@@ -1,13 +1,15 @@
 #!/usr/bin/env bun
 /**
  * Two public agents. Seller is the crawled site. Buyer talks to seller as a machine.
- * Prefer Cursor SDK. If CURSOR_API_KEY is missing, use the script model.
+ * auto: cursor, then openrouter, then script.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { cursorModel, type CursorCall } from "../src/cursor.ts";
 import { Harness } from "../src/harness.ts";
 import { listen, type Hop } from "../src/host/listen.ts";
-import { attachPack, siteBook } from "../src/site/index.ts";
+import { openaiModel } from "../src/models.ts";
+import { attachSales } from "../src/sales/index.ts";
+import { siteBook } from "../src/site/index.ts";
 import type { SitePack } from "../src/site/types.ts";
 import { peerTool } from "./peer.ts";
 import { scriptModel } from "./script.ts";
@@ -32,7 +34,7 @@ if (import.meta.main) {
     report.seller.stop();
     report.buyer.stop();
   } else {
-    console.error("hosts still up: seller " + report.seller.url + "  buyer " + report.buyer.url);
+    printHandoff(report);
     await new Promise(() => {});
   }
 }
@@ -44,7 +46,9 @@ export interface PairOpts {
   buyerPort: number;
   out: string;
   keep: boolean;
-  model: "auto" | "cursor" | "script";
+  model: "auto" | "cursor" | "openrouter" | "script";
+  /** Canned buyer turns. 0 keeps the seller and skips them. */
+  turns?: number;
 }
 
 export async function runPair(opts: PairOpts) {
@@ -55,12 +59,15 @@ export async function runPair(opts: PairOpts) {
   const sellerH = new Harness();
   const buyerH = new Harness();
   const cursor = cursorModel({ onCall: (c) => cursorCalls.push(c) });
+  const openrouter = addOpenrouter();
   sellerH.addModel(cursor);
-  buyerH.addModel(cursorModel({ onCall: (c) => cursorCalls.push(c) }));
+  sellerH.addModel(openrouter);
   sellerH.addModel(scriptModel({ id: "script", role: "seller" }));
+  buyerH.addModel(cursorModel({ onCall: (c) => cursorCalls.push(c) }));
+  buyerH.addModel(addOpenrouter());
   buyerH.addModel(scriptModel({ id: "script", role: "buyer" }));
 
-  const want = pickModel(opts.model, cursor.ready !== false);
+  const want = pickModel(opts.model, cursor.ready !== false, openrouter.ready !== false);
   const t0 = Date.now();
   const job = await siteBook(sellerH).ingest(opts.site, {
     maxPages: opts.maxPages,
@@ -77,10 +84,11 @@ export async function runPair(opts: PairOpts) {
   });
   const crawlMs = Date.now() - t0;
   const pack = job.pack;
-  const sellerRun = attachPack(sellerH, pack, { model: want });
+  const sellerRun = attachSales(sellerH, pack, { model: want });
   const seller = listen(sellerH, {
     port: opts.sellerPort,
-    hostname: "127.0.0.1",
+    hostname: opts.keep ? "0.0.0.0" : "127.0.0.1",
+    reach: opts.keep,
     model: want,
     run: sellerRun,
     onHop: (h) => hops.push({ ...h, path: "seller:" + h.path } as Hop),
@@ -105,7 +113,8 @@ export async function runPair(opts: PairOpts) {
 
   const probes = await probeHosts(seller.url, buyer.url);
   const turns: TurnRec[] = [];
-  for (const text of TURNS) {
+  const canned = TURNS.slice(0, opts.turns ?? TURNS.length);
+  for (const text of canned) {
     const start = Date.now();
     const res = await fetch(buyer.url + "/chat", {
       method: "POST",
@@ -129,7 +138,14 @@ export async function runPair(opts: PairOpts) {
   const report = {
     startedAt: new Date().toISOString(),
     site: opts.site,
-    model: { wanted: opts.model, used: want, cursorReady: cursor.ready !== false, cursorReason: cursor.reasonNotReady },
+    model: {
+      wanted: opts.model,
+      used: want,
+      cursorReady: cursor.ready !== false,
+      cursorReason: cursor.reasonNotReady,
+      openrouterReady: openrouter.ready !== false,
+      openrouterReason: openrouter.reasonNotReady,
+    },
     crawl: {
       ms: crawlMs,
       origin: pack.origin,
@@ -142,6 +158,7 @@ export async function runPair(opts: PairOpts) {
     },
     seller: {
       url: seller.url,
+      port: seller.port,
       runId: seller.room.run.id,
       model: seller.room.run.modelId,
       card: probes.sellerCard,
@@ -176,10 +193,26 @@ interface TurnRec {
   seller: string;
 }
 
-function pickModel(want: PairOpts["model"], cursorReady: boolean): string {
-  if (want === "script") return "script";
-  if (want === "cursor") return "cursor";
-  return cursorReady ? "cursor" : "script";
+export function pickModel(want: PairOpts["model"], cursorReady: boolean, openrouterReady = false): string {
+  if (want === "script" || want === "cursor" || want === "openrouter") return want;
+  if (cursorReady) return "cursor";
+  if (openrouterReady) return "openrouter";
+  return "script";
+}
+
+function addOpenrouter() {
+  return openaiModel({
+    id: "openrouter",
+    baseUrl: "https://openrouter.ai/api/v1",
+    model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+    apiKeyEnv: "OPENROUTER_API_KEY",
+  });
+}
+
+export function printHandoff(r: Awaited<ReturnType<typeof runPair>>): void {
+  console.error("same machine  http://127.0.0.1:" + r.seller.port);
+  console.error("other laptop  " + r.seller.url);
+  console.error("model         " + r.model.used);
 }
 
 function lastAssistant(msgs: readonly { role: string; content: string }[]): string {
@@ -236,7 +269,9 @@ function analyze(pack: SitePack, turns: TurnRec[], hops: Hop[], crawl: { url: st
       "Buyer calls seller over HTTP as a machine (x-agent + JSON).",
       model === "cursor"
         ? "Both runs bound cursor (Cursor SDK Agent.prompt, tools empty)."
-        : "CURSOR_API_KEY was missing. Both runs bound the script model so the pair still ran.",
+        : model === "openrouter"
+          ? "Both runs bound openrouter (OpenRouter chat, tools on)."
+          : "No live key. Both runs bound the script model so the pair still ran.",
     ],
   };
 }
@@ -252,6 +287,7 @@ export function asMarkdown(r: Awaited<ReturnType<typeof runPair>>): string {
     "- wanted: `" + r.model.wanted + "`",
     "- used: `" + r.model.used + "`",
     "- cursor ready: " + r.model.cursorReady + (r.model.cursorReason ? " (" + r.model.cursorReason + ")" : ""),
+    "- openrouter ready: " + r.model.openrouterReady + (r.model.openrouterReason ? " (" + r.model.openrouterReason + ")" : ""),
     "",
     "## Site ingest",
     "",
@@ -270,7 +306,7 @@ export function asMarkdown(r: Awaited<ReturnType<typeof runPair>>): string {
     "",
     "## Agents",
     "",
-    "| | Seller (Corgi) | Buyer (founder) |",
+    "| | Seller (Corgi) | Buyer |",
     "| --- | --- | --- |",
     "| url | " + r.seller.url + " | " + r.buyer.url + " |",
     "| run | `" + r.seller.runId + "` | `" + r.buyer.runId + "` |",
@@ -331,6 +367,7 @@ function parseArgs(argv: string[]): PairOpts {
     out: "experiment/last-report.json",
     keep: false,
     model: "auto",
+    turns: TURNS.length,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
@@ -341,7 +378,13 @@ function parseArgs(argv: string[]): PairOpts {
     else if (a === "--out") out.out = argv[++i] ?? out.out;
     else if (a === "--keep") out.keep = true;
     else if (a === "--model") out.model = (argv[++i] as PairOpts["model"]) || "auto";
+    else if (a === "--turns") out.turns = flagNum(argv[++i], TURNS.length);
     else if (!a.startsWith("-") && a.includes("://")) out.site = a;
   }
   return out;
+}
+
+function flagNum(raw: string | undefined, fallback: number): number {
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : fallback;
 }

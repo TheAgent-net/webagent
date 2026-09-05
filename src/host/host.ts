@@ -1,7 +1,7 @@
 import type { Harness } from "../harness.ts";
 import { intake } from "../intake.ts";
 import { clientKind } from "./detect.ts";
-import { chatPage } from "./page.ts";
+import { chatPage, sayHow } from "./page.ts";
 import { Room } from "./room.ts";
 
 export function publicUrl(req: Request, fallback: string): string {
@@ -15,7 +15,7 @@ export function publicUrl(req: Request, fallback: string): string {
 
 /** Public host: humans get the page, machines get MCP / JSON. Same room. */
 export function host(harness: Harness, room: Room, fallbackUrl = "http://127.0.0.1:8787"): (req: Request) => Promise<Response> {
-  const api = intake(harness);
+  const api = intake(harness, room);
   return async (req: Request) => {
     const url = new URL(req.url);
     const kind = clientKind(req);
@@ -23,7 +23,17 @@ export function host(harness: Harness, room: Room, fallbackUrl = "http://127.0.0
 
     if (url.pathname === "/who") return Response.json({ kind, runId: room.run.id });
     if (url.pathname === "/agent.json") return Response.json(card(base, room));
-    if (url.pathname === "/live") return room.stream();
+    if (url.pathname === "/live") {
+      const accept = req.headers.get("Accept") ?? "";
+      if (!accept.includes("text/event-stream")) {
+        return Response.json({
+          runId: room.run.id,
+          stream: base + "/live",
+          hint: "This is a live stream. Do not wait for it to finish. POST /chat to talk.",
+        });
+      }
+      return room.stream();
+    }
     if (url.pathname === "/chat" && req.method === "POST") {
       const body = (await req.json().catch(() => ({}))) as { text?: string; from?: "human" | "machine" };
       return Response.json(await room.say(chatFrom(req, body), body.text ?? ""));
@@ -70,5 +80,6 @@ function card(base: string, room: Room) {
     live: base + "/live",
     runId: room.run.id,
     protocol: "2025-06-18",
+    how: sayHow(room.run.id),
   };
 }

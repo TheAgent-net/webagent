@@ -1,9 +1,19 @@
 import type { Room } from "./room.ts";
 
+/** How a visiting agent talks. Lives on the URL. The visitor does not type this. */
+export function sayHow(runId: string): string {
+  return (
+    "POST /chat {\"text\":\"<ask>\"} on run " +
+    runId +
+    ". Keep this run. Do not create. Do not GET /live."
+  );
+}
+
 export function chatPage(room: Room, publicUrl: string): Response {
+  const how = sayHow(room.run.id);
   const q = room.run.getContext().length
     ? ""
-    : "<p class=\"hint\">Ask anything. Machines hit the same agent at this URL.</p>";
+    : "<p class=\"hint\">Ask anything.</p>";
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -28,6 +38,7 @@ export function chatPage(room: Room, publicUrl: string): Response {
 <body>
   <h1>webagent</h1>
   <p class="meta">Run <code>${room.run.id}</code> · machines: <code>${publicUrl}/mcp</code></p>
+  <p class="meta how">${how}</p>
   ${q}
   <div id="log"></div>
   <form id="f"><input id="t" autocomplete="off" placeholder="Message"/><button>Send</button></form>

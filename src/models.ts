@@ -136,6 +136,10 @@ function toOpenAI(messages: readonly Message[]): Record<string, unknown>[] {
   const out: Record<string, unknown>[] = new Array(messages.length);
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i]!;
+    if (m.role === "pin") {
+      out[i] = { role: "system", content: m.content };
+      continue;
+    }
     if (m.role === "tool") {
       out[i] = { role: "tool", content: m.content, tool_call_id: m.toolCallId ?? "" };
       continue;

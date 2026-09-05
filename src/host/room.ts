@@ -26,6 +26,7 @@ const ROOM_INSTRUCTION =
 export class Room {
   readonly run: Run;
   private readonly live = new Set<(ev: RoomEvent) => void>();
+  private wait: Promise<unknown> = Promise.resolve();
 
   constructor(private readonly harness: Harness, modelOrOpts: string | RoomOpts = "echo") {
     const opts: RoomOpts = typeof modelOrOpts === "string" ? { model: modelOrOpts } : modelOrOpts;
@@ -42,6 +43,15 @@ export class Room {
   }
 
   async say(from: Side, text: string) {
+    const next = this.wait.then(() => this.speak(from, text));
+    this.wait = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    return next;
+  }
+
+  private async speak(from: Side, text: string) {
     const msg = text.trim();
     if (!msg) return this.peek();
     this.run.inject({ text: `[${from}] ${msg}` });

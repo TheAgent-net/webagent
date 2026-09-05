@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Harness } from "../src/harness.ts";
+import { Room } from "../src/host/room.ts";
 import { intake } from "../src/intake.ts";
 import { mcp } from "../src/mcp.ts";
 
@@ -91,6 +92,7 @@ describe("mcp surface", () => {
     for (const n of [
       "getAvailableModels",
       "create",
+      "say",
       "inject",
       "start",
       "startAll",
@@ -158,6 +160,62 @@ describe("mcp surface", () => {
     expect(text).toContain("event: message");
     expect(text).toContain("2025-06-18");
     expect(session).toBeTruthy();
+  });
+
+  test("a public room lists only say and rejects create", async () => {
+    const h = new Harness();
+    const room = new Room(h, "echo");
+    const fetchFn = mcp(h, room);
+    const session = await handshake(fetchFn);
+    const listed = (await call(fetchFn, session, "tools/list")).result as { tools: { name: string }[] };
+    const names = listed.tools.map((t) => t.name);
+    expect(names).toEqual(["say"]);
+    const created = await tool(fetchFn, session, "create", { text: "hi", model: "echo" });
+    expect(created.isError).toBe(true);
+    expect(String(created.data)).toMatch(/unknown tool/);
+  });
+
+  test("initialize with a room tells the client to say, not create", async () => {
+    const h = new Harness();
+    const room = new Room(h, "echo");
+    const fetchFn = mcp(h, room);
+    const init = await post(fetchFn, "http://t/mcp", {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } },
+    });
+    const body = (await init.json()) as { result?: { instructions?: string } };
+    expect(body.result?.instructions).toMatch(/Use say/);
+    expect(body.result?.instructions).toMatch(/Do not create/);
+  });
+
+  test("say without id hits the room run; wrong id fails; create is not required", async () => {
+    const h = new Harness();
+    const room = new Room(h, "echo");
+    const fetchFn = mcp(h, room);
+    const session = await handshake(fetchFn);
+    const first = await tool<{ id: string; lastText: string }>(fetchFn, session, "say", { text: "alpha token" });
+    expect(first.isError).toBe(false);
+    expect(first.data.id).toBe(room.run.id);
+    expect(first.data.lastText).toContain("alpha token");
+    const second = await tool<{ id: string }>(fetchFn, session, "say", { text: "what did I say" });
+    expect(second.isError).toBe(false);
+    expect(second.data.id).toBe(room.run.id);
+    const ctx = room.run.getContext().map((m) => m.content).join("\n");
+    expect(ctx).toContain("alpha token");
+    expect(ctx).toContain("what did I say");
+    const wrong = await tool(fetchFn, session, "say", { text: "nope", id: "r-not-this" });
+    expect(wrong.isError).toBe(true);
+    expect(String(wrong.data)).toMatch(/unknown run/);
+  });
+
+  test("say without a room fails closed", async () => {
+    const fetchFn = mcp(new Harness());
+    const session = await handshake(fetchFn);
+    const bare = await tool(fetchFn, session, "say", { text: "hello" });
+    expect(bare.isError).toBe(true);
+    expect(String(bare.data)).toMatch(/no public run/);
   });
 
   test("intake mounts /mcp on the same handler", async () => {
