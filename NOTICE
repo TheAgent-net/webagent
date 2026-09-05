@@ -2,13 +2,3 @@ webagent
 Copyright 2026 AgentNet
 
 This product is licensed under the Apache License, Version 2.0 (see LICENSE).
-
-This product includes third-party software:
-
-  - github.com/skip2/go-qrcode — MIT License.
-    Copyright (c) 2014 Tom Harwood.
-    https://github.com/skip2/go-qrcode
-
-  - golang.org/x/term, golang.org/x/sys — BSD-3-Clause License.
-    Copyright (c) The Go Authors.
-    https://pkg.go.dev/golang.org/x/term

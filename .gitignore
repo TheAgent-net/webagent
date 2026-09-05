@@ -1,5 +1,6 @@
 /bin/
 *.log
+node_modules/
 
 # secrets — never commit
 .env
@@ -10,3 +11,12 @@ service-account*
 # local runtime state
 .tokens.json
 .profiles.json
+bench/last-report.json
+experiment/last-report.json
+experiment/last-report.md
+
+# graphify — commit the graph; keep machine-local cache/cost out of git
+graphify-out/cost.json
+graphify-out/cache/
+graphify-out/.graphify_root
+graphify-out/*.sig

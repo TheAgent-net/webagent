@@ -1,0 +1,372 @@
+{
+  "communities": {
+    "0": [
+      "src_cli",
+      "src_cli_args",
+      "src_cli_h",
+      "src_context",
+      "src_harness",
+      "src_harness_defaultharness",
+      "src_harness_harness",
+      "src_harness_harness_addmodel",
+      "src_harness_harness_constructor",
+      "src_harness_harness_create",
+      "src_harness_harness_get",
+      "src_harness_harness_getavailablemodels",
+      "src_harness_harness_gethealth",
+      "src_harness_harness_getlimits",
+      "src_harness_harness_listruns",
+      "src_harness_harness_startall",
+      "src_harness_nextid",
+      "src_index",
+      "src_intake",
+      "src_intake_intake",
+      "src_models",
+      "src_models_echomodel",
+      "src_models_lastuser",
+      "src_models_model",
+      "src_models_modelinfo",
+      "src_models_openaimodel",
+      "src_run_createopts",
+      "src_run_explain",
+      "src_scheduler",
+      "src_scheduler_scheduler",
+      "src_scheduler_scheduler_constructor",
+      "src_scheduler_scheduler_run",
+      "src_scheduler_scheduler_waitslot",
+      "src_scheduler_scheduler_wake",
+      "test_harness_test",
+      "test_harness_test_call",
+      "test_harness_test_reason",
+      "test_perf_test",
+      "test_perf_test_reason"
+    ],
+    "1": [
+      "src_harness_harness_addtool",
+      "src_harness_harness_getavailabletools",
+      "src_hooks",
+      "src_hooks_decide",
+      "src_hooks_hookbag",
+      "src_hooks_verdict",
+      "src_loop",
+      "src_loop_findtool",
+      "src_loop_loophost",
+      "src_loop_loophost_setphase",
+      "src_loop_onestep",
+      "src_loop_tokentee",
+      "src_policy",
+      "src_policy_blockedaction",
+      "src_policy_danger",
+      "src_run",
+      "src_run_run_listtools",
+      "src_state",
+      "src_state_cancelled",
+      "src_state_created",
+      "src_state_paused",
+      "src_state_phase",
+      "src_state_phase_idle",
+      "src_state_phase_name",
+      "src_state_phase_reason",
+      "src_state_phase_tool",
+      "src_state_running",
+      "src_state_runstate",
+      "src_state_state_name",
+      "src_state_stopped",
+      "src_tools",
+      "src_tools_tool",
+      "src_tools_tool_call",
+      "src_tools_tool_preview",
+      "src_tools_toolinfo"
+    ],
+    "2": [
+      "src_context_message",
+      "src_harness_harness_fork",
+      "src_models_modelrequest",
+      "src_run_run",
+      "src_run_run_cancel",
+      "src_run_run_clearmodel",
+      "src_run_run_emit",
+      "src_run_run_eventstream",
+      "src_run_run_explain",
+      "src_run_run_finish",
+      "src_run_run_fork",
+      "src_run_run_getcontext",
+      "src_run_run_getmodelbinding",
+      "src_run_run_inject",
+      "src_run_run_merge",
+      "src_run_run_needsmore",
+      "src_run_run_pause",
+      "src_run_run_removetool",
+      "src_run_run_resume",
+      "src_run_run_retrystep",
+      "src_run_run_setphase",
+      "src_run_run_skipstep",
+      "src_run_run_start",
+      "src_run_run_steponce",
+      "src_run_run_stop",
+      "src_run_run_usemodel",
+      "src_run_run_wait"
+    ],
+    "3": [
+      "src_mcp",
+      "src_mcp_by_name",
+      "src_mcp_dispatch",
+      "src_mcp_id",
+      "src_mcp_mcp",
+      "src_mcp_mcp_protocol",
+      "src_mcp_must",
+      "src_mcp_optstr",
+      "src_mcp_rpc",
+      "src_mcp_rpcerr",
+      "src_mcp_str",
+      "src_mcp_tooldef",
+      "src_mcp_tools",
+      "src_mcp_wantssse",
+      "test_mcp_test",
+      "test_mcp_test_call",
+      "test_mcp_test_handshake",
+      "test_mcp_test_post",
+      "test_mcp_test_rpc",
+      "test_mcp_test_tool"
+    ],
+    "4": [
+      "package",
+      "package_bin",
+      "package_bin_webagent",
+      "package_description",
+      "package_devdependencies",
+      "package_devdependencies_types_bun",
+      "package_devdependencies_typescript",
+      "package_engines",
+      "package_engines_bun",
+      "package_exports",
+      "package_license",
+      "package_name",
+      "package_scripts",
+      "package_scripts_test",
+      "package_scripts_typecheck",
+      "package_type",
+      "package_version",
+      "types_bun",
+      "typescript"
+    ],
+    "5": [
+      "ref_bun_types",
+      "ref_src_ts",
+      "ref_test_ts",
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_allowimportingtsextensions",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_target",
+      "tsconfig_compileroptions_types",
+      "tsconfig_compileroptions_verbatimmodulesyntax",
+      "tsconfig_include"
+    ],
+    "6": [
+      "src_assembler",
+      "src_assembler_assembled",
+      "src_assembler_assembler",
+      "src_assembler_assembler_end",
+      "src_assembler_assembler_pushtext",
+      "src_assembler_assembler_pushtooldelta",
+      "src_assembler_empty",
+      "src_assembler_parseonce",
+      "src_assembler_slot",
+      "src_assembler_toolcall",
+      "src_models_model_reason"
+    ],
+    "7": [
+      "src_models_info",
+      "src_models_modelshelf",
+      "src_models_modelshelf_add",
+      "src_models_modelshelf_check",
+      "src_models_modelshelf_get",
+      "src_models_modelshelf_info",
+      "src_models_modelshelf_list",
+      "src_policy_guardtool",
+      "src_run_run_constructor",
+      "src_run_run_usetool"
+    ],
+    "8": [
+      "src_context_context",
+      "src_context_context_absorb",
+      "src_context_context_append",
+      "src_context_context_appendmany",
+      "src_context_context_constructor",
+      "src_context_context_fork",
+      "src_context_context_length",
+      "src_context_context_view"
+    ],
+    "9": [
+      "src_tools_toolshelf",
+      "src_tools_toolshelf_add",
+      "src_tools_toolshelf_get",
+      "src_tools_toolshelf_list",
+      "src_tools_toolshelf_remove",
+      "src_tools_toolshelf_snapshot"
+    ]
+  },
+  "cohesion": {
+    "0": 0.12280701754385964,
+    "1": 0.11092436974789915,
+    "2": 0.1452991452991453,
+    "3": 0.13157894736842105,
+    "4": 0.10526315789473684,
+    "5": 0.13333333333333333,
+    "6": 0.2,
+    "7": 0.24444444444444444,
+    "8": 0.2857142857142857,
+    "9": 0.3333333333333333
+  },
+  "gods": [
+    {
+      "id": "src_run_run",
+      "label": "Run",
+      "degree": 37
+    },
+    {
+      "id": "src_harness_harness",
+      "label": "Harness",
+      "degree": 22
+    },
+    {
+      "id": "src_context_context",
+      "label": "Context",
+      "degree": 17
+    },
+    {
+      "id": "src_tools_tool",
+      "label": "Tool",
+      "degree": 14
+    },
+    {
+      "id": "src_loop_onestep",
+      "label": "oneStep()",
+      "degree": 12
+    },
+    {
+      "id": "src_assembler_assembler",
+      "label": "Assembler",
+      "degree": 11
+    },
+    {
+      "id": "src_scheduler_scheduler",
+      "label": "Scheduler",
+      "degree": 10
+    },
+    {
+      "id": "src_models_modelshelf",
+      "label": "ModelShelf",
+      "degree": 10
+    },
+    {
+      "id": "src_intake_intake",
+      "label": "intake()",
+      "degree": 10
+    },
+    {
+      "id": "tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 10
+    }
+  ],
+  "surprises": [
+    {
+      "source": "ToolDef",
+      "target": "Harness",
+      "source_files": [
+        "src/mcp.ts",
+        "src/harness.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities; peripheral node `ToolDef` unexpectedly reaches hub `Harness`"
+    },
+    {
+      "source": "CreateOpts",
+      "target": "Context",
+      "source_files": [
+        "src/run.ts",
+        "src/context.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "CreateOpts",
+      "target": "Message",
+      "source_files": [
+        "src/run.ts",
+        "src/context.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "CreateOpts",
+      "target": "HookBag",
+      "source_files": [
+        "src/run.ts",
+        "src/hooks.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "CreateOpts",
+      "target": "Tool",
+      "source_files": [
+        "src/run.ts",
+        "src/tools.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `Run` connect `Community 2` to `Community 0`, `Community 1`, `Community 3`, `Community 7`, `Community 8`?",
+      "why": "High betweenness centrality (0.194) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Context` connect `Community 8` to `Community 0`, `Community 1`, `Community 2`, `Community 7`?",
+      "why": "High betweenness centrality (0.069) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Harness` connect `Community 0` to `Community 1`, `Community 2`, `Community 3`?",
+      "why": "High betweenness centrality (0.063) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 2 inferred relationships involving `oneStep()` (e.g. with `.end()` and `.get()`) actually correct?",
+      "why": "`oneStep()` has 2 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `Phase`, `RpcErr`, `Rpc` to the rest of the system?",
+      "why": "37 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.12280701754385964 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.11092436974789915 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

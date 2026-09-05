@@ -1,33 +1,15 @@
-.PHONY: all fmt fmt-check vet lint test race cover tidy vuln ci
-
-all: fmt vet test
-
-fmt:
-	gofmt -w .
-
-fmt-check:
-	@test -z "$$(gofmt -l .)" || (echo "gofmt needed on:"; gofmt -l .; exit 1)
-
-vet:
-	go vet ./...
-
-lint:
-	golangci-lint run
+.PHONY: test typecheck ci bench pair
 
 test:
-	go test ./...
+	bun test
 
-race:
-	go test -race ./...
+typecheck:
+	bunx tsc --noEmit
 
-cover:
-	go test -cover ./...
+bench:
+	bun bench/run.ts
 
-tidy:
-	go mod tidy
+pair:
+	bun experiment/run.ts --site https://www.corgi.insure
 
-vuln:
-	govulncheck ./...
-
-# What CI runs.
-ci: fmt-check vet race cover
+ci: test typecheck

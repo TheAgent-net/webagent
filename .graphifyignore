@@ -1,0 +1,4 @@
+# Extra exclusions beyond .gitignore (graphify already honors gitignore).
+graphify-out/
+.agents/
+.cursor/
