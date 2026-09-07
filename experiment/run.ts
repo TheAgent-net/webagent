@@ -7,7 +7,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { cursorModel, type CursorCall } from "../src/cursor.ts";
 import { Harness } from "../src/harness.ts";
 import { listen, type Hop } from "../src/host/listen.ts";
-import { attachPack, siteBook } from "../src/site/index.ts";
+import { attachSales } from "../src/sales/index.ts";
+import { siteBook } from "../src/site/index.ts";
 import type { SitePack } from "../src/site/types.ts";
 import { peerTool } from "./peer.ts";
 import { scriptModel } from "./script.ts";
@@ -77,7 +78,7 @@ export async function runPair(opts: PairOpts) {
   });
   const crawlMs = Date.now() - t0;
   const pack = job.pack;
-  const sellerRun = attachPack(sellerH, pack, { model: want });
+  const sellerRun = attachSales(sellerH, pack, { model: want });
   const seller = listen(sellerH, {
     port: opts.sellerPort,
     hostname: "127.0.0.1",

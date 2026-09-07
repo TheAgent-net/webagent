@@ -7,13 +7,13 @@ import type { Run } from "../run.ts";
 import type { Tool } from "../tools.ts";
 import type { SiteFlow, SitePack } from "./types.ts";
 
-export function attachPack(h: Harness, pack: SitePack, opts?: { model?: string }): Run {
+export function attachPack(h: Harness, pack: SitePack, opts?: { model?: string; instruction?: string }): Run {
   h.addTool(lookupTool(pack));
   for (const flow of pack.flows) h.addTool(flowTool(flow));
 
   const run = h.create({
     model: opts?.model,
-    instruction: pack.instruction,
+    instruction: opts?.instruction ?? pack.instruction,
     tools: [lookupTool(pack), ...pack.flows.map(flowTool)],
   });
   if (pack.facts.length) run.inject({ vars: pack.facts.join("\n") });
