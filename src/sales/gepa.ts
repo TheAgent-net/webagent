@@ -10,6 +10,9 @@ export interface GoalScore {
   report: number;
   grounded: number;
   short: number;
+  cover: number;
+  readme: number;
+  teach: number;
 }
 
 export interface PromptCand {
@@ -28,18 +31,24 @@ const GOALS: (keyof GoalScore)[] = [
   "report",
   "grounded",
   "short",
+  "cover",
+  "readme",
+  "teach",
 ];
 
 export function scorePrompt(text: string): GoalScore {
   const t = text.toLowerCase();
   return {
-    discover: hit(t, [/categor(y|ies)/, /what (the )?startup does/, /saas|fintech|health-tech/, /one question/]),
-    risks: hit(t, [/risk factor/, /risks:/, /map_risks|highlight/]),
+    discover: hit(t, [/company name/, /founder name/, /field|categor(y|ies)/, /one question/, /do not recommend|until you have/]),
+    risks: hit(t, [/risk factor/, /risks:/, /map_risks|highlight/, /site_lookup/]),
     penalty: hit(t, [/penalt/, /if (you )?skip insurance|uninsured|not insured/, /lawsuit|lost deal|coi/]),
     social: hit(t, [/customer|intryc|competitor|similar (problem|company)/, /using corgi|already uses/]),
-    report: hit(t, [/pinpoint report|for you:/, /best fit:/, /do this next/]),
-    grounded: hit(t, [/do not invent|from the pack|only from/, /no (fake|invented) (price|customer|lawsuit)/]),
+    report: hit(t, [/pinpoint report|for you:/, /best fit:/, /do this next/, /founder|company/]),
+    grounded: hit(t, [/do not invent|from the pack|from the files|only from/, /no (fake|invented) (price|customer|lawsuit)/]),
     short: hit(t, [/180 words|short/, /no tool (names|json)/, /one link/]),
+    cover: hit(t, [/liabilit/, /how much we cover|limit|\$1m|per claim/, /cgl|tech e&o|cyber/]),
+    readme: hit(t, [/# for |readme|short read/, /personal/, /what can go wrong|what pays/]),
+    teach: hit(t, [/situation|problem|implication|need-payoff/, /insight|reframe|challenger|spin/, /simple|snap|one link/]),
   };
 }
 
@@ -90,12 +99,15 @@ function reflect(cands: PromptCand[]): { id: string; text: string }[] {
   const missing = GOALS.filter((g) => best.score[g] < 1);
   const extra = missing
     .map((g) => {
-      if (g === "discover") return "Ask category and what the startup does. One question per turn.";
-      if (g === "risks") return "After both answers, call map_risks and highlight those risk factors.";
+      if (g === "discover") return "Ask company name, founder name, field, and what they sell. One question per turn. Do not recommend until you have those facts.";
+      if (g === "risks") return "After those answers, call site_lookup then map_risks and highlight those risk factors.";
       if (g === "penalty") return "Show penalties if they are not insured: lost deal, lawsuit, delayed COI. Pack only.";
       if (g === "social") return "Name one similar company with that problem, or a competitor-category customer already using Corgi. Pack only.";
       if (g === "report") return "Reply with one short pinpoint report: For you / Risks / If you skip insurance / Who / Best fit / Do this next.";
       if (g === "grounded") return "Do not invent prices, customers, lawsuits, or penalties. If the pack has no match, say so.";
+      if (g === "cover") return "For each product, name one liability case and how much we cover (site limits, often $1M per claim). CGL, D&O, Tech E&O, Cyber.";
+      if (g === "readme") return "Write the reply as a brief personal readme: # For {founder} — {company}. What can go wrong and what pays. Short read they can share.";
+      if (g === "teach") return "Use SPIN (situation, problem, implication, need-payoff). Teach one Challenger insight. Keep it SNAP: simple, one link.";
       return "Keep the whole report under 180 words. No tool names. No JSON. One link.";
     })
     .join("\n");

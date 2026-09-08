@@ -12,8 +12,8 @@ const lines = [
   "",
   "## All",
   "",
-  "| id | gen | mean | discover | risks | penalty | social | report | grounded | short |",
-  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+  "| id | gen | mean | discover | risks | penalty | social | report | grounded | short | cover | readme | teach |",
+  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   ...all.map((c) =>
     [
       c.id,
@@ -26,6 +26,9 @@ const lines = [
       c.score.report.toFixed(2),
       c.score.grounded.toFixed(2),
       c.score.short.toFixed(2),
+      c.score.cover.toFixed(2),
+      c.score.readme.toFixed(2),
+      c.score.teach.toFixed(2),
     ].join(" | ").replace(/^/, "| ").concat(" |"),
   ),
   "",

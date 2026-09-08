@@ -168,7 +168,7 @@ Do not add `transfer_funds`. Do not expose `fit_offer` as the public product. Th
 
 ### 4. Model
 
-`useModel("cursor")` when `CURSOR_API_KEY` is set. Sales voice needs composition. Script/echo can stay for CI. Fail closed if unbound.
+`useModel("cursor")` when `CURSOR_API_KEY` is set. Sales voice needs composition. The pair requires a live LLM. Fail closed if unbound. Echo stays for unit tests only.
 
 ### 5. Human page
 

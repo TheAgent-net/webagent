@@ -11,7 +11,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent ask <text>          one echo run");
   console.error("  webagent serve [addr]        public HTTPS host (default :8787)");
   console.error("  webagent ingest <url>        crawl a site, build flows, attach a run");
-  console.error("  webagent pair <url>          two agents: site seller + buyer (Cursor SDK)");
+  console.error("  webagent pair <url>          two agents: site seller + buyer (live LLM)");
   process.exit(args[0] ? 0 : 2);
 }
 
@@ -50,16 +50,21 @@ switch (args[0]) {
     break;
   }
   case "pair": {
-    const url = args[1] || "https://www.corgi.insure";
+    const url = args.find((a) => a.includes("://")) || args[1] || "https://www.corgi.insure";
+    const modelFlag = args.includes("--model") ? args[args.indexOf("--model") + 1] : "live";
+    if (modelFlag === "script") {
+      console.error("script model is removed. Use a live LLM.");
+      process.exit(2);
+    }
     const { runPair, asMarkdown } = await import("../experiment/run.ts");
     const report = await runPair({
-      site: url,
+      site: url.startsWith("-") ? "https://www.corgi.insure" : url,
       maxPages: 40,
       sellerPort: 8787,
       buyerPort: 8788,
       out: "experiment/last-report.json",
       keep: args.includes("--keep"),
-      model: "auto",
+      model: (modelFlag as "auto" | "live" | "cursor" | "openai" | "openrouter" | "ollama" | "mock") || "live",
     });
     console.log(asMarkdown(report));
     if (!args.includes("--keep")) {

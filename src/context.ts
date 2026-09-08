@@ -1,9 +1,13 @@
+import type { ToolCall } from "./assembler.ts";
+
 /** Copy-on-write message log. Forks share the spine until a write. */
 
 export interface Message {
   role: "system" | "user" | "assistant" | "tool" | "pin";
   content: string;
   toolCallId?: string;
+  /** Present on an assistant frame that asked for tools. Live models need this. */
+  toolCalls?: ToolCall[];
 }
 
 export class Context {

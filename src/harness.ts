@@ -1,5 +1,5 @@
 import { cursorModel } from "./cursor.ts";
-import { echoModel, ModelShelf, openaiModel, type Model, type ModelInfo } from "./models.ts";
+import { echoModel, ModelShelf, ollamaModel, openaiModel, type Model, type ModelInfo } from "./models.ts";
 import { Run, type CreateOpts, type Explain } from "./run.ts";
 import { Scheduler } from "./scheduler.ts";
 import { STATE_NAME, type RunState } from "./state.ts";
@@ -114,6 +114,15 @@ export function defaultHarness(): Harness {
       }),
     );
   }
+  h.addModel(
+    openaiModel({
+      id: "openai",
+      baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      apiKeyEnv: "OPENAI_API_KEY",
+    }),
+  );
+  h.addModel(ollamaModel());
   return h;
 }
 

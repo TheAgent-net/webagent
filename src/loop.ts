@@ -40,13 +40,14 @@ export async function oneStep(host: LoopHost, models: ModelShelf): Promise<{ tex
 
   const out = assembler.end();
   host.hooks.afterReason?.(host.id, out.text);
-  if (out.text) host.context.append({ role: "assistant", content: out.text });
 
   if (out.toolCalls.length === 0) {
+    if (out.text) host.context.append({ role: "assistant", content: out.text });
     host.setPhase(PHASE_IDLE);
     return { text: out.text };
   }
 
+  host.context.append({ role: "assistant", content: out.text, toolCalls: out.toolCalls });
   host.setPhase(PHASE_TOOL);
   for (let i = 0; i < out.toolCalls.length; i++) {
     const tc = out.toolCalls[i]!;

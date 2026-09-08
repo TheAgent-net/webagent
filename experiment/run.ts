@@ -1,22 +1,25 @@
 #!/usr/bin/env bun
 /**
  * Two public agents. Seller is the crawled site. Buyer talks to seller as a machine.
- * Prefer Cursor SDK. If CURSOR_API_KEY is missing, use the script model.
+ * auto and live: first ready of cursor, openai, openrouter, ollama (or a test mock host).
+ * Fail closed if no live LLM is ready. There is no script model.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { cursorModel, type CursorCall } from "../src/cursor.ts";
 import { Harness } from "../src/harness.ts";
 import { listen, type Hop } from "../src/host/listen.ts";
+import { ollamaModel, openaiModel, probeOllama, type ModelCall } from "../src/models.ts";
 import { attachSales } from "../src/sales/index.ts";
-import { siteBook } from "../src/site/index.ts";
+import { CORPUS_CORGI, hasCorpus, loadCorpus, siteBook } from "../src/site/index.ts";
 import type { SitePack } from "../src/site/types.ts";
 import { peerTool } from "./peer.ts";
-import { scriptModel } from "./script.ts";
+
+const LIVE = ["cursor", "openai", "openrouter", "ollama", "mock"] as const;
 
 const TURNS = [
-  "I am a seed-stage SaaS founder. What coverage do I need and what does it cost?",
-  "How fast can I get a quote compared to a broker?",
-  "Should I buy from Corgi or keep a traditional broker? Give a short recommendation.",
+  "Hi. I need insurance for my startup.",
+  "I am Maya Chen, founder of Northline. We are a seed-stage SaaS company. We sell B2B analytics to other software teams.",
+  "Our biggest worry is a customer data breach and a product outage. What should we buy, what does it cost, and should we use Corgi or a broker?",
 ];
 
 const args = parseArgs(process.argv.slice(2));
@@ -38,6 +41,8 @@ if (import.meta.main) {
   }
 }
 
+export type PairModel = "auto" | "live" | "cursor" | "openai" | "openrouter" | "ollama" | "mock";
+
 export interface PairOpts {
   site: string;
   maxPages: number;
@@ -45,40 +50,83 @@ export interface PairOpts {
   buyerPort: number;
   out: string;
   keep: boolean;
-  model: "auto" | "cursor" | "script";
+  model: PairModel;
+  /** Local page files. When set, skip the live crawl. */
+  corpus?: string;
+  /** Test only. OpenAI-compatible /v1 host. Bound as `mock`. */
+  liveUrl?: string;
 }
 
 export async function runPair(opts: PairOpts) {
   const hops: Hop[] = [];
   const crawl: { url: string; status: number; ms: number }[] = [];
   const cursorCalls: CursorCall[] = [];
+  const modelCalls: ModelCall[] = [];
+  const onCall = (c: ModelCall) => modelCalls.push(c);
 
   const sellerH = new Harness();
   const buyerH = new Harness();
   const cursor = cursorModel({ onCall: (c) => cursorCalls.push(c) });
+  const openai = addOpenAI(onCall);
+  const openrouter = addOpenrouter(onCall);
+  const ollamaUp = await probeOllama();
+  const ollama = ollamaModel({ ready: ollamaUp, onCall });
   sellerH.addModel(cursor);
+  sellerH.addModel(openai);
+  sellerH.addModel(openrouter);
+  sellerH.addModel(ollama);
   buyerH.addModel(cursorModel({ onCall: (c) => cursorCalls.push(c) }));
-  sellerH.addModel(scriptModel({ id: "script", role: "seller" }));
-  buyerH.addModel(scriptModel({ id: "script", role: "buyer" }));
+  buyerH.addModel(addOpenAI(onCall));
+  buyerH.addModel(addOpenrouter(onCall));
+  buyerH.addModel(ollamaModel({ ready: ollamaUp, onCall }));
+  if (opts.liveUrl) {
+    const base = opts.liveUrl.replace(/\/+$/, "");
+    sellerH.addModel(openaiModel({ id: "mock", baseUrl: base, model: "mock", ready: true, onCall }));
+    buyerH.addModel(openaiModel({ id: "mock", baseUrl: base, model: "mock", ready: true, onCall }));
+  }
 
-  const want = pickModel(opts.model, cursor.ready !== false);
-  const t0 = Date.now();
-  const job = await siteBook(sellerH).ingest(opts.site, {
-    maxPages: opts.maxPages,
-    fetch: Object.assign(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
-        const start = Date.now();
-        const res = await fetch(input, init);
-        const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-        crawl.push({ url: href, status: res.status, ms: Date.now() - start });
-        return res;
-      },
-      fetch,
-    ),
+  const want = pickModel(opts.model, {
+    cursor: cursor.ready !== false,
+    openai: openai.ready !== false,
+    openrouter: openrouter.ready !== false,
+    ollama: ollamaUp,
+    mock: Boolean(opts.liveUrl),
   });
+  const t0 = Date.now();
+  const corpusDir = pickCorpus(opts);
+  let pack: SitePack;
+  if (corpusDir) {
+    pack = loadCorpus(corpusDir);
+    crawl.push({ url: "file:" + corpusDir, status: 200, ms: Date.now() - t0 });
+  } else {
+    const job = await siteBook(sellerH).ingest(opts.site, {
+      maxPages: opts.maxPages,
+      fetch: Object.assign(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const start = Date.now();
+          const res = await fetch(input, init);
+          const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+          crawl.push({ url: href, status: res.status, ms: Date.now() - start });
+          return res;
+        },
+        fetch,
+      ),
+    });
+    pack = job.pack;
+  }
   const crawlMs = Date.now() - t0;
-  const pack = job.pack;
   const sellerRun = attachSales(sellerH, pack, { model: want });
+  sellerRun.inject({
+    vars: [
+      "Interview first. Ask for company name and founder name if they are missing.",
+      "If they already named the company, the founder, the field or what they sell, infer the rest and write the report.",
+      "If they ask what to buy or what it costs, write the short personal readme. Do not ask another discovery question.",
+      "Then call note_visitor, site_lookup on the local files, and map_risks.",
+      "Use only the customer name the tool returns.",
+      "Do not invent Shopify or any other name.",
+      "Answer the latest visitor question. Do not repeat an old report.",
+    ].join(" "),
+  });
   const seller = listen(sellerH, {
     port: opts.sellerPort,
     hostname: "127.0.0.1",
@@ -91,8 +139,11 @@ export async function runPair(opts: PairOpts) {
     model: want,
     instruction: [
       "You are a founder who wants startup insurance.",
-      "The Corgi public agent is a peer. Use ask_peer to ask it.",
-      "Then give a short answer to the human. Quote the peer. Do not invent prices.",
+      "The Corgi public agent is a peer.",
+      "On every human message you must call ask_peer with that message. Do not answer from memory.",
+      "If the peer asks a question, tell the human that question. Do not invent a company or founder name.",
+      "After the tool returns, give a short answer to the human. Quote the peer.",
+      "Do not invent a dollar amount. If the peer did not state a price, say the peer did not state a price.",
     ].join(" "),
     tools: [peerTool(seller.url, (h) => hops.push({ ...h, path: "peer:" + h.path } as Hop))],
   });
@@ -130,7 +181,19 @@ export async function runPair(opts: PairOpts) {
   const report = {
     startedAt: new Date().toISOString(),
     site: opts.site,
-    model: { wanted: opts.model, used: want, cursorReady: cursor.ready !== false, cursorReason: cursor.reasonNotReady },
+    model: {
+      wanted: opts.model,
+      used: want,
+      cursorReady: cursor.ready !== false,
+      cursorReason: cursor.reasonNotReady,
+      openaiReady: openai.ready !== false,
+      openaiReason: openai.reasonNotReady,
+      openaiName: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      openrouterReady: openrouter.ready !== false,
+      openrouterReason: openrouter.reasonNotReady,
+      ollamaReady: ollamaUp,
+      ollamaReason: ollama.reasonNotReady,
+    },
     crawl: {
       ms: crawlMs,
       origin: pack.origin,
@@ -140,6 +203,7 @@ export async function runPair(opts: PairOpts) {
       starterQuestions: pack.starterQuestions,
       hops: crawl,
       titles: pack.pages.map((p) => ({ url: p.url, status: p.status, title: p.title, bytes: p.text.length })),
+      corpus: pack.corpusDir ?? "",
     },
     seller: {
       url: seller.url,
@@ -164,6 +228,7 @@ export async function runPair(opts: PairOpts) {
     turns,
     hops,
     cursorCalls,
+    modelCalls,
     analysis: analyze(pack, turns, hops, crawl, want),
   };
   return report;
@@ -177,10 +242,53 @@ interface TurnRec {
   seller: string;
 }
 
-function pickModel(want: PairOpts["model"], cursorReady: boolean): string {
-  if (want === "script") return "script";
-  if (want === "cursor") return "cursor";
-  return cursorReady ? "cursor" : "script";
+export interface ModelReady {
+  cursor: boolean;
+  openai?: boolean;
+  openrouter: boolean;
+  ollama: boolean;
+  mock?: boolean;
+}
+
+function pickCorpus(opts: PairOpts): string | undefined {
+  if (opts.corpus) return opts.corpus;
+  try {
+    const host = new URL(opts.site).hostname.replace(/^www\./, "");
+    if (host === "corgi.insure" && hasCorpus(CORPUS_CORGI)) return CORPUS_CORGI;
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
+/** Pick a bound live model. Fail closed when none is ready. */
+export function pickModel(want: PairModel, ready: ModelReady): string {
+  if (want === "cursor" || want === "openai" || want === "openrouter" || want === "ollama" || want === "mock") {
+    return want;
+  }
+  const first = LIVE.find((id) => ready[id]);
+  if (first) return first;
+  throw new Error("no live model is ready (cursor, openai, openrouter, or ollama)");
+}
+
+function addOpenAI(onCall: (c: ModelCall) => void) {
+  return openaiModel({
+    id: "openai",
+    baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    apiKeyEnv: "OPENAI_API_KEY",
+    onCall,
+  });
+}
+
+function addOpenrouter(onCall: (c: ModelCall) => void) {
+  return openaiModel({
+    id: "openrouter",
+    baseUrl: "https://openrouter.ai/api/v1",
+    model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+    apiKeyEnv: "OPENROUTER_API_KEY",
+    onCall,
+  });
 }
 
 function lastAssistant(msgs: readonly { role: string; content: string }[]): string {
@@ -232,12 +340,13 @@ function analyze(pack: SitePack, turns: TurnRec[], hops: Hop[], crawl: { url: st
     humanPage: hops.some((h) => h.kind === "human" && h.path.endsWith("/") && h.status === 200),
     machineCard: hops.some((h) => h.kind === "machine" && h.path.includes("agent.json")),
     notes: [
-      "Seller answers only from the crawled pack plus site_lookup.",
+      pack.corpusDir
+        ? "Seller reads local corpus files with site_lookup. No scrape API at run time."
+        : "Seller answers only from the crawled pack plus site_lookup.",
+      "Seller interviews first: company, founder, field, then a personal report.",
       "Buyer is a separate harness and a separate listen port.",
       "Buyer calls seller over HTTP as a machine (x-agent + JSON).",
-      model === "cursor"
-        ? "Both runs bound cursor (Cursor SDK Agent.prompt, tools empty)."
-        : "CURSOR_API_KEY was missing. Both runs bound the script model so the pair still ran.",
+      "Both runs bound a live LLM. Buyer and seller are separate harnesses.",
     ],
   };
 }
@@ -253,11 +362,16 @@ export function asMarkdown(r: Awaited<ReturnType<typeof runPair>>): string {
     "- wanted: `" + r.model.wanted + "`",
     "- used: `" + r.model.used + "`",
     "- cursor ready: " + r.model.cursorReady + (r.model.cursorReason ? " (" + r.model.cursorReason + ")" : ""),
+    "- openai ready: " + r.model.openaiReady + (r.model.openaiReason ? " (" + r.model.openaiReason + ")" : ""),
+    "- openai name: `" + r.model.openaiName + "`",
+    "- openrouter ready: " + r.model.openrouterReady + (r.model.openrouterReason ? " (" + r.model.openrouterReason + ")" : ""),
+    "- ollama ready: " + r.model.ollamaReady + (r.model.ollamaReason ? " (" + r.model.ollamaReason + ")" : ""),
     "",
     "## Site ingest",
     "",
     "- origin: " + r.crawl.origin,
     "- pages: " + r.crawl.pages + " in " + r.crawl.ms + " ms",
+    "- corpus: " + (r.crawl.corpus || "(live crawl)"),
     "- flows: " + r.crawl.flows.join(", "),
     "- crawl hops: " + r.crawl.hops.length,
     "",
@@ -312,6 +426,14 @@ export function asMarkdown(r: Awaited<ReturnType<typeof runPair>>): string {
       lines.push("- " + c.ms + "ms" + (c.error ? " error: " + c.error : "") + (c.usage ? " tokens=" + JSON.stringify(c.usage) : ""));
     }
   }
+  if (r.modelCalls.length) {
+    lines.push("");
+    lines.push("## Live model calls");
+    lines.push("");
+    for (const c of r.modelCalls) {
+      lines.push("- `" + c.id + "` " + c.ms + "ms" + (c.error ? " error: " + c.error : "") + (c.text ? " " + c.text.slice(0, 80).replace(/\n/g, " ") : ""));
+    }
+  }
   lines.push("");
   lines.push("## Analysis");
   lines.push("");
@@ -331,7 +453,8 @@ function parseArgs(argv: string[]): PairOpts {
     buyerPort: 0,
     out: "experiment/last-report.json",
     keep: false,
-    model: "auto",
+    model: "live",
+    corpus: "",
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
@@ -340,8 +463,24 @@ function parseArgs(argv: string[]): PairOpts {
     else if (a === "--seller-port") out.sellerPort = Number(argv[++i]) || 0;
     else if (a === "--buyer-port") out.buyerPort = Number(argv[++i]) || 0;
     else if (a === "--out") out.out = argv[++i] ?? out.out;
+    else if (a === "--corpus") out.corpus = argv[++i] ?? "";
     else if (a === "--keep") out.keep = true;
-    else if (a === "--model") out.model = (argv[++i] as PairOpts["model"]) || "auto";
+    else if (a === "--model") {
+      const v = argv[++i] ?? "live";
+      if (v === "script") throw new Error("script model is removed. Use a live LLM.");
+      if (
+        v !== "auto" &&
+        v !== "live" &&
+        v !== "cursor" &&
+        v !== "openai" &&
+        v !== "openrouter" &&
+        v !== "ollama" &&
+        v !== "mock"
+      ) {
+        throw new Error("unknown model " + v);
+      }
+      out.model = v;
+    }
     else if (!a.startsWith("-") && a.includes("://")) out.site = a;
   }
   return out;

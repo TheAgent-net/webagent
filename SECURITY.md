@@ -17,4 +17,4 @@ within a few business days and to coordinate a fix and disclosure timeline with 
   `drop_database`) never execute. A hook `deny` also blocks the call.
 - **The model cannot bypass policy.** Tool execution is gated in the loop, not in the prompt.
 - **No hidden default model.** A run with no binding fails instead of picking one for you.
-- Keys are read from the environment (`OPENROUTER_API_KEY`). Do not commit secrets.
+- Keys are read from the environment (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `CURSOR_API_KEY`). Do not commit secrets.

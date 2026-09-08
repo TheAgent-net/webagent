@@ -3,7 +3,7 @@ import { Assembler } from "../src/assembler.ts";
 import { Context } from "../src/context.ts";
 import { Harness } from "../src/harness.ts";
 import { intake } from "../src/intake.ts";
-import type { Model } from "../src/models.ts";
+import { mapOpenAI, openaiModel, type Model } from "../src/models.ts";
 import type { Tool } from "../src/tools.ts";
 
 describe("assembler", () => {
@@ -26,6 +26,93 @@ describe("copy-on-write context", () => {
     expect(a.view()).not.toBe(b.view());
     expect(a.length).toBe(1);
     expect(b.length).toBe(2);
+  });
+});
+
+describe("mapOpenAI", () => {
+  test("maps pin to system and keeps tool call ids", () => {
+    const mapped = mapOpenAI([
+      { role: "pin", content: "fact" },
+      { role: "assistant", content: "", toolCalls: [{ id: "c1", name: "lookup", arguments: { city: "X" } }] },
+      { role: "tool", content: "{\"ok\":true}", toolCallId: "c1" },
+    ]);
+    expect(mapped[0]).toEqual({ role: "system", content: "fact" });
+    expect(mapped[1]).toEqual({
+      role: "assistant",
+      content: null,
+      tool_calls: [{ id: "c1", type: "function", function: { name: "lookup", arguments: "{\"city\":\"X\"}" } }],
+    });
+    expect(mapped[2]).toEqual({ role: "tool", content: "{\"ok\":true}", tool_call_id: "c1" });
+  });
+
+  test("openaiModel sends mapped frames to a live endpoint", async () => {
+    const prev = process.env.OPENAI_REASONING_EFFORT;
+    delete process.env.OPENAI_REASONING_EFFORT;
+    let seen: Record<string, unknown> | undefined;
+    const server = Bun.serve({
+      port: 0,
+      fetch: async (req) => {
+        seen = (await req.json()) as Record<string, unknown>;
+        return Response.json({
+          choices: [{ message: { content: "from-live", tool_calls: [{ id: "c1", function: { name: "lookup", arguments: "{\"q\":\"x\"}" } }] } }],
+        });
+      },
+    });
+    try {
+      const model = openaiModel({
+        id: "mock",
+        baseUrl: String(server.url).replace(/\/+$/, "") + "/v1",
+        model: "mock-llm",
+        ready: true,
+      });
+      const a = new Assembler();
+      await model.reason(
+        {
+          messages: [{ role: "pin", content: "keep" }, { role: "user", content: "hi" }],
+          tools: [{ name: "lookup", description: "d", schema: { type: "object" } }],
+        },
+        a,
+      );
+      const out = a.end();
+      expect(out.text).toBe("from-live");
+      expect(out.toolCalls[0]?.name).toBe("lookup");
+      const msgs = seen!.messages as { role: string }[];
+      expect(msgs[0]!.role).toBe("system");
+      expect(seen!.reasoning_effort).toBeUndefined();
+    } finally {
+      if (prev === undefined) delete process.env.OPENAI_REASONING_EFFORT;
+      else process.env.OPENAI_REASONING_EFFORT = prev;
+      server.stop(true);
+    }
+  });
+
+  test("gpt-5 chat completions send reasoning_effort none", async () => {
+    const prev = process.env.OPENAI_REASONING_EFFORT;
+    delete process.env.OPENAI_REASONING_EFFORT;
+    let seen: Record<string, unknown> | undefined;
+    const server = Bun.serve({
+      port: 0,
+      fetch: async (req) => {
+        seen = (await req.json()) as Record<string, unknown>;
+        return Response.json({ choices: [{ message: { content: "ok" } }] });
+      },
+    });
+    try {
+      const model = openaiModel({
+        id: "mock",
+        baseUrl: String(server.url).replace(/\/+$/, "") + "/v1",
+        model: "gpt-5.6-luna",
+        ready: true,
+      });
+      const a = new Assembler();
+      await model.reason({ messages: [{ role: "user", content: "hi" }], tools: [{ name: "lookup" }] }, a);
+      expect(seen!.reasoning_effort).toBe("none");
+      expect(seen!.model).toBe("gpt-5.6-luna");
+    } finally {
+      if (prev === undefined) delete process.env.OPENAI_REASONING_EFFORT;
+      else process.env.OPENAI_REASONING_EFFORT = prev;
+      server.stop(true);
+    }
   });
 });
 
@@ -191,6 +278,10 @@ describe("tools and policy", () => {
     const ex = await run.start();
     expect(calls).toBe(1);
     expect(ex.lastText).toBe("done");
+    const frames = run.getContext();
+    const asked = frames.find((m) => m.role === "assistant" && m.toolCalls?.length);
+    expect(asked?.toolCalls?.[0]?.name).toBe("lookup");
+    expect(frames.some((m) => m.role === "tool")).toBe(true);
   });
 
   test("dangerous tool never executes", async () => {

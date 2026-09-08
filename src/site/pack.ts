@@ -1,10 +1,11 @@
 import type { CrawlState } from "./crawl.ts";
 import { inferFlows } from "./flows.ts";
+import { addAppQuote } from "./quote.ts";
 import type { PageShot, SitePack } from "./types.ts";
 
 export function buildPack(state: CrawlState): SitePack {
   const pages = state.pages.filter((p) => p.status > 0);
-  const flows = inferFlows(pages);
+  const flows = addAppQuote(inferFlows(pages), state.origin);
   const facts = factsFrom(pages, flows, state.origin);
   const starterQuestions = questionsFrom(pages, flows);
   const home = pages[0];
@@ -58,6 +59,7 @@ function questionsFrom(pages: PageShot[], flows: ReturnType<typeof inferFlows>):
     if (f.id === "change") qs.push("How do I change or cancel something I already booked?");
     if (f.id === "support") qs.push("Where do I get help or read the policy?");
     if (f.id === "quote") qs.push("How do I get a quote and what does coverage cost?");
+    if (f.id === "app_quote") qs.push("How do I pick products on the quote app?");
   }
   for (const p of pages) {
     for (const h of p.headings.slice(0, 3)) {
