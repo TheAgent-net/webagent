@@ -106,6 +106,7 @@ export async function runPair(opts: PairOpts) {
 
   const probes = await probeHosts(seller.url, buyer.url);
   const turns: TurnRec[] = [];
+  let session: string | undefined;
   for (const text of TURNS) {
     const start = Date.now();
     const res = await fetch(buyer.url + "/chat", {
@@ -115,18 +116,22 @@ export async function runPair(opts: PairOpts) {
         accept: "application/json",
         "user-agent": "Mozilla/5.0 experiment",
       },
-      body: JSON.stringify({ text, from: "human" }),
+      body: JSON.stringify({ text, from: "human", session }),
     });
-    const body = (await res.json()) as { lastText?: string; id?: string; step?: number };
+    const body = (await res.json()) as { lastText?: string; id?: string; step?: number; session?: string };
+    if (body.session) session = body.session;
+    const sellerChat = seller.sessions.last ?? seller.room;
     turns.push({
       input: text,
       status: res.status,
       ms: Date.now() - start,
       buyer: body.lastText ?? "",
-      seller: lastAssistant(seller.room.run.getContext()),
+      seller: lastAssistant(sellerChat.run.getContext()),
     });
   }
 
+  const sellerChat = seller.sessions.last ?? seller.room;
+  const buyerChat = buyer.sessions.last ?? buyer.room;
   const report = {
     startedAt: new Date().toISOString(),
     site: opts.site,
@@ -143,22 +148,22 @@ export async function runPair(opts: PairOpts) {
     },
     seller: {
       url: seller.url,
-      runId: seller.room.run.id,
-      model: seller.room.run.modelId,
+      runId: sellerChat.run.id,
+      model: sellerChat.run.modelId,
       card: probes.sellerCard,
       who: probes.sellerWho,
-      lastText: seller.room.run.lastText,
-      messages: slim(seller.room.run.getContext()),
+      lastText: sellerChat.run.lastText,
+      messages: slim(sellerChat.run.getContext()),
       stop: seller.stop,
     },
     buyer: {
       url: buyer.url,
-      runId: buyer.room.run.id,
-      model: buyer.room.run.modelId,
+      runId: buyerChat.run.id,
+      model: buyerChat.run.modelId,
       card: probes.buyerCard,
       who: probes.buyerWho,
-      lastText: buyer.room.run.lastText,
-      messages: slim(buyer.room.run.getContext()),
+      lastText: buyerChat.run.lastText,
+      messages: slim(buyerChat.run.getContext()),
       stop: buyer.stop,
     },
     turns,

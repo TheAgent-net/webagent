@@ -3,6 +3,7 @@ import type { Tool } from "../src/tools.ts";
 
 export function peerTool(peerUrl: string, onHop?: (hop: Hop) => void): Tool {
   const base = peerUrl.replace(/\/+$/, "");
+  let session: string | undefined;
   return {
     name: "ask_peer",
     description: "Ask the other public agent. Pass the visitor question as text.",
@@ -10,7 +11,7 @@ export function peerTool(peerUrl: string, onHop?: (hop: Hop) => void): Tool {
     async call(args) {
       const t0 = Date.now();
       const text = String(args.text ?? "");
-      const body = JSON.stringify({ text, from: "machine" });
+      const body = JSON.stringify({ text, from: "machine", session });
       const res = await fetch(base + "/chat", {
         method: "POST",
         headers: {
@@ -36,7 +37,11 @@ export function peerTool(peerUrl: string, onHop?: (hop: Hop) => void): Tool {
       });
       try {
         const parsed = JSON.parse(raw) as unknown;
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          const rec = parsed as Record<string, unknown>;
+          if (typeof rec.session === "string") session = rec.session;
+          return rec;
+        }
         return { value: parsed };
       } catch {
         return { error: "bad_json", status: res.status, raw: raw.slice(0, 400) };

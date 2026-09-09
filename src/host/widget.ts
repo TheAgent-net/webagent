@@ -95,8 +95,14 @@ export function floatingWidget(publicUrl: string, runId: string): string {
       log.appendChild(d); log.scrollTop = log.scrollHeight;
     };
     let lastUserText = '';
-    const es = new EventSource("/live");
-    es.onmessage = (e) => {
+    if (!window.__waSession) {
+      window.__waSession = (crypto.randomUUID && crypto.randomUUID()) || ("c" + Date.now());
+    }
+    const session = window.__waSession;
+    if (!window.__waEs) {
+      window.__waEs = new EventSource("/live?session=" + encodeURIComponent(session));
+    }
+    window.__waEs.onmessage = (e) => {
       const ev = JSON.parse(e.data);
       if (ev.t === "say" && ev.from === "human") {
         if (ev.text === lastUserText) return;
@@ -112,7 +118,11 @@ export function floatingWidget(publicUrl: string, runId: string): string {
       lastUserText = text;
       add("human", text);
       input.value = "";
-      await fetch("/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) });
+      await fetch("/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, session }),
+      });
     };
   };
   const OPEN_ICON = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';

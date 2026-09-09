@@ -171,7 +171,7 @@ describe("mcp surface", () => {
       params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } },
     });
     const body = (await init.json()) as { result?: { sessionId?: string } };
-    expect(init.headers.get("Mcp-Session-Id")).toBe(body.result?.sessionId);
+    expect(init.headers.get("Mcp-Session-Id")).toBe(body.result?.sessionId ?? null);
   });
 
   test("GET /mcp is discovery; OPTIONS is 204", async () => {

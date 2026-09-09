@@ -107,32 +107,70 @@ describe("host route + shared room", () => {
     expect(forced.headers.get("content-type")).toContain("application/json");
   });
 
-  test("human chat and machine say share one run", async () => {
+  test("each chat without a session is a fresh context", async () => {
     const h = new Harness();
     const room = new Room(h);
     const fetchFn = host(h, room);
-    const human = await fetchFn(
+    const a = await fetchFn(
       new Request("http://t/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/html", "User-Agent": "Mozilla/5.0" },
         body: JSON.stringify({ text: "hello from human" }),
       }),
     );
-    const hbody = (await human.json()) as { lastText: string };
-    expect(hbody.lastText).toContain("hello from human");
+    const abody = (await a.json()) as { lastText: string; session: string; runId: string };
+    expect(abody.lastText).toContain("hello from human");
+    expect(abody.session).toBeTruthy();
+    expect(abody.runId).not.toBe(room.run.id);
 
-    const machine = await fetchFn(
+    const b = await fetchFn(
       new Request("http://t/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": "curl/8" },
         body: JSON.stringify({ text: "hello from machine" }),
       }),
     );
-    const mbody = (await machine.json()) as { lastText: string };
-    expect(mbody.lastText).toContain("hello from machine");
-    const ctx = room.run.getContext().map((m) => m.content).join("\n");
-    expect(ctx).toContain("[human] hello from human");
-    expect(ctx).toContain("[machine] hello from machine");
+    const bbody = (await b.json()) as { lastText: string; session: string; runId: string };
+    expect(bbody.lastText).toContain("hello from machine");
+    expect(bbody.session).not.toBe(abody.session);
+    expect(bbody.runId).not.toBe(abody.runId);
+    const lobby = room.run.getContext().map((m) => m.content).join("\n");
+    expect(lobby).not.toContain("hello from human");
+    expect(lobby).not.toContain("hello from machine");
+  });
+
+  test("same session keeps turns; a new session is empty", async () => {
+    const h = new Harness();
+    const room = new Room(h);
+    const fetchFn = host(h, room);
+    const first = await fetchFn(
+      new Request("http://t/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "my name is Ada", session: "chat-ada" }),
+      }),
+    );
+    const one = (await first.json()) as { session: string; runId: string };
+    expect(one.session).toBe("chat-ada");
+    const second = await fetchFn(
+      new Request("http://t/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "what is my name?", session: "chat-ada" }),
+      }),
+    );
+    const two = (await second.json()) as { lastText: string; runId: string };
+    expect(two.runId).toBe(one.runId);
+    expect(two.lastText).toContain("what is my name?");
+    const fresh = await fetchFn(
+      new Request("http://t/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "what is my name?", session: "chat-bob" }),
+      }),
+    );
+    const three = (await fresh.json()) as { runId: string };
+    expect(three.runId).not.toBe(one.runId);
   });
 
   test("room can wrap an existing run", async () => {

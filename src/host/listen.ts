@@ -4,6 +4,7 @@ import type { AgentCardMeta } from "./card.ts";
 import { host } from "./host.ts";
 import { tapFetch, type Hop } from "./hop.ts";
 import { Room } from "./room.ts";
+import { Sessions } from "./sessions.ts";
 
 export type { Hop } from "./hop.ts";
 export type { AgentCardMeta } from "./card.ts";
@@ -21,6 +22,7 @@ export interface ListenOpts {
 export interface Hosted {
   url: string;
   room: Room;
+  sessions: Sessions;
   stop: () => void;
 }
 
@@ -29,6 +31,7 @@ export function listen(harness: Harness, opts: ListenOpts = {}): Hosted {
   const port = opts.port ?? 8787;
   const hostname = opts.hostname ?? "0.0.0.0";
   const room = new Room(harness, { model: opts.model ?? "echo", run: opts.run });
+  const sessions = new Sessions(harness, room);
   const tls = tlsEnv();
   const localProto = tls ? "https" : "http";
   const printed =
@@ -41,8 +44,8 @@ export function listen(harness: Harness, opts: ListenOpts = {}): Hosted {
     hostname,
     tls,
     fetch: opts.onHop
-      ? tapFetch(host(harness, room, printed, opts.card), opts.onHop)
-      : host(harness, room, printed, opts.card),
+      ? tapFetch(host(harness, room, printed, opts.card, sessions), opts.onHop)
+      : host(harness, room, printed, opts.card, sessions),
   });
   const bound = opts.publicUrl?.replace(/\/+$/, "") ||
     process.env.WEBAGENT_PUBLIC_URL?.replace(/\/+$/, "") ||
@@ -51,6 +54,7 @@ export function listen(harness: Harness, opts: ListenOpts = {}): Hosted {
   return {
     url: bound,
     room,
+    sessions,
     stop: () => server.stop(true),
   };
 }
