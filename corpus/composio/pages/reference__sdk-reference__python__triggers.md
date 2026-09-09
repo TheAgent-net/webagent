@@ -1,0 +1,252 @@
+---
+url: https://docs.composio.dev/reference/sdk-reference/python/triggers
+title: Triggers | Composio
+description: Triggers (instance) class
+status: 200
+---
+
+SDK Reference [Python SDK](https://docs.composio.dev/reference/sdk-reference/python)
+
+# Triggers
+
+Copy page
+
+## [Methods](https://docs.composio.dev/reference/sdk-reference/python/triggers\#methods)
+
+### [set\_webhook\_subscription()](https://docs.composio.dev/reference/sdk-reference/python/triggers\#set_webhook_subscription)
+
+Create or update the project webhook subscription used for webhook delivery. If a subscription already exists, the first subscription is updated. Otherwise a new subscription is created. By default this subscribes to V3 trigger message events.
+
+```
+def set_webhook_subscription(webhook_url: str, enabled_events: Sequence[str | None] = ..., version: Union[WebhookVersion, str] = ...) -> WebhookSubscription
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `webhook_url` | `str` |
+| `enabled_events?` | `Sequence[str | None]` |
+| `version?` | `Union[WebhookVersion, str]` |
+
+**Returns**
+
+`WebhookSubscription`
+
+**Example**
+
+```
+composio.triggers.set_webhook_subscription(
+    webhook_url=f"{APP_URL}/webhooks/composio",
+)
+```
+
+* * *
+
+### [get\_type()](https://docs.composio.dev/reference/sdk-reference/python/triggers\#get_type)
+
+Get a trigger type by its slug Uses the global toolkit version provided when initializing composio instance to fetch trigger for specific toolkit version
+
+```
+def get_type(slug: str) -> TriggersTypeRetrieveResponse
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `slug` | `str` |
+
+**Returns**
+
+`TriggersTypeRetrieveResponse` — The trigger type
+
+* * *
+
+### [list\_active()](https://docs.composio.dev/reference/sdk-reference/python/triggers\#list_active)
+
+List all active triggers
+
+```
+def list_active(trigger_ids: list[str | None] = ..., trigger_names: list[str | None] = ..., auth_config_ids: list[str | None] = ..., connected_account_ids: list[str | None] = ..., show_disabled: bool | None = ..., limit: int | None = ..., cursor: str | None = ...)
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `trigger_ids?` | `list[str | None]` |
+| `trigger_names?` | `list[str | None]` |
+| `auth_config_ids?` | `list[str | None]` |
+| `connected_account_ids?` | `list[str | None]` |
+| `show_disabled?` | `bool | None` |
+| `limit?` | `int | None` |
+| `cursor?` | `str | None` |
+
+* * *
+
+### [list()](https://docs.composio.dev/reference/sdk-reference/python/triggers\#list)
+
+List all the trigger types.
+
+```
+def list(cursor: str | None = ..., limit: int | None = ..., toolkit_slugs: list[str | None] = ...)
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `cursor?` | `str | None` |
+| `limit?` | `int | None` |
+| `toolkit_slugs?` | `list[str | None]` |
+
+* * *
+
+### [create()](https://docs.composio.dev/reference/sdk-reference/python/triggers\#create)
+
+Create a trigger instance
+
+```
+def create(slug: str, user_id: str | None = ..., connected_account_id: str | None = ..., trigger_config: Dict[str, Any | None] = ...) -> trigger_instance_upsert_response.TriggerInstanceUpsertRes...
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `slug` | `str` |
+| `user_id?` | `str | None` |
+| `connected_account_id?` | `str | None` |
+| `trigger_config?` | `Dict[str, Any | None]` |
+
+**Returns**
+
+`trigger_instance_upsert_response.TriggerInstanceUpsertRes...` — The trigger instance
+
+* * *
+
+### [subscribe()](https://docs.composio.dev/reference/sdk-reference/python/triggers\#subscribe)
+
+Subscribe to a trigger and receive trigger events.
+
+```
+def subscribe(timeout: float = ...) -> TriggerSubscription
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `timeout?` | `float` |
+
+**Returns**
+
+`TriggerSubscription` — The trigger subscription handler.
+
+* * *
+
+### [verify\_webhook()](https://docs.composio.dev/reference/sdk-reference/python/triggers\#verify_webhook)
+
+Verify an incoming webhook payload and signature. This method validates that the webhook request is authentic by: 1. Validating the webhook timestamp is within the tolerance window 2. Verifying the HMAC-SHA256 signature using the correct algorithm 3. Parsing the payload and detecting the webhook version (V1, V2, or V3)
+
+```
+def verify_webhook(id: str, payload: str, secret: str, signature: str, timestamp: str, tolerance: int = ...) -> VerifyWebhookResult
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `id` | `str` |
+| `payload` | `str` |
+| `secret` | `str` |
+| `signature` | `str` |
+| `timestamp` | `str` |
+| `tolerance?` | `int` |
+
+**Returns**
+
+`VerifyWebhookResult` — VerifyWebhookResult containing version, normalized payload, and raw payload :raises WebhookSignatureVerificationError: If the signature verification fails :raises WebhookPayloadError: If the payload cannot be parsed or is invalid
+
+**Example**
+
+```
+# In a Flask webhook handler
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    try:
+        result = composio.triggers.verify_webhook(
+            id=request.headers.get('webhook-id', ''),
+            payload=request.get_data(as_text=True),
+            signature=request.headers.get('webhook-signature', ''),
+            timestamp=request.headers.get('webhook-timestamp', ''),
+            secret=os.environ['COMPOSIO_WEBHOOK_SECRET'],
+        )
+
+        # Process the verified payload
+        print(f"Version: {result['version']}")
+        print(f"Received trigger: {result['payload']['trigger_slug']}")
+        return 'OK', 200
+    except WebhookSignatureVerificationError:
+        return 'Unauthorized', 401
+```
+
+* * *
+
+### [parse()](https://docs.composio.dev/reference/sdk-reference/python/triggers\#parse)
+
+Parse an incoming webhook request into a typed, normalized trigger payload. Pass a framework request object, or pass `body=` and `headers=` explicitly. When `verify_secret` is provided, the SDK verifies the webhook signature before returning the normalized trigger payload. When it is omitted, the SDK parses the body without verifying the signature. `request` may be any object exposing the request body and headers, such as a Flask, Django, or FastAPI request. The body is read from `.body` (or `.data` / `.get_data()`), and the headers are read from `.headers`. Because this SDK is synchronous, async frameworks must pass an already-read raw body, for example via `body=await request.body()`.
+
+```
+def parse(request: Any = ..., body: Union[str, bytes, Mapping[str, Any], None] = ..., headers: Union[Mapping[str, Any], None] = ..., verify_secret: Union[str, None, Omit] = ..., tolerance: int = ...) -> VerifyWebhookResult
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `request?` | `Any` |
+| `body?` | `Union[str, bytes, Mapping[str, Any], None]` |
+| `headers?` | `Union[Mapping[str, Any], None]` |
+| `verify_secret?` | `Union[str, None, Omit]` |
+| `tolerance?` | `int` |
+
+**Returns**
+
+`VerifyWebhookResult` — VerifyWebhookResult containing version, normalized payload, and raw payload :raises ValidationError: If `verify_secret` is empty, or is set but signature headers are missing :raises WebhookSignatureVerificationError: If signature verification fails :raises WebhookPayloadError: If the payload cannot be parsed
+
+**Example**
+
+```
+# Flask: verify the signature
+@app.route('/webhooks/composio', methods=['POST'])
+def webhook():
+    try:
+        result = composio.triggers.parse(
+            request,
+            verify_secret=os.environ['COMPOSIO_WEBHOOK_SECRET'],
+        )
+        print(f"Trigger: {result['payload']['trigger_slug']}")
+        print(f"Event data: {result['payload']['payload']}")
+        return 'OK', 200
+    except exceptions.WebhookSignatureVerificationError:
+        return 'Unauthorized', 401
+
+# FastAPI: parse without verifying after reading the async body
+@app.post('/webhooks/composio')
+async def webhook(request: Request):
+    raw = await request.body()
+    result = composio.triggers.parse(body=raw, headers=request.headers)
+    return {'trigger': result['payload']['trigger_slug']}
+```
+
+* * *
+
+[View source](https://github.com/composiohq/composio/blob/next/python/composio/core/models/triggers.py#L936)
+
+[Edit this page on GitHub](https://github.com/ComposioHQ/composio/blob/next/docs/content/reference/sdk-reference/python/triggers.mdx)
+
+### On this page
+
+[Methods](https://docs.composio.dev/reference/sdk-reference/python/triggers#methods) [set\_webhook\_subscription()](https://docs.composio.dev/reference/sdk-reference/python/triggers#set_webhook_subscription) [get\_type()](https://docs.composio.dev/reference/sdk-reference/python/triggers#get_type) [list\_active()](https://docs.composio.dev/reference/sdk-reference/python/triggers#list_active) [list()](https://docs.composio.dev/reference/sdk-reference/python/triggers#list) [create()](https://docs.composio.dev/reference/sdk-reference/python/triggers#create) [subscribe()](https://docs.composio.dev/reference/sdk-reference/python/triggers#subscribe) [verify\_webhook()](https://docs.composio.dev/reference/sdk-reference/python/triggers#verify_webhook) [parse()](https://docs.composio.dev/reference/sdk-reference/python/triggers#parse)

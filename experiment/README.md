@@ -16,3 +16,5 @@ bun experiment/run.ts --site https://www.corgi.insure
 Model: `cursor` when `CURSOR_API_KEY` is set. Otherwise `script` (calls the same tools, no Cursor network).
 
 Flags: `--site` `--max-pages` `--seller-port` `--buyer-port` `--model auto|cursor|script` `--out` `--keep`.
+
+Composio Graph RAG (separate host): [composio.md](composio.md). `webagent apps`. EC2 host: [apps-host.md](apps-host.md).

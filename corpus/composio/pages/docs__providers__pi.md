@@ -1,0 +1,186 @@
+---
+url: https://docs.composio.dev/docs/providers/pi
+title: Pi | Composio
+description: Use Composio tools inside Pi coding-agent sessions.
+status: 200
+---
+
+[SDKs and frameworks](https://docs.composio.dev/docs/providers)
+
+Experimental
+
+# Pi
+
+Copy page
+
+The Pi provider adapts Composio tools for [`@earendil-works/pi-coding-agent`](https://www.npmjs.com/package/@earendil-works/pi-coding-agent). A Pi session can search tools, manage connections, execute tools, and run the remote sandbox. Unlike the other providers, `PiProvider` ships its own hook interface to intercept, allow, deny, or rewrite every helper call before the model sees the result.
+
+The Pi provider ships from `@composio/experimental` for TypeScript projects.
+
+## [Dynamic session helpers](https://docs.composio.dev/docs/providers/pi\#dynamic-session-helpers)
+
+For most Pi apps, expose the dynamic helper tools. They let the model discover exact Composio tool slugs before it executes, request missing connections, and run sandbox commands when you enable them.
+
+**Install**
+
+```
+npm install @composio/core @composio/experimental @earendil-works/pi-coding-agent
+```
+
+**Configure API keys**
+
+.env
+
+```
+COMPOSIO_API_KEY=xxxxxxxxx
+```
+
+**Create a Composio session and Pi tools**
+
+```
+import { Composio } from '@composio/core';
+import { PiProvider, createPiComposioSystemPrompt } from '@composio/experimental';
+import {
+  createAgentSession,
+  DefaultResourceLoader,
+  getAgentDir,
+  SessionManager,
+} from '@earendil-works/pi-coding-agent';
+
+const composio = new Composio({
+  apiKey: process.env.COMPOSIO_API_KEY,
+  provider: new PiProvider(),
+});
+
+const composioSession = await composio.sessions.create('user_123', {
+  toolkits: ['github', 'gmail'],
+  manageConnections: {
+    enable: true,
+    callbackUrl: 'https://your-app.example.com/auth/callback',
+  },
+  sandbox: { enable: true },
+});
+
+const composioTools = composio.provider.createSessionTools({
+  sessionId: composioSession.sessionId,
+  search: composioSession.search.bind(composioSession),
+  execute: composioSession.execute.bind(composioSession),
+  callbackUrl: 'https://your-app.example.com/auth/callback',
+  includeWorkbenchTools: true,
+  connections: {
+    getToolkitStates: toolkits => composioSession.toolkits({ toolkits }),
+    authorizeToolkit: (toolkit, options) => composioSession.authorize(toolkit, options),
+  },
+  hooks: {
+    execute: (ctx, next) => {
+      if (ctx.request.toolSlug === 'COMPOSIO_MANAGE_CONNECTIONS') {
+        return ctx.deny('Use composio_manage_connections instead.');
+      }
+      return next();
+    },
+    onAuthLink: async ctx => {
+      await sendConnectionLinkToUser(ctx.url);
+      return { message: 'Connection link sent out-of-band.' };
+    },
+  },
+});
+
+const loader = new DefaultResourceLoader({
+  cwd: process.cwd(),
+  agentDir: getAgentDir(),
+  systemPromptOverride: () =>
+    createPiComposioSystemPrompt(composioSession.sessionId, {
+      includeWorkbenchTools: true,
+    }),
+});
+await loader.reload();
+
+const { session: piSession } = await createAgentSession({
+  cwd: process.cwd(),
+  resourceLoader: loader,
+  sessionManager: SessionManager.inMemory(process.cwd()),
+  customTools: composioTools,
+  tools: [\
+    'composio_search_tools',\
+    'composio_manage_connections',\
+    'composio_execute_tool',\
+    'composio_remote_workbench',\
+    'composio_remote_bash',\
+  ],
+});
+
+await piSession.prompt('Find my open GitHub issues and summarize the blockers.');
+```
+
+The provider creates these Pi tools:
+
+- `composio_search_tools` searches Composio for exact tool slugs and schemas.
+- `composio_manage_connections` checks connection state and initiates auth for missing toolkits.
+- `composio_execute_tool` executes an exact Composio tool slug.
+- `composio_remote_workbench` runs Python in the Composio sandbox, and requires `includeWorkbenchTools: true`.
+- `composio_remote_bash` runs short bash commands in the sandbox filesystem, and requires `includeWorkbenchTools: true`.
+
+You can rename any of these helpers through the `names` option on `createSessionTools`, and the constants live on `PI_COMPOSIO_SESSION_TOOL_NAMES`.
+
+## [Hooks](https://docs.composio.dev/docs/providers/pi\#hooks)
+
+Hooks are the Pi provider's distinctive feature: middleware that wraps each helper so you control what runs and what the model sees. Pass a `hooks` object to `createSessionTools`. Each hook is `(ctx, next)`: `await next()` runs the default behavior, returning a value replaces what the model sees, and `ctx.deny(reason)` blocks the call. `ctx.request` is mutable; `ctx.context` is read-only.
+
+```
+const composioTools = composio.provider.createSessionTools({
+  sessionId: composioSession.sessionId,
+  search: composioSession.search.bind(composioSession),
+  execute: composioSession.execute.bind(composioSession),
+  hooks: {
+    search: (ctx, next) => {
+      ctx.request.toolkits = ctx.request.toolkits?.map(toolkit =>
+        toolkit === 'slack' ? 'slackbot' : toolkit
+      );
+      return next();
+    },
+    execute: async (ctx, next) => {
+      if (ctx.request.toolSlug.startsWith('COMPOSIO_')) {
+        return ctx.deny('Meta tools are blocked.');
+      }
+
+      const result = await next();
+      const file = await saveLargeOutput(result);
+      return file ? { message: `Output saved to ${file}` } : result;
+    },
+    remoteBash: (ctx, next) => {
+      if (ctx.request.command.includes('rm -rf')) {
+        return ctx.deny('Destructive bash commands are blocked.');
+      }
+      return next();
+    },
+    onAuthLink: async (ctx, next) => {
+      await sendConnectionLinkToUser(ctx.url);
+      return shouldShowLinkToModel(ctx) ? next() : { message: 'Connection link sent out-of-band.' };
+    },
+  },
+});
+```
+
+Available hooks, each keyed on `PiSessionHooks`:
+
+| Hook | Wraps |
+| --- | --- |
+| `search` | Tool discovery; rewrite `query` or `toolkits` |
+| `manageConnections` | Connection checks and auth |
+| `execute` | Tool execution; rewrite `toolSlug`, `args`, or `account` |
+| `remoteWorkbench` | The remote Python helper |
+| `remoteBash` | The remote bash helper |
+| `onAuthLink` | Any auth link found in a result |
+
+Every `ctx.request` is fully typed, so your editor surfaces the exact fields. `ctx.deny` is also exported as `denyPiToolCall(reason)`.
+
+## [Next](https://docs.composio.dev/docs/providers/pi\#next)
+
+[**What is a session?** \\
+How sessions scope users, tools, and auth, and how to reuse them across requests.](https://docs.composio.dev/docs/how-composio-works)
+
+[Edit this page on GitHub](https://github.com/ComposioHQ/composio/blob/next/docs/content/docs/providers/pi.mdx)
+
+### On this page
+
+[Dynamic session helpers](https://docs.composio.dev/docs/providers/pi#dynamic-session-helpers) [Hooks](https://docs.composio.dev/docs/providers/pi#hooks) [Next](https://docs.composio.dev/docs/providers/pi#next)

@@ -1,0 +1,2017 @@
+{
+  "origin": "https://docs.composio.dev",
+  "savedAt": "2026-09-09T03:17:28.402Z",
+  "source": "firecrawl",
+  "pages": [
+    {
+      "url": "https://docs.composio.dev/docs",
+      "title": "Welcome | Composio",
+      "file": "docs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb",
+      "title": "Knowledge Base | Composio",
+      "file": "kb.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/quickstart.md",
+      "title": "https://docs.composio.dev/docs/quickstart.md",
+      "file": "docs__quickstart-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits",
+      "title": "Toolkits",
+      "file": "toolkits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/sessions-via-mcp.md",
+      "title": "https://docs.composio.dev/docs/sessions-via-mcp.md",
+      "file": "docs__sessions-via-mcp-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers",
+      "title": "SDKs and frameworks | Composio",
+      "file": "docs__providers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/migration-guide",
+      "title": "Migration guides | Composio",
+      "file": "docs__migration-guide.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/postConnectedAccountsLink.md",
+      "title": "https://docs.composio.dev/reference/api-reference/connected-accounts/postConnectedAccountsLink.md",
+      "file": "reference__api-reference__connected-accounts__postConnectedAccountsLink-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/sessions-vs-direct-execution",
+      "title": "Sessions vs Direct Execution | Composio",
+      "file": "docs__sessions-vs-direct-execution.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googleforms",
+      "title": "Googleforms - Composio Toolkit | Composio",
+      "file": "toolkits__googleforms.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/tools/postToolsExecuteProxy",
+      "title": "Execute proxy request | Composio",
+      "file": "reference__v3__api-reference__tools__postToolsExecuteProxy.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/youtube",
+      "title": "YouTube - Composio Toolkit | Composio",
+      "file": "toolkits__youtube.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSession.md",
+      "title": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSession.md",
+      "file": "reference__api-reference__tool-router__postToolRouterSession-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/tools-direct/authenticating-tools",
+      "title": "Authenticating Tools | Composio",
+      "file": "docs__tools-direct__authenticating-tools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/posthog",
+      "title": "PostHog - Composio Toolkit | Composio",
+      "file": "toolkits__posthog.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/agent-plugins.md",
+      "title": "https://docs.composio.dev/docs/agent-plugins.md",
+      "file": "docs__agent-plugins-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-sharepoint",
+      "title": "SharePoint | Composio",
+      "file": "kb__guide__toolkits-sharepoint.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googledocs",
+      "title": "Google Docs",
+      "file": "toolkits__googledocs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/authentication/manually-authenticating",
+      "title": "Manual auth management | Composio",
+      "file": "docs__authentication__manually-authenticating.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/auth-configs/postAuthConfigs",
+      "title": "Create new authentication configuration | Composio",
+      "file": "reference__api-reference__auth-configs__postAuthConfigs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-connected-accounts.md",
+      "title": "https://docs.composio.dev/kb/guide/platform-connected-accounts.md",
+      "file": "kb__guide__platform-connected-accounts-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts.md",
+      "title": "https://docs.composio.dev/reference/api-reference/connected-accounts.md",
+      "file": "reference__api-reference__connected-accounts-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/migration-guide/mcp-servers-to-sessions",
+      "title": "Migrating from MCP servers to Sessions | Composio",
+      "file": "docs__migration-guide__mcp-servers-to-sessions.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference",
+      "title": "API Reference | Composio",
+      "file": "reference.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/logs/postLogsToolExecution",
+      "title": "Search and retrieve tool execution logs | Composio",
+      "file": "reference__api-reference__logs__postLogsToolExecution.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/authentication/programmatic-auth-configs",
+      "title": "Programmatic auth configs | Composio",
+      "file": "docs__authentication__programmatic-auth-configs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/google_maps",
+      "title": "Google Maps - Composio Toolkit | Composio",
+      "file": "toolkits__google_maps.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/fathom.md",
+      "title": "https://docs.composio.dev/toolkits/fathom.md",
+      "file": "toolkits__fathom-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/monday",
+      "title": "Monday - Composio Toolkit | Composio",
+      "file": "toolkits__monday.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/authenticating-to-composio/project-api-key-permissions",
+      "title": "Scoped Project API Key | Composio",
+      "file": "reference__authenticating-to-composio__project-api-key-permissions.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/moderationapi",
+      "title": "Moderation API - Composio Toolkit | Composio",
+      "file": "toolkits__moderationapi.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/salesforce",
+      "title": "Salesforce - Composio Toolkit | Composio",
+      "file": "toolkits__salesforce.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/setting-up-triggers/subscribing-to-events.md",
+      "title": "https://docs.composio.dev/docs/setting-up-triggers/subscribing-to-events.md",
+      "file": "docs__setting-up-triggers__subscribing-to-events-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/auth-configs/postAuthConfigs?format=md",
+      "title": "Create new authentication configuration | Composio",
+      "file": "reference__api-reference__auth-configs__postAuthConfigs-2.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/mcp/postMcpServersByServerIdInstances",
+      "title": "Create a new MCP server instance | Composio",
+      "file": "reference__v3__api-reference__mcp__postMcpServersByServerIdInstances.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/yousearch",
+      "title": "You.com - Composio Toolkit | Composio",
+      "file": "toolkits__yousearch.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/google",
+      "title": "Google | Composio",
+      "file": "docs__providers__google.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googlesuper.md",
+      "title": "https://docs.composio.dev/toolkits/googlesuper.md",
+      "file": "toolkits__googlesuper-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/mcp/getMcpServersByServerIdInstances",
+      "title": "List all instances for an MCP server | Composio",
+      "file": "reference__v3__api-reference__mcp__getMcpServersByServerIdInstances.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/auth-configs/patchAuthConfigsByNanoidByStatus",
+      "title": "Enable or disable an authentication configuration | Composio",
+      "file": "reference__v3__api-reference__auth-configs__patchAuthConfigsByNanoidByStatus.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/configuring-sessions.md",
+      "title": "https://docs.composio.dev/docs/configuring-sessions.md",
+      "file": "docs__configuring-sessions-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/notion",
+      "title": "Notion",
+      "file": "toolkits__notion.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/extending-sessions/proxy-execute",
+      "title": "Proxy execute | Composio",
+      "file": "docs__extending-sessions__proxy-execute.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/authenticating-to-composio",
+      "title": "Overview | Composio",
+      "file": "reference__authenticating-to-composio.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/faqs.md",
+      "title": "https://docs.composio.dev/kb/guide/faqs.md",
+      "file": "kb__guide__faqs-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/getToolRouterSessionBySessionIdTools.md",
+      "title": "https://docs.composio.dev/reference/api-reference/tool-router/getToolRouterSessionBySessionIdTools.md",
+      "file": "reference__api-reference__tool-router__getToolRouterSessionBySessionIdTools-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/toolkits/postCustomToolkitsUpsert",
+      "title": "Upsert a custom toolkit | Composio",
+      "file": "reference__api-reference__toolkits__postCustomToolkitsUpsert.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/getConnectedAccounts.md",
+      "title": "https://docs.composio.dev/reference/api-reference/connected-accounts/getConnectedAccounts.md",
+      "file": "reference__api-reference__connected-accounts__getConnectedAccounts-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/connected-accounts/patchConnectedAccountsByNanoid",
+      "title": "Update a connected account | Composio",
+      "file": "reference__v3__api-reference__connected-accounts__patchConnectedAccountsByNanoid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/mcp/getMcpServersByServerIdInstances",
+      "title": "List all instances for an MCP server | Composio",
+      "file": "reference__api-reference__mcp__getMcpServersByServerIdInstances.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/twitter",
+      "title": "Twitter",
+      "file": "toolkits__twitter.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/webhook-endpoints/getWebhookEndpoints",
+      "title": "List webhook endpoints | Composio",
+      "file": "reference__api-reference__webhook-endpoints__getWebhookEndpoints.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/tools-direct/executing-tools",
+      "title": "Executing tools directly | Composio",
+      "file": "docs__tools-direct__executing-tools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/codeinterpreter",
+      "title": "Code Interpreter - Composio Toolkit | Composio",
+      "file": "toolkits__codeinterpreter.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/gmail",
+      "title": "Gmail",
+      "file": "toolkits__gmail.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/asana",
+      "title": "Asana",
+      "file": "toolkits__asana.md"
+    },
+    {
+      "url": "https://docs.composio.dev/examples/harness-integration",
+      "title": "Integrate Composio into an existing harness | Composio",
+      "file": "examples__harness-integration.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/skills.md",
+      "title": "https://docs.composio.dev/docs/skills.md",
+      "file": "docs__skills-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/toolkits/postCustomToolkitsSync",
+      "title": "Sync a custom toolkit | Composio",
+      "file": "reference__api-reference__toolkits__postCustomToolkitsSync.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/logs",
+      "title": "Logs | Composio",
+      "file": "reference__api-reference__logs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/organization/postOrgUsageByEntityType",
+      "title": "Org usage breakdown | Composio",
+      "file": "reference__api-reference__organization__postOrgUsageByEntityType.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/postConnectedAccounts",
+      "title": "Create a new connected account | Composio",
+      "file": "reference__api-reference__connected-accounts__postConnectedAccounts.md"
+    },
+    {
+      "url": "https://docs.composio.dev/examples/general-agent-with-pi",
+      "title": "Build a Slack bot that can do work with you and your team | Composio",
+      "file": "examples__general-agent-with-pi.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/triggers.md",
+      "title": "https://docs.composio.dev/docs/triggers.md",
+      "file": "docs__triggers-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/calendly.md",
+      "title": "https://docs.composio.dev/toolkits/calendly.md",
+      "file": "toolkits__calendly-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googleads.md",
+      "title": "https://docs.composio.dev/toolkits/googleads.md",
+      "file": "toolkits__googleads-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/dropbox.md",
+      "title": "https://docs.composio.dev/toolkits/dropbox.md",
+      "file": "toolkits__dropbox-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googledrive",
+      "title": "Google Drive",
+      "file": "toolkits__googledrive.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/mcp-tool-router-sessions.md",
+      "title": "https://docs.composio.dev/kb/guide/mcp-tool-router-sessions.md",
+      "file": "kb__guide__mcp-tool-router-sessions-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/mcp-mcp-hermes",
+      "title": "Hermes MCP | Composio",
+      "file": "kb__guide__mcp-mcp-hermes.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/pro-tools",
+      "title": "Premium Tools | Composio",
+      "file": "toolkits__pro-tools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/google_admin.md",
+      "title": "https://docs.composio.dev/toolkits/google_admin.md",
+      "file": "toolkits__google_admin-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/meta-tools/remote_workbench",
+      "title": "Remote Workbench | Composio",
+      "file": "toolkits__meta-tools__remote_workbench.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/connected-accounts",
+      "title": "Connected Accounts | Composio",
+      "file": "reference__v3__api-reference__connected-accounts.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/errors",
+      "title": "Errors (/reference/errors)",
+      "file": "reference__errors.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/patchConnectedAccountsByNanoid",
+      "title": "Update a connected account | Composio",
+      "file": "reference__api-reference__connected-accounts__patchConnectedAccountsByNanoid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/vercel",
+      "title": "Vercel AI SDK | Composio",
+      "file": "docs__providers__vercel.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/rate-limits",
+      "title": "Rate Limits | Composio",
+      "file": "reference__rate-limits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/webhook-endpoints/postWebhookEndpoints",
+      "title": "Create webhook endpoint | Composio",
+      "file": "reference__v3__api-reference__webhook-endpoints__postWebhookEndpoints.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/setting-up-triggers/creating-triggers",
+      "title": "Creating triggers | Composio",
+      "file": "docs__setting-up-triggers__creating-triggers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/bunnycdn",
+      "title": "BunnyCDN - Composio Toolkit | Composio",
+      "file": "toolkits__bunnycdn.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/sdk-tool-execution-retries",
+      "title": "Tool Execution Retries (/kb/guide/sdk-tool-execution-retries)",
+      "file": "kb__guide__sdk-tool-execution-retries.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/slackbot",
+      "title": "Slackbot - Composio Toolkit | Composio",
+      "file": "toolkits__slackbot.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/webhook-endpoints",
+      "title": "Webhook Endpoints | Composio",
+      "file": "reference__api-reference__webhook-endpoints.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/cli.md",
+      "title": "https://docs.composio.dev/docs/cli.md",
+      "file": "docs__cli-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/getConnectedAccountsByNanoid",
+      "title": "Get connected account details by ID | Composio",
+      "file": "reference__api-reference__connected-accounts__getConnectedAccountsByNanoid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/postConnectedAccountsByNanoidRevoke",
+      "title": "Revoke a connected account at the provider | Composio",
+      "file": "reference__api-reference__connected-accounts__postConnectedAccountsByNanoidRevoke.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/supabase",
+      "title": "Supabase",
+      "file": "toolkits__supabase.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/mcp/postMcpServers",
+      "title": "Create a new MCP server | Composio",
+      "file": "reference__api-reference__mcp__postMcpServers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/webhook-subscriptions/postWebhookSubscriptions",
+      "title": "Create webhook subscription | Composio",
+      "file": "reference__api-reference__webhook-subscriptions__postWebhookSubscriptions.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/auth-configs/getAuthConfigsByNanoid",
+      "title": "Get single authentication configuration by ID | Composio",
+      "file": "reference__api-reference__auth-configs__getAuthConfigsByNanoid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/tool-router/patchToolRouterSessionBySessionId",
+      "title": "Patch a tool router session config | Composio",
+      "file": "reference__v3__api-reference__tool-router__patchToolRouterSessionBySessionId.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/migration-guide/tool-router-beta",
+      "title": "Migrating from Experimental Tool Router | Composio",
+      "file": "docs__migration-guide__tool-router-beta.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tools",
+      "title": "Tools | Composio",
+      "file": "reference__api-reference__tools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/monday_mcp",
+      "title": "Monday MCP - Composio Toolkit | Composio",
+      "file": "toolkits__monday_mcp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/composio_search",
+      "title": "Composio Search - Composio Toolkit | Composio",
+      "file": "toolkits__composio_search.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/dashboard-auth-configs-navigation.md",
+      "title": "https://docs.composio.dev/kb/guide/dashboard-auth-configs-navigation.md",
+      "file": "kb__guide__dashboard-auth-configs-navigation-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/toolkits",
+      "title": "Toolkits | Composio",
+      "file": "reference__v3__api-reference__toolkits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/webhook-subscriptions/getWebhookSubscriptionsById",
+      "title": "Get webhook subscription | Composio",
+      "file": "reference__api-reference__webhook-subscriptions__getWebhookSubscriptionsById.md"
+    },
+    {
+      "url": "https://docs.composio.dev/examples/local-sandbox-pr-reviewer",
+      "title": "Review pull requests in a sandbox you own | Composio",
+      "file": "examples__local-sandbox-pr-reviewer.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/polygon_io",
+      "title": "Polygon.io - Composio Toolkit | Composio",
+      "file": "toolkits__polygon_io.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/getToolRouterSessionBySessionId.md",
+      "title": "https://docs.composio.dev/reference/api-reference/tool-router/getToolRouterSessionBySessionId.md",
+      "file": "reference__api-reference__tool-router__getToolRouterSessionBySessionId-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-custom-connection-data-fields.md",
+      "title": "https://docs.composio.dev/kb/guide/platform-custom-connection-data-fields.md",
+      "file": "kb__guide__platform-custom-connection-data-fields-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSessionBySessionIdSearch",
+      "title": "Search for tools using a query | Composio",
+      "file": "reference__api-reference__tool-router__postToolRouterSessionBySessionIdSearch.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/canva.md",
+      "title": "https://docs.composio.dev/toolkits/canva.md",
+      "file": "toolkits__canva-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-session-tool-policies",
+      "title": "Create Read-Only and Restricted Composio Sessions | Composio",
+      "file": "kb__guide__platform-session-tool-policies.md"
+    },
+    {
+      "url": "https://docs.composio.dev/examples",
+      "title": "Examples | Composio",
+      "file": "examples.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/elevenlabs",
+      "title": "ElevenLabs - Composio Toolkit | Composio",
+      "file": "toolkits__elevenlabs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/files/postFilesUploadRequest",
+      "title": "Create presigned URL for request file upload to S3 | Composio",
+      "file": "reference__v3__api-reference__files__postFilesUploadRequest.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-googledrive",
+      "title": "Google Drive (/kb/guide/toolkits-googledrive)",
+      "file": "kb__guide__toolkits-googledrive.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-google-oauth.md",
+      "title": "https://docs.composio.dev/kb/guide/platform-google-oauth.md",
+      "file": "kb__guide__platform-google-oauth-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-self-hosted-helm",
+      "title": "Self-hosted Helm | Composio",
+      "file": "kb__guide__platform-self-hosted-helm.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/patchConnectedAccountsByNanoIdStatus",
+      "title": "Enable or disable a connected account | Composio",
+      "file": "reference__api-reference__connected-accounts__patchConnectedAccountsByNanoIdStatus.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/tools/getToolsByToolSlug",
+      "title": "Get tool by slug | Composio",
+      "file": "reference__v3__api-reference__tools__getToolsByToolSlug.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/perplexityai",
+      "title": "Perplexity AI",
+      "file": "toolkits__perplexityai.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/linkedin",
+      "title": "LinkedIn knowledge",
+      "file": "kb__toolkit__linkedin.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/composio-connect",
+      "title": "Composio Connect | Composio",
+      "file": "docs__composio-connect.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSessionBySessionIdExecuteMeta.md",
+      "title": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSessionBySessionIdExecuteMeta.md",
+      "file": "reference__api-reference__tool-router__postToolRouterSessionBySessionIdExecuteMeta-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/instagram.md",
+      "title": "https://docs.composio.dev/toolkits/instagram.md",
+      "file": "toolkits__instagram-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/googlesuper.md",
+      "title": "https://docs.composio.dev/kb/toolkit/googlesuper.md",
+      "file": "kb__toolkit__googlesuper-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-project-api-key-permissions.md",
+      "title": "https://docs.composio.dev/kb/guide/platform-project-api-key-permissions.md",
+      "file": "kb__guide__platform-project-api-key-permissions-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-instagram",
+      "title": "Instagram | Composio",
+      "file": "kb__guide__toolkits-instagram.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/ring_central",
+      "title": "Ring central - Composio Toolkit | Composio",
+      "file": "toolkits__ring_central.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/share_point",
+      "title": "SharePoint - Composio Toolkit | Composio",
+      "file": "toolkits__share_point.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/odoo",
+      "title": "Odoo - Composio Toolkit | Composio",
+      "file": "toolkits__odoo.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/patchToolRouterSessionBySessionId",
+      "title": "Patch a tool router session config (v3.1) | Composio",
+      "file": "reference__api-reference__tool-router__patchToolRouterSessionBySessionId.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/postConnectedAccountsCompleteAuth",
+      "title": "Complete a deferred OAuth connection after identity verification | Composio",
+      "file": "reference__api-reference__connected-accounts__postConnectedAccountsCompleteAuth.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/consumer-project-boundaries-and-auth-selection.md",
+      "title": "https://docs.composio.dev/kb/guide/consumer-project-boundaries-and-auth-selection.md",
+      "file": "kb__guide__consumer-project-boundaries-and-auth-selection-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/microsoft_teams",
+      "title": "Microsoft Teams",
+      "file": "toolkits__microsoft_teams.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/browser_tool.md",
+      "title": "https://docs.composio.dev/toolkits/browser_tool.md",
+      "file": "toolkits__browser_tool-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/airtable",
+      "title": "Airtable",
+      "file": "toolkits__airtable.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python/connected-accounts",
+      "title": "ConnectedAccounts | Composio",
+      "file": "reference__sdk-reference__python__connected-accounts.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/connected-accounts/getConnectedAccountsByNanoid",
+      "title": "Get connected account details by ID | Composio",
+      "file": "reference__v3__api-reference__connected-accounts__getConnectedAccountsByNanoid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/changelog",
+      "title": "Changelog | Composio | Composio",
+      "file": "reference__changelog.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/connected-accounts",
+      "title": "ConnectedAccounts | Composio",
+      "file": "reference__sdk-reference__typescript__connected-accounts.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/mcp.md",
+      "title": "https://docs.composio.dev/reference/api-reference/mcp.md",
+      "file": "reference__api-reference__mcp-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/mcp/patchMcpById",
+      "title": "Update MCP server configuration | Composio",
+      "file": "reference__api-reference__mcp__patchMcpById.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/triggers",
+      "title": "Triggers | Composio",
+      "file": "reference__api-reference__triggers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tools/postToolsExecuteByToolSlug.md",
+      "title": "https://docs.composio.dev/reference/api-reference/tools/postToolsExecuteByToolSlug.md",
+      "file": "reference__api-reference__tools__postToolsExecuteByToolSlug-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/sandbox/remote",
+      "title": "Remote sandbox | Composio",
+      "file": "docs__sandbox__remote.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/files",
+      "title": "Files | Composio",
+      "file": "reference__api-reference__files.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/heyreach.md",
+      "title": "https://docs.composio.dev/toolkits/heyreach.md",
+      "file": "toolkits__heyreach-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/tiktok.md",
+      "title": "https://docs.composio.dev/toolkits/tiktok.md",
+      "file": "toolkits__tiktok-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app.md",
+      "title": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app.md",
+      "file": "docs__authentication__custom-app-vs-managed-app-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/follow_up_boss",
+      "title": "Follow Up Boss - Composio Toolkit | Composio",
+      "file": "toolkits__follow_up_boss.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/hubspot",
+      "title": "HubSpot knowledge",
+      "file": "kb__toolkit__hubspot.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python/session.md",
+      "title": "https://docs.composio.dev/reference/sdk-reference/python/session.md",
+      "file": "reference__sdk-reference__python__session-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/connected-accounts/postConnectedAccounts",
+      "title": "Create a new connected account | Composio",
+      "file": "reference__v3__api-reference__connected-accounts__postConnectedAccounts.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/cloudflare",
+      "title": "Cloudflare - Composio Toolkit | Composio",
+      "file": "toolkits__cloudflare.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/firecrawl",
+      "title": "Firecrawl - Composio Toolkit | Composio",
+      "file": "toolkits__firecrawl.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/auth-configs/getAuthConfigs",
+      "title": "List authentication configurations with optional filters | Composio",
+      "file": "reference__api-reference__auth-configs__getAuthConfigs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-gmail.md",
+      "title": "https://docs.composio.dev/kb/guide/toolkits-gmail.md",
+      "file": "kb__guide__toolkits-gmail-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/serpapi",
+      "title": "SerpApi - Composio Toolkit | Composio",
+      "file": "toolkits__serpapi.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/how-composio-works.md",
+      "title": "https://docs.composio.dev/docs/how-composio-works.md",
+      "file": "docs__how-composio-works-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/search?q=Enhanced%20Control",
+      "title": "Search Composio knowledge | Composio",
+      "file": "kb__search.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/fireflies.md",
+      "title": "https://docs.composio.dev/toolkits/fireflies.md",
+      "file": "toolkits__fireflies-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/polygon",
+      "title": "Polygon - Composio Toolkit | Composio",
+      "file": "toolkits__polygon.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/authentication.md",
+      "title": "https://docs.composio.dev/docs/authentication.md",
+      "file": "docs__authentication-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/tools/postToolsExecuteByToolSlug",
+      "title": "Execute tool | Composio",
+      "file": "reference__v3__api-reference__tools__postToolsExecuteByToolSlug.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/googlesheets",
+      "title": "Google Sheets knowledge",
+      "file": "kb__toolkit__googlesheets.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/zoom.md",
+      "title": "https://docs.composio.dev/toolkits/zoom.md",
+      "file": "toolkits__zoom-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/tool-router/postToolRouterSessionBySessionIdProxyExecute",
+      "title": "Execute proxy request within a tool router session | Composio",
+      "file": "reference__v3__api-reference__tool-router__postToolRouterSessionBySessionIdProxyExecute.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-health-endpoints",
+      "title": "Platform Health Endpoints | Composio",
+      "file": "kb__guide__platform-health-endpoints.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/single-toolkit-mcp",
+      "title": "Single Toolkit MCP | Composio",
+      "file": "docs__single-toolkit-mcp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googlecontacts",
+      "title": "Googlecontacts - Composio Toolkit | Composio",
+      "file": "toolkits__googlecontacts.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/telegram",
+      "title": "Telegram",
+      "file": "toolkits__telegram.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/extending-sessions/custom-tools-and-toolkits",
+      "title": "Custom Tools and Toolkits | Composio",
+      "file": "docs__extending-sessions__custom-tools-and-toolkits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-googletasks",
+      "title": "Google Tasks | Composio",
+      "file": "kb__guide__toolkits-googletasks.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/projects/postOrgOwnerProjectNew",
+      "title": "Create a new project | Composio",
+      "file": "reference__api-reference__projects__postOrgOwnerProjectNew.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/facebook.md",
+      "title": "https://docs.composio.dev/toolkits/facebook.md",
+      "file": "toolkits__facebook-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/mcp/postMcpServersCustom",
+      "title": "Create a new custom MCP server with multiple apps | Composio",
+      "file": "reference__api-reference__mcp__postMcpServersCustom.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googlesheets",
+      "title": "Google Sheets",
+      "file": "toolkits__googlesheets.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-firecrawl",
+      "title": "Firecrawl | Composio",
+      "file": "kb__guide__toolkits-firecrawl.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/discordbot",
+      "title": "Discord Bot - Composio Toolkit | Composio",
+      "file": "toolkits__discordbot.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googlecalendar",
+      "title": "Google Calendar",
+      "file": "toolkits__googlecalendar.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-googlesuper",
+      "title": "Google Super | Composio",
+      "file": "kb__guide__toolkits-googlesuper.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/projects/getOrgProjectList",
+      "title": "List all projects | Composio",
+      "file": "reference__v3__api-reference__projects__getOrgProjectList.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/extending-sessions/shared-connections.md",
+      "title": "https://docs.composio.dev/docs/extending-sessions/shared-connections.md",
+      "file": "docs__extending-sessions__shared-connections-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/mcp/postMcpServersGenerate",
+      "title": "Generate MCP URL with custom parameters | Composio",
+      "file": "reference__api-reference__mcp__postMcpServersGenerate.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/toolkits/getToolkitsCategories",
+      "title": "List toolkit categories | Composio",
+      "file": "reference__api-reference__toolkits__getToolkitsCategories.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/auth-configuration/connected-accounts",
+      "title": "Connected Accounts | Composio",
+      "file": "docs__auth-configuration__connected-accounts.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/security/data-retention",
+      "title": "Data retention | Composio",
+      "file": "docs__security__data-retention.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/authentication/controlling-scopes.md",
+      "title": "https://docs.composio.dev/docs/authentication/controlling-scopes.md",
+      "file": "docs__authentication__controlling-scopes-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/authentication/managing-multiple-connected-accounts",
+      "title": "Managing multiple connected accounts | Composio",
+      "file": "docs__authentication__managing-multiple-connected-accounts.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/webhook-events/composio_trigger_disabled",
+      "title": "Trigger disabled | Composio",
+      "file": "reference__api-reference__webhook-events__composio_trigger_disabled.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/deleteToolRouterSessionBySessionId",
+      "title": "Delete a tool router session | Composio",
+      "file": "reference__api-reference__tool-router__deleteToolRouterSessionBySessionId.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/connected-accounts/deleteConnectedAccountsByNanoid.md",
+      "title": "https://docs.composio.dev/reference/api-reference/connected-accounts/deleteConnectedAccountsByNanoid.md",
+      "file": "reference__api-reference__connected-accounts__deleteConnectedAccountsByNanoid-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-rate-limits",
+      "title": "Platform API Rate Limits | Composio",
+      "file": "kb__guide__platform-rate-limits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/session",
+      "title": "Session | Composio",
+      "file": "reference__sdk-reference__typescript__session.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/github",
+      "title": "GitHub - Composio Toolkit | Composio",
+      "file": "toolkits__github.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googletasks",
+      "title": "Google Tasks - Composio Toolkit | Composio",
+      "file": "toolkits__googletasks.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/make",
+      "title": "Make - Composio Toolkit | Composio",
+      "file": "toolkits__make.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/linkedin.md",
+      "title": "https://docs.composio.dev/toolkits/linkedin.md",
+      "file": "toolkits__linkedin-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/tool-router/postToolRouterSession",
+      "title": "Create a new tool router session | Composio",
+      "file": "reference__v3__api-reference__tool-router__postToolRouterSession.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/spotify.md",
+      "title": "https://docs.composio.dev/toolkits/spotify.md",
+      "file": "toolkits__spotify-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/meta-tools/remote_bash_tool.md",
+      "title": "https://docs.composio.dev/toolkits/meta-tools/remote_bash_tool.md",
+      "file": "toolkits__meta-tools__remote_bash_tool-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tools/postToolsScopesRequired.md",
+      "title": "https://docs.composio.dev/reference/api-reference/tools/postToolsScopesRequired.md",
+      "file": "reference__api-reference__tools__postToolsScopesRequired-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/extending-sessions/custom-mcp",
+      "title": "Custom MCP | Composio",
+      "file": "docs__extending-sessions__custom-mcp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python/composio",
+      "title": "Composio | Composio",
+      "file": "reference__sdk-reference__python__composio.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/meta-tools/manage_connections",
+      "title": "Manage Connections | Composio",
+      "file": "toolkits__meta-tools__manage_connections.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSessionBySessionIdProxyExecute.md",
+      "title": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSessionBySessionIdProxyExecute.md",
+      "file": "reference__api-reference__tool-router__postToolRouterSessionBySessionIdProxyExecute-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googlephotos",
+      "title": "Google Photos - Composio Toolkit | Composio",
+      "file": "toolkits__googlephotos.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/triggers",
+      "title": "Triggers | Composio",
+      "file": "reference__sdk-reference__typescript__triggers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tools/getToolsByToolSlug",
+      "title": "Get tool by slug | Composio",
+      "file": "reference__api-reference__tools__getToolsByToolSlug.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/custom-providers/typescript",
+      "title": "TypeScript Custom Provider | Composio",
+      "file": "docs__providers__custom-providers__typescript.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/meta-tools/get_tool_schemas.md",
+      "title": "https://docs.composio.dev/toolkits/meta-tools/get_tool_schemas.md",
+      "file": "toolkits__meta-tools__get_tool_schemas-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSessionBySessionIdAttach",
+      "title": "Attach to an existing tool router session (v3.1) | Composio",
+      "file": "reference__api-reference__tool-router__postToolRouterSessionBySessionIdAttach.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/tools/postToolsExecuteByToolSlugInput",
+      "title": "Generate tool inputs from natural language | Composio",
+      "file": "reference__v3__api-reference__tools__postToolsExecuteByToolSlugInput.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/llamaindex",
+      "title": "LlamaIndex | Composio",
+      "file": "docs__providers__llamaindex.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/mastra",
+      "title": "Mastra | Composio",
+      "file": "docs__providers__mastra.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/openai",
+      "title": "OpenAI | Composio",
+      "file": "docs__providers__openai.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/pi",
+      "title": "Pi | Composio",
+      "file": "docs__providers__pi.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/authentication/white-labeling-authentication",
+      "title": "White-labeling authentication | Composio",
+      "file": "docs__authentication__white-labeling-authentication.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/authentication/importing-existing-connections.md",
+      "title": "https://docs.composio.dev/docs/authentication/importing-existing-connections.md",
+      "file": "docs__authentication__importing-existing-connections-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/sandbox/local",
+      "title": "Local sandbox | Composio",
+      "file": "docs__sandbox__local.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/setting-up-triggers/custom-oauth-webhooks",
+      "title": "Custom OAuth webhooks | Composio",
+      "file": "docs__setting-up-triggers__custom-oauth-webhooks.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/setting-up-triggers/managing-triggers",
+      "title": "Managing triggers | Composio",
+      "file": "docs__setting-up-triggers__managing-triggers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/security/overview",
+      "title": "Security | Composio",
+      "file": "docs__security__overview.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/tools-direct/toolkit-versioning",
+      "title": "Toolkit Versioning | Composio",
+      "file": "docs__tools-direct__toolkit-versioning.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/tools-direct/fetching-tools",
+      "title": "Fetching tools and schemas | Composio",
+      "file": "docs__tools-direct__fetching-tools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/custom-providers",
+      "title": "Custom Providers | Composio",
+      "file": "docs__providers__custom-providers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/tools-direct/modify-tool-behavior/after-execution-modifiers",
+      "title": "After Execution Modifiers | Composio",
+      "file": "docs__tools-direct__modify-tool-behavior__after-execution-modifiers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/custom-providers/python",
+      "title": "Python Custom Provider | Composio",
+      "file": "docs__providers__custom-providers__python.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/tools-direct/modify-tool-behavior/before-execution-modifiers",
+      "title": "Before Execution Modifiers | Composio",
+      "file": "docs__tools-direct__modify-tool-behavior__before-execution-modifiers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/tools-direct/modify-tool-behavior/schema-modifiers",
+      "title": "Schema Modifiers | Composio",
+      "file": "docs__tools-direct__modify-tool-behavior__schema-modifiers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/glossary",
+      "title": "Glossary | Composio",
+      "file": "reference__glossary.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/authentication",
+      "title": "Authentication | Composio",
+      "file": "reference__v3__authentication.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/errors",
+      "title": "Errors (/reference/v3/errors)",
+      "file": "reference__v3__errors.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/rate-limits",
+      "title": "Rate Limits | Composio",
+      "file": "reference__v3__rate-limits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/api-keys",
+      "title": "API Keys | Composio",
+      "file": "reference__api-reference__api-keys.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/auth-configs",
+      "title": "Auth Configs | Composio",
+      "file": "reference__api-reference__auth-configs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3",
+      "title": "API Reference (v3) | Composio",
+      "file": "reference__v3.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/organization",
+      "title": "Organization | Composio",
+      "file": "reference__api-reference__organization.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/organization-management",
+      "title": "Organization Management | Composio",
+      "file": "reference__api-reference__organization-management.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/projects",
+      "title": "Projects | Composio",
+      "file": "reference__api-reference__projects.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router.md",
+      "title": "https://docs.composio.dev/reference/api-reference/tool-router.md",
+      "file": "reference__api-reference__tool-router-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/toolkits",
+      "title": "Toolkits | Composio",
+      "file": "reference__api-reference__toolkits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/webhook-subscriptions",
+      "title": "Webhook Subscriptions | Composio",
+      "file": "reference__api-reference__webhook-subscriptions.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/webhook-events",
+      "title": "Webhook Events | Composio",
+      "file": "reference__api-reference__webhook-events.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python/auth-configs",
+      "title": "AuthConfigs | Composio",
+      "file": "reference__sdk-reference__python__auth-configs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python",
+      "title": "Python SDK Reference | Composio",
+      "file": "reference__sdk-reference__python.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python/mcp",
+      "title": "MCP | Composio",
+      "file": "reference__sdk-reference__python__mcp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python/tools",
+      "title": "Tools | Composio",
+      "file": "reference__sdk-reference__python__tools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python/toolkits",
+      "title": "Toolkits | Composio",
+      "file": "reference__sdk-reference__python__toolkits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/python/triggers",
+      "title": "Triggers | Composio",
+      "file": "reference__sdk-reference__python__triggers.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/composio",
+      "title": "Composio | Composio",
+      "file": "reference__sdk-reference__typescript__composio.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/auth-configs",
+      "title": "AuthConfigs | Composio",
+      "file": "reference__sdk-reference__typescript__auth-configs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript",
+      "title": "TypeScript SDK Reference | Composio",
+      "file": "reference__sdk-reference__typescript.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/experimental",
+      "title": "Experimental | Composio",
+      "file": "reference__sdk-reference__typescript__experimental.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/remote-file",
+      "title": "RemoteFile | Composio",
+      "file": "reference__sdk-reference__typescript__remote-file.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/mcp",
+      "title": "MCP | Composio",
+      "file": "reference__sdk-reference__typescript__mcp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/sessions",
+      "title": "Sessions | Composio",
+      "file": "reference__sdk-reference__typescript__sessions.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/toolkits",
+      "title": "Toolkits | Composio",
+      "file": "reference__sdk-reference__typescript__toolkits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/session-files",
+      "title": "Session files | Composio",
+      "file": "reference__sdk-reference__typescript__session-files.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/sdk-reference/typescript/tools",
+      "title": "Tools | Composio",
+      "file": "reference__sdk-reference__typescript__tools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/mcp",
+      "title": "MCP | Composio",
+      "file": "reference__v3__api-reference__mcp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/langchain",
+      "title": "LangChain | Composio",
+      "file": "docs__providers__langchain.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/files",
+      "title": "Files | Composio",
+      "file": "reference__v3__api-reference__files.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/auth-configs",
+      "title": "Auth Configs | Composio",
+      "file": "reference__v3__api-reference__auth-configs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/llms.mdx/reference",
+      "title": "https://docs.composio.dev/llms.mdx/reference",
+      "file": "llms-mdx__reference.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/mcp/postMcpServersCustom",
+      "title": "Create a new custom MCP server with multiple apps | Composio",
+      "file": "reference__v3__api-reference__mcp__postMcpServersCustom.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/servicenow",
+      "title": "ServiceNow - Composio Toolkit | Composio",
+      "file": "toolkits__servicenow.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/postToolRouterSessionBySessionIdExecute",
+      "title": "Execute a tool within a tool router session | Composio",
+      "file": "reference__api-reference__tool-router__postToolRouterSessionBySessionIdExecute.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-compliance-data-handling",
+      "title": "Compliance, Data Retention, and Model Training | Composio",
+      "file": "kb__guide__platform-compliance-data-handling.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tools/getTools",
+      "title": "List available tools | Composio",
+      "file": "reference__api-reference__tools__getTools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-production-readiness",
+      "title": "Move a Composio Integration from Prototype to Production | Composio",
+      "file": "kb__guide__platform-production-readiness.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs?cta_placement=footer-docs",
+      "title": "Welcome | Composio",
+      "file": "docs-2.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/toolkits/getToolkitsBySlug",
+      "title": "Get toolkit by slug | Composio",
+      "file": "reference__api-reference__toolkits__getToolkitsBySlug.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-shopify",
+      "title": "Shopify | Composio",
+      "file": "kb__guide__toolkits-shopify.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/salesforce_service_cloud",
+      "title": "Salesforce Service Cloud - Composio Toolkit | Composio",
+      "file": "toolkits__salesforce_service_cloud.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/google_analytics",
+      "title": "Google Analytics - Composio Toolkit | Composio",
+      "file": "toolkits__google_analytics.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-googlesheets",
+      "title": "Google Sheets (/kb/guide/toolkits-googlesheets)",
+      "file": "kb__guide__toolkits-googlesheets.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/tavily",
+      "title": "Tavily",
+      "file": "toolkits__tavily.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/meta-tools/multi_execute_tool",
+      "title": "Multi Execute Tool | Composio",
+      "file": "toolkits__meta-tools__multi_execute_tool.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/zendesk",
+      "title": "Zendesk - Composio Toolkit | Composio",
+      "file": "toolkits__zendesk.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/auth-configs/deleteAuthConfigsByNanoid",
+      "title": "Delete an authentication configuration | Composio",
+      "file": "reference__v3__api-reference__auth-configs__deleteAuthConfigsByNanoid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/slack",
+      "title": "Slack knowledge",
+      "file": "kb__toolkit__slack.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-youtube",
+      "title": "YouTube | Composio",
+      "file": "kb__guide__toolkits-youtube.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/toolkits/getToolkits",
+      "title": "List available toolkits | Composio",
+      "file": "reference__api-reference__toolkits__getToolkits.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/organization-management/getOrgList",
+      "title": "List organizations | Composio",
+      "file": "reference__v3__api-reference__organization-management__getOrgList.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/dashboard-org-members",
+      "title": "Organization Members and Administrators | Composio",
+      "file": "kb__guide__dashboard-org-members.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tools/postToolsExecuteByToolSlugInput",
+      "title": "Generate tool inputs from natural language | Composio",
+      "file": "reference__api-reference__tools__postToolsExecuteByToolSlugInput.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/organization-management/getOrgList",
+      "title": "List organizations | Composio",
+      "file": "reference__api-reference__organization-management__getOrgList.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/googlecalendar",
+      "title": "Google Calendar knowledge",
+      "file": "kb__toolkit__googlecalendar.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/webhook-endpoints",
+      "title": "Webhook Endpoints | Composio",
+      "file": "reference__v3__api-reference__webhook-endpoints.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/luma_labs",
+      "title": "Luma Labs - Composio Toolkit | Composio",
+      "file": "toolkits__luma_labs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/managed-auth",
+      "title": "Managed OAuth apps | Composio",
+      "file": "toolkits__managed-auth.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/outlook",
+      "title": "Outlook - Composio Toolkit | Composio",
+      "file": "toolkits__outlook.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/triggers/postTriggerInstancesBySlugUpsert",
+      "title": "Create or update a trigger | Composio",
+      "file": "reference__api-reference__triggers__postTriggerInstancesBySlugUpsert.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/platform-file-storage",
+      "title": "File Download Storage and Expiry | Composio",
+      "file": "kb__guide__platform-file-storage.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/meta-tools/search_tools",
+      "title": "Search Tools | Composio",
+      "file": "toolkits__meta-tools__search_tools.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/auth-configs/patchAuthConfigsByNanoid",
+      "title": "Update an authentication configuration | Composio",
+      "file": "reference__api-reference__auth-configs__patchAuthConfigsByNanoid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/agent_mail",
+      "title": "Agent Mail - Composio Toolkit | Composio",
+      "file": "toolkits__agent_mail.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-twitter",
+      "title": "Twitter (/kb/guide/toolkits-twitter)",
+      "file": "kb__guide__toolkits-twitter.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/v3/api-reference/connected-accounts/postConnectedAccountsLink",
+      "title": "Create a new auth link session | Composio",
+      "file": "reference__v3__api-reference__connected-accounts__postConnectedAccountsLink.md"
+    },
+    {
+      "url": "https://docs.composio.dev/examples/standup-slackbot",
+      "title": "Daily standup bot | Composio",
+      "file": "examples__standup-slackbot.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/one_drive",
+      "title": "OneDrive - Composio Toolkit | Composio",
+      "file": "toolkits__one_drive.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/aws_marketplace_mcp",
+      "title": "AWS Marketplace MCP - Composio Toolkit | Composio",
+      "file": "toolkits__aws_marketplace_mcp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/auth-configs/patchAuthConfigsByNanoidByStatus",
+      "title": "Enable or disable an authentication configuration | Composio",
+      "file": "reference__api-reference__auth-configs__patchAuthConfigsByNanoidByStatus.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/hubspot",
+      "title": "HubSpot",
+      "file": "toolkits__hubspot.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/files/postFilesUploadRequest",
+      "title": "Create presigned URL for request file upload to S3 | Composio",
+      "file": "reference__api-reference__files__postFilesUploadRequest.md"
+    },
+    {
+      "url": "https://docs.composio.dev/llms.mdx/reference/api-reference/tool-router",
+      "title": "https://docs.composio.dev/llms.mdx/reference/api-reference/tool-router",
+      "file": "llms-mdx__reference__api-reference__tool-router.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/exa",
+      "title": "Exa - Composio Toolkit | Composio",
+      "file": "toolkits__exa.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/toolkits/recommendToolkitScopes",
+      "title": "Get required scopes | Composio",
+      "file": "reference__api-reference__toolkits__recommendToolkitScopes.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/slack",
+      "title": "Slack",
+      "file": "toolkits__slack.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/ngrok",
+      "title": "Ngrok - Composio Toolkit | Composio",
+      "file": "toolkits__ngrok.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tool-router/getToolRouterSessionBySessionIdConfigHistory",
+      "title": "List a tool router session config history | Composio",
+      "file": "reference__api-reference__tool-router__getToolRouterSessionBySessionIdConfigHistory.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/hugging_face.md",
+      "title": "https://docs.composio.dev/toolkits/hugging_face.md",
+      "file": "toolkits__hugging_face-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/sharepoint_graph",
+      "title": "SharePoint Graph - Composio Toolkit | Composio",
+      "file": "toolkits__sharepoint_graph.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/whatsapp",
+      "title": "WhatsApp",
+      "file": "toolkits__whatsapp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/toolkits/postToolkitsMulti",
+      "title": "Fetch multiple toolkits | Composio",
+      "file": "reference__api-reference__toolkits__postToolkitsMulti.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/metaads",
+      "title": "Meta Ads - Composio Toolkit | Composio",
+      "file": "toolkits__metaads.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/tools/postToolsExecuteProxy",
+      "title": "Execute proxy request | Composio",
+      "file": "reference__api-reference__tools__postToolsExecuteProxy.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/linear.md",
+      "title": "https://docs.composio.dev/toolkits/linear.md",
+      "file": "toolkits__linear-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/discord.md",
+      "title": "https://docs.composio.dev/toolkits/discord.md",
+      "file": "toolkits__discord-md.md"
+    },
+    {
+      "url": "https://docs.composio.dev/reference/api-reference/webhook-events/composio_connected_account_expired",
+      "title": "Connection expired | Composio",
+      "file": "reference__api-reference__webhook-events__composio_connected_account_expired.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/claude-code-plugin",
+      "title": "Claude Code Plugin | Composio",
+      "file": "docs__claude-code-plugin.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/auth-configuration/custom-auth-configs",
+      "title": "Custom Auth Configs | Composio",
+      "file": "docs__auth-configuration__custom-auth-configs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/auth-configuration/custom-auth-params",
+      "title": "Custom Auth Parameters | Composio",
+      "file": "docs__auth-configuration__custom-auth-params.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link",
+      "title": "Migrating from initiate() to link() | Composio",
+      "file": "docs__auth-configuration__migrating-initiate-to-link.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/auth-configuration/white-labeling",
+      "title": "White-labeling (direct execution) | Composio",
+      "file": "docs__auth-configuration__white-labeling.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/migration-guide/new-sdk",
+      "title": "Our next generation SDKs | Composio",
+      "file": "docs__migration-guide__new-sdk.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/migration-guide/direct-to-sessions",
+      "title": "Migrating from Direct Tools to Sessions | Composio",
+      "file": "docs__migration-guide__direct-to-sessions.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/migration-guide/toolkit-versioning",
+      "title": "Toolkit versioning migration | Composio",
+      "file": "docs__migration-guide__toolkit-versioning.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/anthropic",
+      "title": "Anthropic | Composio",
+      "file": "docs__providers__anthropic.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/autogen",
+      "title": "AutoGen | Composio",
+      "file": "docs__providers__autogen.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/crewai",
+      "title": "CrewAI | Composio",
+      "file": "docs__providers__crewai.md"
+    },
+    {
+      "url": "https://docs.composio.dev/docs/providers/eve",
+      "title": "Eve | Composio",
+      "file": "docs__providers__eve.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/github",
+      "title": "GitHub knowledge",
+      "file": "kb__toolkit__github.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-github",
+      "title": "GitHub (/kb/guide/toolkits-github)",
+      "file": "kb__guide__toolkits-github.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-slack",
+      "title": "Slack (/kb/guide/toolkits-slack)",
+      "file": "kb__guide__toolkits-slack.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/outlook",
+      "title": "Outlook knowledge",
+      "file": "kb__toolkit__outlook.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-outlook",
+      "title": "Outlook (/kb/guide/toolkits-outlook)",
+      "file": "kb__guide__toolkits-outlook.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/gmail",
+      "title": "Gmail knowledge",
+      "file": "kb__toolkit__gmail.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-notion",
+      "title": "Notion (/kb/guide/toolkits-notion)",
+      "file": "kb__guide__toolkits-notion.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/supabase",
+      "title": "Supabase knowledge",
+      "file": "kb__toolkit__supabase.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-supabase",
+      "title": "Supabase (/kb/guide/toolkits-supabase)",
+      "file": "kb__guide__toolkits-supabase.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/notion",
+      "title": "Notion knowledge",
+      "file": "kb__toolkit__notion.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-hubspot",
+      "title": "HubSpot (/kb/guide/toolkits-hubspot)",
+      "file": "kb__guide__toolkits-hubspot.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/linear",
+      "title": "Linear knowledge",
+      "file": "kb__toolkit__linear.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-linear",
+      "title": "Linear (/kb/guide/toolkits-linear)",
+      "file": "kb__guide__toolkits-linear.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/airtable",
+      "title": "Airtable knowledge",
+      "file": "kb__toolkit__airtable.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-airtable",
+      "title": "Airtable (/kb/guide/toolkits-airtable)",
+      "file": "kb__guide__toolkits-airtable.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/jira",
+      "title": "Jira knowledge",
+      "file": "kb__toolkit__jira.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-jira",
+      "title": "Jira (/kb/guide/toolkits-jira)",
+      "file": "kb__guide__toolkits-jira.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/discord",
+      "title": "Discord knowledge",
+      "file": "kb__toolkit__discord.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/microsoft_teams",
+      "title": "Microsoft Teams knowledge",
+      "file": "kb__toolkit__microsoft_teams.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-discord",
+      "title": "Discord (/kb/guide/toolkits-discord)",
+      "file": "kb__guide__toolkits-discord.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/jira",
+      "title": "Jira",
+      "file": "toolkits__jira.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/asana",
+      "title": "Asana knowledge",
+      "file": "kb__toolkit__asana.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-asana",
+      "title": "Asana (/kb/guide/toolkits-asana)",
+      "file": "kb__guide__toolkits-asana.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/salesforce",
+      "title": "Salesforce knowledge",
+      "file": "kb__toolkit__salesforce.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/calendly",
+      "title": "Calendly knowledge",
+      "file": "kb__toolkit__calendly.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-calendly",
+      "title": "Calendly (/kb/guide/toolkits-calendly)",
+      "file": "kb__guide__toolkits-calendly.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/trello",
+      "title": "Trello knowledge",
+      "file": "kb__toolkit__trello.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-trello",
+      "title": "Trello (/kb/guide/toolkits-trello)",
+      "file": "kb__guide__toolkits-trello.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-salesforce",
+      "title": "Salesforce (/kb/guide/toolkits-salesforce)",
+      "file": "kb__guide__toolkits-salesforce.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/clickup",
+      "title": "ClickUp knowledge",
+      "file": "kb__toolkit__clickup.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/trello",
+      "title": "Trello",
+      "file": "toolkits__trello.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-clickup",
+      "title": "ClickUp (/kb/guide/toolkits-clickup)",
+      "file": "kb__guide__toolkits-clickup.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/stripe",
+      "title": "Stripe knowledge",
+      "file": "kb__toolkit__stripe.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/clickup",
+      "title": "ClickUp",
+      "file": "toolkits__clickup.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-stripe",
+      "title": "Stripe (/kb/guide/toolkits-stripe)",
+      "file": "kb__guide__toolkits-stripe.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-mailchimp",
+      "title": "Mailchimp (/kb/guide/toolkits-mailchimp)",
+      "file": "kb__guide__toolkits-mailchimp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/mailchimp",
+      "title": "Mailchimp knowledge",
+      "file": "kb__toolkit__mailchimp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/attio",
+      "title": "Attio knowledge",
+      "file": "kb__toolkit__attio.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-attio",
+      "title": "Attio (/kb/guide/toolkits-attio)",
+      "file": "kb__guide__toolkits-attio.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/attio",
+      "title": "Attio",
+      "file": "toolkits__attio.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/googlemeet",
+      "title": "Google Meet",
+      "file": "toolkits__googlemeet.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/googlemeet",
+      "title": "Google Meet knowledge",
+      "file": "kb__toolkit__googlemeet.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/dropbox",
+      "title": "Dropbox knowledge",
+      "file": "kb__toolkit__dropbox.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-googlemeet",
+      "title": "Google Meet (/kb/guide/toolkits-googlemeet)",
+      "file": "kb__guide__toolkits-googlemeet.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-dropbox",
+      "title": "Dropbox (/kb/guide/toolkits-dropbox)",
+      "file": "kb__guide__toolkits-dropbox.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/confluence",
+      "title": "Confluence knowledge",
+      "file": "kb__toolkit__confluence.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/mailchimp",
+      "title": "Mailchimp",
+      "file": "toolkits__mailchimp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-confluence",
+      "title": "Confluence (/kb/guide/toolkits-confluence)",
+      "file": "kb__guide__toolkits-confluence.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/confluence",
+      "title": "Confluence",
+      "file": "toolkits__confluence.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/zendesk",
+      "title": "Zendesk knowledge",
+      "file": "kb__toolkit__zendesk.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-zendesk",
+      "title": "Zendesk (/kb/guide/toolkits-zendesk)",
+      "file": "kb__guide__toolkits-zendesk.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/pagerduty",
+      "title": "PagerDuty knowledge",
+      "file": "kb__toolkit__pagerduty.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/stripe",
+      "title": "Stripe",
+      "file": "toolkits__stripe.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/zoom",
+      "title": "Zoom knowledge",
+      "file": "kb__toolkit__zoom.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-zoom",
+      "title": "Zoom (/kb/guide/toolkits-zoom)",
+      "file": "kb__guide__toolkits-zoom.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-linkedin",
+      "title": "LinkedIn (/kb/guide/toolkits-linkedin)",
+      "file": "kb__guide__toolkits-linkedin.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/twitter",
+      "title": "Twitter knowledge",
+      "file": "kb__toolkit__twitter.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/pagerduty",
+      "title": "PagerDuty",
+      "file": "toolkits__pagerduty.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/googledrive",
+      "title": "Google Drive knowledge",
+      "file": "kb__toolkit__googledrive.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/googledocs",
+      "title": "Google Docs knowledge",
+      "file": "kb__toolkit__googledocs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-googledocs",
+      "title": "Google Docs (/kb/guide/toolkits-googledocs)",
+      "file": "kb__guide__toolkits-googledocs.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/tavily",
+      "title": "Tavily knowledge",
+      "file": "kb__toolkit__tavily.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-tavily",
+      "title": "Tavily (/kb/guide/toolkits-tavily)",
+      "file": "kb__guide__toolkits-tavily.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/perplexityai",
+      "title": "Perplexity AI knowledge",
+      "file": "kb__toolkit__perplexityai.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-perplexityai",
+      "title": "Perplexity AI authentication (/kb/guide/toolkits-perplexityai)",
+      "file": "kb__guide__toolkits-perplexityai.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/whatsapp",
+      "title": "WhatsApp knowledge",
+      "file": "kb__toolkit__whatsapp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/guide/toolkits-whatsapp",
+      "title": "WhatsApp (/kb/guide/toolkits-whatsapp)",
+      "file": "kb__guide__toolkits-whatsapp.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/telegram",
+      "title": "Telegram knowledge",
+      "file": "kb__toolkit__telegram.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/resend",
+      "title": "Resend",
+      "file": "toolkits__resend.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/resend",
+      "title": "Resend",
+      "file": "kb__toolkit__resend.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/sendgrid",
+      "title": "SendGrid",
+      "file": "toolkits__sendgrid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/sendgrid",
+      "title": "SendGrid",
+      "file": "kb__toolkit__sendgrid.md"
+    },
+    {
+      "url": "https://docs.composio.dev/toolkits/gitlab",
+      "title": "GitLab",
+      "file": "toolkits__gitlab.md"
+    },
+    {
+      "url": "https://docs.composio.dev/kb/toolkit/gitlab",
+      "title": "GitLab knowledge",
+      "file": "kb__toolkit__gitlab.md"
+    }
+  ]
+}

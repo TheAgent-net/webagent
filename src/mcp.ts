@@ -320,6 +320,7 @@ const TOOLS: ToolDef[] = [
 ];
 
 const BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
+const MCP_ALLOW = "GET, POST, DELETE, OPTIONS";
 
 /** Fetch handler for one MCP endpoint. Mount at /mcp or use standalone. */
 export function mcp(harness: Harness): (req: Request) => Promise<Response> {
@@ -327,12 +328,24 @@ export function mcp(harness: Harness): (req: Request) => Promise<Response> {
   let seq = 0;
 
   return async (req: Request) => {
+    if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: { Allow: MCP_ALLOW } });
     if (req.method === "DELETE") {
       const sid = req.headers.get("Mcp-Session-Id") ?? "";
       if (sid) sessions.delete(sid);
       return new Response(null, { status: 204 });
     }
-    if (req.method !== "POST") return new Response("method not allowed", { status: 405 });
+    if (req.method === "GET") {
+      const discover = {
+        type: "mcp",
+        protocol: MCP_PROTOCOL,
+        howToConnect:
+          "POST JSON-RPC initialize, read Mcp-Session-Id (also result.sessionId), then tools/list or POST /chat.",
+      };
+      return Response.json(discover, { headers: { Allow: MCP_ALLOW } });
+    }
+    if (req.method !== "POST") {
+      return new Response("method not allowed", { status: 405, headers: { Allow: MCP_ALLOW } });
+    }
 
     let msg: Rpc;
     try {
@@ -355,13 +368,21 @@ export function mcp(harness: Harness): (req: Request) => Promise<Response> {
         protocolVersion: MCP_PROTOCOL,
         capabilities: { tools: { listChanged: false } },
         serverInfo: { name: "webagent", version: "0.4.0" },
+        sessionId: sid,
       });
       res.headers.set("Mcp-Session-Id", sid);
+      res.headers.set("MCP-Protocol-Version", MCP_PROTOCOL);
       return res;
     }
 
     const sid = req.headers.get("Mcp-Session-Id") ?? "";
-    if (!sid || !sessions.has(sid)) return new Response("missing session", { status: 400 });
+    if (!sid || !sessions.has(sid)) {
+      const res = await rpc(req, msg.id, undefined, {
+        code: -32000,
+        message: "missing session; POST initialize first",
+      });
+      return new Response(res.body, { status: 400, headers: res.headers });
+    }
 
     try {
       const result = await dispatch(harness, msg.method, msg.params);

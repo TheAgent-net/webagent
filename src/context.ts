@@ -1,9 +1,17 @@
 /** Copy-on-write message log. Forks share the spine until a write. */
 
+export interface AssistantToolCall {
+  id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
 export interface Message {
   role: "system" | "user" | "assistant" | "tool" | "pin";
   content: string;
   toolCallId?: string;
+  /** Present on assistant frames that requested tools. Required for OpenAI follow-up. */
+  toolCalls?: AssistantToolCall[];
 }
 
 export class Context {

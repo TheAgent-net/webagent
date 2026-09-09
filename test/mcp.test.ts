@@ -79,6 +79,8 @@ describe("mcp surface", () => {
     const session = await handshake(fetchFn);
     const missing = await post(fetchFn, "http://t/mcp", { jsonrpc: "2.0", id: 9, method: "ping" });
     expect(missing.status).toBe(400);
+    const miss = (await missing.json()) as Rpc;
+    expect(miss.error?.message).toMatch(/session/);
     const pong = await call(fetchFn, session, "ping");
     expect(pong.result).toEqual({});
   });
@@ -158,6 +160,29 @@ describe("mcp surface", () => {
     expect(text).toContain("event: message");
     expect(text).toContain("2025-06-18");
     expect(session).toBeTruthy();
+  });
+
+  test("initialize result includes sessionId", async () => {
+    const fetchFn = mcp(new Harness());
+    const init = await post(fetchFn, "http://t/mcp", {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } },
+    });
+    const body = (await init.json()) as { result?: { sessionId?: string } };
+    expect(init.headers.get("Mcp-Session-Id")).toBe(body.result?.sessionId);
+  });
+
+  test("GET /mcp is discovery; OPTIONS is 204", async () => {
+    const fetchFn = mcp(new Harness());
+    const opt = await fetchFn(new Request("http://t/mcp", { method: "OPTIONS" }));
+    expect(opt.status).toBe(204);
+    const get = await fetchFn(new Request("http://t/mcp"));
+    expect(get.status).toBe(200);
+    const body = (await get.json()) as { type: string; protocol: string };
+    expect(body.type).toBe("mcp");
+    expect(body.protocol).toBe("2025-06-18");
   });
 
   test("intake mounts /mcp on the same handler", async () => {
