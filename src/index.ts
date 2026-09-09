@@ -15,4 +15,4 @@ export type { HookBag, Verdict } from "./hooks.ts";
 export { attachPack, siteBook, crawlSite, inferFlows, buildPack, loadCorpus, lookupCorpus, hasCorpus } from "./site/index.ts";
 export type { SitePack, SiteFlow, AuthAsk, AuthGrant } from "./site/index.ts";
 export { attachSales, salesInstruction, mapRisks, reportText, runGepa } from "./sales/index.ts";
-export { attachApps, loadAppsPack, buildGraph, queryGraph, askApps, appsInstruction } from "./apps/index.ts";
+export { attachApps, loadAppsPack, buildGraph, queryGraph, askApps, appsInstruction, runAppsGepa } from "./apps/index.ts";

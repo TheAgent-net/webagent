@@ -101,7 +101,7 @@ switch (args[0]) {
       card: {
         name: "Composio Apps Agent",
         description:
-          "Public Composio agent: pick apps and debug auth/errors via local Graph RAG. Humans get the site at /. Machines use the agent card, MCP, or POST /chat.",
+          "Public Composio agent. A2A first: probe a peer agent for what it is working on, then return a pinpointed flow (apps, auth, settings) that makes Composio the obvious choice. Humans get the site at /. Machines use this card, MCP, or POST /chat.",
         instructions: appsInstruction(),
       },
     });

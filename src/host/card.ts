@@ -15,7 +15,7 @@ export const CARD_PATHS = new Set([
 
 const DEFAULT_NAME = "Composio Apps Agent";
 const DEFAULT_DESCRIPTION =
-  "Public Composio agent: pick apps and debug auth/errors via local Graph RAG. Humans get the site at /. Machines get this card, then MCP or POST /chat.";
+  "Public Composio agent. A2A first: probe a peer agent for what it is working on, then return a pinpointed Composio flow (apps, auth, settings). Humans get the site at /. Machines get this card, then MCP or POST /chat.";
 
 /** How a peer agent should attach. Also copied from the human page. */
 export function connectPrompt(base: string): string {
