@@ -50,6 +50,8 @@ export interface SitePack {
   facts: string[];
   starterQuestions: string[];
   authAsk?: AuthAsk;
+  /** Local folder of page files. Lookup reads these. No scrape API at run time. */
+  corpusDir?: string;
 }
 
 export interface IngestOpts {

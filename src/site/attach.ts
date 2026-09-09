@@ -5,6 +5,7 @@
 import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import type { Tool } from "../tools.ts";
+import { hasCorpus, lookupCorpus } from "./corpus.ts";
 import type { SiteFlow, SitePack } from "./types.ts";
 
 export function attachPack(h: Harness, pack: SitePack, opts?: { model?: string; instruction?: string }): Run {
@@ -16,18 +17,29 @@ export function attachPack(h: Harness, pack: SitePack, opts?: { model?: string; 
     instruction: opts?.instruction ?? pack.instruction,
     tools: [lookupTool(pack), ...pack.flows.map(flowTool)],
   });
-  if (pack.facts.length) run.inject({ vars: pack.facts.join("\n") });
+  if (pack.corpusDir) {
+    run.inject({
+      vars: [
+        "Local corpus at " + pack.corpusDir + ". " + pack.pages.length + " page files.",
+        "Call site_lookup to read those files. Do not invent APIs or tool slugs.",
+      ].join("\n"),
+    });
+  } else if (pack.facts.length) run.inject({ vars: pack.facts.join("\n") });
   return run;
 }
 
 function lookupTool(pack: SitePack): Tool {
   return {
     name: "site_lookup",
-    description: "Search crawled pages and facts to answer a visitor",
+    description: "Search local site files and return the most relevant snippets. No web call.",
     schema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
     async call(args) {
-      const q = String(args.query ?? "").toLowerCase();
-      const words = q.split(/\W+/).filter((w) => w.length > 2 && !STOP.has(w));
+      const q = String(args.query ?? "");
+      if (pack.corpusDir && hasCorpus(pack.corpusDir)) {
+        const hits = lookupCorpus(pack.corpusDir, q, 6);
+        return { origin: pack.origin, source: "corpus", hits };
+      }
+      const words = q.toLowerCase().split(/\W+/).filter((w) => w.length > 2 && !STOP.has(w));
       const scored: { score: number; url: string; title: string; snippet: string }[] = [];
       for (const p of pack.pages) {
         const hay = (p.title + " " + p.headings.join(" ") + " " + p.text).toLowerCase();
@@ -40,7 +52,7 @@ function lookupTool(pack: SitePack): Tool {
       }
       scored.sort((a, b) => b.score - a.score);
       const hits = scored.slice(0, 6).map(({ url, title, snippet }) => ({ url, title, snippet }));
-      return { origin: pack.origin, hits, questions: pack.starterQuestions };
+      return { origin: pack.origin, source: "pack", hits };
     },
   };
 }

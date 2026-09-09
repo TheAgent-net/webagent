@@ -1,0 +1,268 @@
+---
+url: https://docs.composio.dev/reference/sdk-reference/python/mcp
+title: MCP | Composio
+description: MCP (Model Control Protocol) class. Provides enhanced MCP server operations  This matches the TypeScript ExperimentalMCP class functionality.
+status: 200
+---
+
+SDK Reference [Python SDK](https://docs.composio.dev/reference/sdk-reference/python)
+
+# MCP
+
+Copy page
+
+Deprecated
+
+Use a session's MCP endpoint instead: `composio.create(user_id, mcp=True)` returns a session that exposes `session.mcp.url` / `session.mcp.headers`. MCP is now opt-in per session; this standalone `composio.mcp` server-management API is kept only for backwards compatibility. Prefer the session MCP endpoint; do not generate new code against `composio.mcp`. See [https://docs.composio.dev/docs/sessions-via-mcp](https://docs.composio.dev/docs/sessions-via-mcp)
+
+## [Methods](https://docs.composio.dev/reference/sdk-reference/python/mcp\#methods)
+
+### [create()](https://docs.composio.dev/reference/sdk-reference/python/mcp\#create)
+
+Create a new MCP server configuration with specified toolkits and authentication settings.
+
+```
+def create(name: str, toolkits: List[Union[ConfigToolkit, str]], manually_manage_connections: bool = ..., allowed_tools: List[str | None] = ...) -> MCPCreateResponse
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `name` | `str` |
+| `toolkits` | `List[Union[ConfigToolkit, str]]` |
+| `manually_manage_connections?` | `bool` |
+| `allowed_tools?` | `List[str | None]` |
+
+**Returns**
+
+`MCPCreateResponse` — Created server details with generate method
+
+**Example**
+
+```
+>>> # Using toolkit configuration objects with auth
+>>> server = composio.experimental.mcp.create(
+...     'personal-mcp-server',
+...     toolkits=[\
+...         {\
+...             'toolkit': 'github',\
+...             'auth_config_id': 'ac_xyz',\
+...         },\
+...         {\
+...             'toolkit': 'slack',\
+...             'auth_config_id': 'ac_abc',\
+...         },\
+...     ],
+...     allowed_tools=['GITHUB_CREATE_ISSUE', 'GITHUB_LIST_REPOS', 'SLACK_SEND_MESSAGE'],
+...     manually_manage_connections=False
+... )
+>>>
+>>> # Using simple toolkit names (most common usage)
+>>> server = composio.experimental.mcp.create(
+...     'simple-mcp-server',
+...     toolkits=['composio_search', 'text_to_pdf'],
+...     allowed_tools=['COMPOSIO_SEARCH_DUCK_DUCK_GO_SEARCH', 'TEXT_TO_PDF_CONVERT_TEXT_TO_PDF']
+... )
+>>>
+>>> # Using all tools from toolkits (default behavior)
+>>> server = composio.experimental.mcp.create(
+...     'all-tools-server',
+...     toolkits=['composio_search', 'text_to_pdf']
+...     # allowed_tools=None means all tools from these toolkits
+... )
+>>>
+>>> # Get server instance for a user
+>>> mcp = server.generate('user_12345')
+```
+
+* * *
+
+### [list()](https://docs.composio.dev/reference/sdk-reference/python/mcp\#list)
+
+List MCP servers with optional filtering and pagination.
+
+```
+def list(page_no: int | None = ..., limit: int | None = ..., toolkits: str | None = ..., auth_config_ids: str | None = ..., name: str | None = ..., order_by: Literal['created_at', 'updated_at' | None] = ..., order_direction: Literal['asc', 'desc' | None] = ...) -> MCPListResponse
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `page_no?` | `int | None` |
+| `limit?` | `int | None` |
+| `toolkits?` | `str | None` |
+| `auth_config_ids?` | `str | None` |
+| `name?` | `str | None` |
+| `order_by?` | `Literal['created_at', 'updated_at' | None]` |
+| `order_direction?` | `Literal['asc', 'desc' | None]` |
+
+**Returns**
+
+`MCPListResponse` — Paginated list of MCP servers
+
+**Example**
+
+```
+>>> # List all servers
+>>> all_servers = composio.experimental.mcp.list()
+>>>
+>>> # List with pagination
+>>> paged_servers = composio.experimental.mcp.list(page_no=2, limit=5)
+>>>
+>>> # Filter by toolkit
+>>> github_servers = composio.experimental.mcp.list(toolkits='github', name='personal')
+```
+
+* * *
+
+### [get()](https://docs.composio.dev/reference/sdk-reference/python/mcp\#get)
+
+Retrieve detailed information about a specific MCP server/config.
+
+```
+def get(server_id: str)
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `server_id` | `str` |
+
+**Example**
+
+```
+>>> server = composio.experimental.mcp.get('mcp_12345')
+>>>
+>>> print(server['name'])  # "My Personal MCP Server"
+>>> print(server['allowed_tools'])  # ["GITHUB_CREATE_ISSUE", "SLACK_SEND_MESSAGE"]
+>>> print(server['toolkits'])  # ["github", "slack"]
+>>> print(server['server_instance_count'])  # 3
+```
+
+* * *
+
+### [update()](https://docs.composio.dev/reference/sdk-reference/python/mcp\#update)
+
+Update an existing MCP server configuration.
+
+```
+def update(server_id: str, name: str | None = ..., toolkits: List[Union[ConfigToolkit, str | None]] = ..., manually_manage_connections: bool | None = ..., allowed_tools: List[str | None] = ...)
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `server_id` | `str` |
+| `name?` | `str | None` |
+| `toolkits?` | `List[Union[ConfigToolkit, str | None]]` |
+| `manually_manage_connections?` | `bool | None` |
+| `allowed_tools?` | `List[str | None]` |
+
+**Example**
+
+```
+>>> # Update server name only
+>>> updated_server = composio.experimental.mcp.update(
+...     'mcp_12345',
+...     name='My Updated MCP Server'
+... )
+>>>
+>>> # Update toolkits and tools
+>>> server_with_new_tools = composio.experimental.mcp.update(
+...     'mcp_12345',
+...     toolkits=['github', 'slack'],
+...     allowed_tools=['GITHUB_CREATE_ISSUE', 'SLACK_SEND_MESSAGE']
+... )
+>>>
+>>> # Update with auth configs
+>>> server_with_auth = composio.experimental.mcp.update(
+...     'mcp_12345',
+...     toolkits=[\
+...         {'toolkit': 'github', 'auth_config_id': 'auth_abc123'},\
+...         {'toolkit': 'slack', 'auth_config_id': 'auth_def456'}\
+...     ],
+...     allowed_tools=['GITHUB_CREATE_ISSUE', 'SLACK_SEND_MESSAGE'],
+...     manually_manage_connections=False
+... )
+```
+
+* * *
+
+### [delete()](https://docs.composio.dev/reference/sdk-reference/python/mcp\#delete)
+
+Permanently delete an MCP server configuration.
+
+```
+def delete(server_id: str) -> Dict[str, Any]
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `server_id` | `str` |
+
+**Returns**
+
+`Dict[str, Any]` — Deletion result
+
+**Example**
+
+```
+>>> # Delete a server
+>>> result = composio.experimental.mcp.delete('mcp_12345')
+>>>
+>>> if result['deleted']:
+...     print(f"Server {result['id']} has been successfully deleted")
+>>> else:
+...     print(f"Failed to delete server {result['id']}")
+```
+
+* * *
+
+### [generate()](https://docs.composio.dev/reference/sdk-reference/python/mcp\#generate)
+
+Get server URLs for an existing MCP server. This matches the TypeScript implementation exactly.
+
+```
+def generate(user_id: str, mcp_config_id: str, manually_manage_connections: bool | None = ...) -> MCPServerInstance
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `user_id` | `str` |
+| `mcp_config_id` | `str` |
+| `manually_manage_connections?` | `bool | None` |
+
+**Returns**
+
+`MCPServerInstance` — MCP server instance
+
+**Example**
+
+```
+>>> mcp = composio.experimental.mcp.generate(
+...     'user_12345',
+...     'mcp_67890',
+...     manually_manage_connections=False
+... )
+>>>
+>>> print(mcp['url'])  # Server URL for the user
+>>> print(mcp['allowed_tools'])  # Available tools
+```
+
+* * *
+
+[View source](https://github.com/composiohq/composio/blob/next/python/composio/core/models/mcp.py#L104)
+
+[Edit this page on GitHub](https://github.com/ComposioHQ/composio/blob/next/docs/content/reference/sdk-reference/python/mcp.mdx)
+
+### On this page
+
+[Methods](https://docs.composio.dev/reference/sdk-reference/python/mcp#methods) [create()](https://docs.composio.dev/reference/sdk-reference/python/mcp#create) [list()](https://docs.composio.dev/reference/sdk-reference/python/mcp#list) [get()](https://docs.composio.dev/reference/sdk-reference/python/mcp#get) [update()](https://docs.composio.dev/reference/sdk-reference/python/mcp#update) [delete()](https://docs.composio.dev/reference/sdk-reference/python/mcp#delete) [generate()](https://docs.composio.dev/reference/sdk-reference/python/mcp#generate)

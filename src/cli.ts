@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { networkInterfaces } from "node:os";
 import { defaultHarness } from "./harness.ts";
 import { listen } from "./host/listen.ts";
 
@@ -12,6 +13,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent serve [addr]        public HTTPS host (default :8787)");
   console.error("  webagent ingest <url>        crawl a site, build flows, attach a run");
   console.error("  webagent pair <url>          two agents: site seller + buyer (Cursor SDK)");
+  console.error("  webagent apps [addr]         Composio Graph RAG host (local corpus)");
   process.exit(args[0] ? 0 : 2);
 }
 
@@ -72,6 +74,44 @@ switch (args[0]) {
     }
     break;
   }
+  case "apps": {
+    const { attachApps, loadAppsPack, appsInstruction } = await import("./apps/index.ts");
+    const { openaiModel } = await import("./models.ts");
+    const addr = args[1] || ":8787";
+    const port = Number(addr.replace(/^.*:/, "")) || 8787;
+    const pack = loadAppsPack();
+    const hasKey = !!process.env.OPENAI_API_KEY;
+    if (hasKey) {
+      h.addModel(
+        openaiModel({
+          id: "openai",
+          baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+          apiKeyEnv: "OPENAI_API_KEY",
+        }),
+      );
+    }
+    const run = attachApps(h, pack, { model: hasKey ? "openai" : "echo" });
+    const publicUrl = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + port;
+    const hosted = listen(h, {
+      port,
+      run,
+      model: hasKey ? "openai" : "echo",
+      publicUrl,
+      card: {
+        name: "Composio Apps Agent",
+        description:
+          "Public Composio agent: pick apps and debug auth/errors via local Graph RAG. Humans get the site at /. Machines use the agent card, MCP, or POST /chat.",
+        instructions: appsInstruction(),
+      },
+    });
+    console.error(`composio agent ${hosted.url}`);
+    console.error(`  human   ${hosted.url}/`);
+    console.error(`  machine ${hosted.url}/mcp  run ${hosted.room.run.id}`);
+    console.error(`  local   http://127.0.0.1:${port}/`);
+    await new Promise(() => {});
+    break;
+  }
   case "serve": {
     const addr = args[1] || ":8787";
     const port = Number(addr.replace(/^.*:/, "")) || 8787;
@@ -85,4 +125,17 @@ switch (args[0]) {
   default:
     console.error("unknown command");
     process.exit(2);
+}
+
+function lanIp(): string {
+  try {
+    for (const addrs of Object.values(networkInterfaces())) {
+      for (const a of addrs ?? []) {
+        if (a.family === "IPv4" && !a.internal) return a.address;
+      }
+    }
+  } catch {
+    /* no interfaces */
+  }
+  return "127.0.0.1";
 }

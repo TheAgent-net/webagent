@@ -1,0 +1,103 @@
+---
+url: https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link
+title: Migrating from initiate() to link() | Composio
+description: Move Composio-managed OAuth flows off the legacy POST /api/v3/connected_accounts endpoint and onto link() before the 2026-05-08 / 2026-07-03 cutover.
+status: 200
+---
+
+Direct auth
+
+Legacy
+
+# Migrating from initiate() to link()
+
+Copy page
+
+`composio.connected_accounts.initiate()` (Python) and `composio.connectedAccounts.initiate()` (TypeScript) wrap `POST /api/v3/connected_accounts`. That endpoint is being retired for **Composio-managed auth configs on redirectable OAuth schemes** (OAuth1, OAuth2, DCR\_OAUTH):
+
+- **2026-05-08, 00:00 UTC** — organizations created on or after this date are blocked.
+- **2026-07-03, 00:00 UTC** — all remaining organizations are blocked.
+
+After your org's cutover, calling `initiate()` for the affected combination raises `ComposioLegacyConnectedAccountsEndpointRetiredError` (TS) / `composio.exceptions.ComposioLegacyConnectedAccountsEndpointRetiredError` (Python). The replacement is `link()` — same return shape, same `redirectUrl` / `redirect_url`, same `waitForConnection()` / `wait_for_connection()` helper.
+
+**Who this affects:** developers using a Composio-managed (default) auth config on OAuth1, OAuth2, or DCR\_OAUTH. If you brought your own OAuth client credentials (custom auth config) or use a non-OAuth scheme (API key, bearer, basic), your `initiate()` calls keep working — no migration needed.
+
+## [Why](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link\#why)
+
+When a connection is initiated through a default (Composio-managed) auth config, a Composio-owned OAuth application is acting on behalf of your integration. The end user should explicitly understand and acknowledge, at the moment of connection, that they are granting a third-party application access to their account on the external service. The `link()` flow enforces that consent step; the legacy `initiate()` path could bypass it when credentials were passed in directly. Concentrating Composio-managed OAuth on `link()` aligns the user experience with that consent guarantee.
+
+## [Migration at a glance](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link\#migration-at-a-glance)
+
+The signatures are the same shape — only the method name changes for the OAuth case.
+
+PythonTypeScript
+
+**Before:**
+
+```
+connection_request = composio.connected_accounts.initiate(
+    user_id="user_123",
+    auth_config_id="ac_abc",
+)
+print(connection_request.redirect_url)
+connected_account = connection_request.wait_for_connection()
+```
+
+**After:**
+
+```
+connection_request = composio.connected_accounts.link(
+    user_id="user_123",
+    auth_config_id="ac_abc",
+)
+print(connection_request.redirect_url)
+connected_account = connection_request.wait_for_connection()
+```
+
+`callback_url` / `callbackUrl` works the same way on both methods.
+
+## [What changes between the two methods](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link\#what-changes-between-the-two-methods)
+
+| Concern | `initiate()` | `link()` |
+| --- | --- | --- |
+| Underlying endpoint | `POST /api/v3/connected_accounts` | `POST /api/v3/connected_accounts/link` |
+| Return shape | `ConnectionRequest` with `id`, `redirect_url`, `wait_for_connection()` | Same |
+| `callback_url` / `callbackUrl` | ✓ | ✓ |
+| Pre-filled connection state (`config`) | ✓ — for non-OAuth schemes | Not needed — OAuth uses redirect; non-OAuth users keep `initiate()` |
+| `allow_multiple` / `allowMultiple` | ✓ — guards against duplicates | ✓ — same default (`False`), same exception ( [since 2026-04-28](https://docs.composio.dev/docs/changelog/2026/04/28)) |
+| Affected by the 2026-05-08 / 2026-07-03 retirement (Composio-managed OAuth) | Yes | No |
+
+## [How to know which auth config is which](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link\#how-to-know-which-auth-config-is-which)
+
+If you maintain a mix of Composio-managed and custom auth configs and aren't sure which path to take per call, look at the auth config record. The dashboard shows whether each config is "Default (Composio-managed)" or "Custom". Programmatically, the auth config retrieve response includes an `is_composio_managed` (Python) / `isComposioManaged` (TS) boolean. Route the call based on that field:
+
+PythonTypeScript
+
+```
+auth_config = composio.auth_configs.get("ac_abc")
+
+if auth_config.is_composio_managed:
+    request = composio.connected_accounts.link(
+        user_id="user_123",
+        auth_config_id="ac_abc",
+    )
+else:
+    request = composio.connected_accounts.initiate(
+        user_id="user_123",
+        auth_config_id="ac_abc",
+    )
+```
+
+For most integrations the auth config is hard-coded per integration, so you'll know up front which path to use and can drop the branching.
+
+## [Related](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link\#related)
+
+- [Connected accounts → Multiple accounts](https://docs.composio.dev/docs/auth-configuration/connected-accounts#multiple-accounts) — using `link()` for multi-account flows
+- [Authenticating tools → Hosted Authentication](https://docs.composio.dev/docs/tools-direct/authenticating-tools#hosted-authentication-connect-link) — the canonical `link()` flow
+- [Changelog: Link Auth Migration](https://docs.composio.dev/docs/changelog/2026/04/24) — the announcement
+
+[Edit this page on GitHub](https://github.com/ComposioHQ/composio/blob/next/docs/content/docs/auth-configuration/migrating-initiate-to-link.mdx)
+
+### On this page
+
+[Why](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link#why) [Migration at a glance](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link#migration-at-a-glance) [What changes between the two methods](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link#what-changes-between-the-two-methods) [How to know which auth config is which](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link#how-to-know-which-auth-config-is-which) [Related](https://docs.composio.dev/docs/auth-configuration/migrating-initiate-to-link#related)

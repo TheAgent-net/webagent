@@ -1,0 +1,283 @@
+---
+url: https://docs.composio.dev/reference/v3/api-reference/tool-router/postToolRouterSession
+title: Create a new tool router session | Composio
+description: Creates a new session for the tool router feature. This endpoint initializes a new session with specified toolkits and their authentication configurations. The session provides an isolated environment for testing and managing tool routing logic with scoped MCP server access.
+status: 200
+---
+
+API Reference [Sessions (prev Tool Router)](https://docs.composio.dev/reference/v3/api-reference/tool-router)
+
+# Create a new tool router sessionv3.0
+
+Copy page
+
+Server URL`https://backend.composio.dev/`
+
+POST
+
+``/`api`/`v3`/`tool_router`/`session`
+
+Send
+
+Authorization
+
+Body
+
+Creates a new session for the tool router feature. This endpoint initializes a new session with specified toolkits and their authentication configurations. The session provides an isolated environment for testing and managing tool routing logic with scoped MCP server access.
+
+## [Authorization](https://docs.composio.dev/reference/v3/api-reference/tool-router/postToolRouterSession\#authorization)
+
+`ApiKeyAuth`
+
+x-api-key<token>
+
+Project API key authentication
+
+In: `header`
+
+## [Request Body](https://docs.composio.dev/reference/v3/api-reference/tool-router/postToolRouterSession\#request-body)
+
+`application/json`
+
+user\_idstringRequired
+
+The identifier of the user who is initiating the session, ideally a unique identifier from your database like a user ID or email address
+
+toolkitsobject \| object
+
+Toolkit configuration - specify either enable toolkits (allowlist) or disable toolkits (denylist). Mutually exclusive.
+
+Show 2 child attributes
+
+auth\_configsobject
+
+The auth configs to use for the session. This will override the default behavior and use the given auth config when specific toolkits are being executed
+
+Show 1 child attributes
+
+connected\_accountsobject
+
+Per-toolkit connected account override (single nano-ID). Each connected account must exist (not deleted or disabled) and belong to the same `user_id` as the session.
+
+Show 1 child attributes
+
+manage\_connectionsobject
+
+Configuration for connection management settings
+
+Default:`{"enable":true,"enable_wait_for_connections":false,"enable_connection_removal":true}`
+
+Show 4 child attributes
+
+toolsobject
+
+Tool-level configuration per toolkit. Allows you to enable, disable, or filter by tags for specific tools within each toolkit. Every slug passed in `enable` / `disable` must be a valid Composio tool slug for that toolkit — invalid or typo'd slugs fail session creation with a clear error listing which ones didn't match.
+
+Show 1 child attributes
+
+tagsenum\[\] \| object
+
+Global MCP tool annotation hints for filtering. Array format is treated as enabled list. Object format supports both enabled (tool must have at least one) and disabled (tool must NOT have any) lists. Toolkit-level tags override this. Toolkit enabled/disabled lists take precedence over tag filtering.
+
+Show 2 child attributes
+
+workbenchobject
+
+Configuration for workbench behavior
+
+Default:`{"enable":true,"enable_proxy_execution":true}`
+
+Show 4 child attributes
+
+multi\_accountobject
+
+Configure multi-account behavior. When enabled, users can connect multiple accounts per toolkit.
+
+Show 3 child attributes
+
+experimentalobjectExperimental
+
+Experimental features - not stable, may be modified or removed in future versions.
+
+Show 6 child attributes
+
+preloadobject
+
+Preload configuration for Composio tools. Controls which tools appear in `session.tools` and the MCP server tool list so the agent can call them directly without going through search first. Custom tools use `preload` on the custom tool/toolkit definition instead. Not supported when multi-account is enabled. Each preloaded tool adds to the agent context window, so keep the list at or under ~20 tools.
+
+Show 1 child attributes
+
+## [Response Body](https://docs.composio.dev/reference/v3/api-reference/tool-router/postToolRouterSession\#response-body)
+
+### 201  `application/json`
+
+### 400  `application/json`
+
+### 401  `application/json`
+
+### 403  `application/json`
+
+### 408  `application/json`
+
+### 429  `application/json`
+
+### 500  `application/json`
+
+Session with all toolkits
+
+cURL
+
+JavaScript
+
+Go
+
+Python
+
+Java
+
+C#
+
+Rust
+
+```
+curl -X POST "https://backend.composio.dev/api/v3/tool_router/session" \
+  -H "x-api-key: " \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_123456789"
+  }'
+```
+
+201400401403408429500
+
+```
+{
+  "session_id": "trs_1a2b3c4d5e6f",
+  "mcp": {
+    "type": "http",
+    "url": "https://app.composio.dev/tool_router/v3/trs_1a2b3c4d5e6f/mcp"
+  },
+  "tool_router_tools": [\
+    "string"\
+  ],
+  "config": {
+    "user_id": "string",
+    "toolkits": {
+      "enabled": [\
+        "string"\
+      ]
+    },
+    "auth_configs": {
+      "property1": "string",
+      "property2": "string"
+    },
+    "connected_accounts": {
+      "property1": "string",
+      "property2": "string"
+    },
+    "all_connected_accounts": {
+      "property1": [\
+        "string"\
+      ],
+      "property2": [\
+        "string"\
+      ]
+    },
+    "manage_connections": {
+      "enabled": true,
+      "callback_url": "http://example.com",
+      "enable_wait_for_connections": false,
+      "enable_connection_removal": true
+    },
+    "tools": {
+      "property1": {
+        "enabled": [\
+          "string"\
+        ]
+      },
+      "property2": {
+        "enabled": [\
+          "string"\
+        ]
+      }
+    },
+    "tags": {
+      "enabled": [\
+        "readOnlyHint"\
+      ],
+      "disabled": [\
+        "readOnlyHint"\
+      ]
+    },
+    "workbench": {
+      "enable": true,
+      "proxy_execution_enabled": true
+    },
+    "multi_account": {
+      "enable": true,
+      "max_accounts_per_toolkit": 0,
+      "require_explicit_selection": true
+    },
+    "preload": {
+      "tools": [\
+        "string"\
+      ]
+    }
+  },
+  "config_version": 0,
+  "experimental": {
+    "assistive_prompt": "string",
+    "custom_toolkits": [\
+      {\
+        "slug": "string",\
+        "name": "string",\
+        "description": "string",\
+        "tools": [\
+          {\
+            "slug": "string",\
+            "name": "string",\
+            "description": "string",\
+            "input_schema": {\
+              "property1": null,\
+              "property2": null\
+            },\
+            "output_schema": {\
+              "property1": null,\
+              "property2": null\
+            },\
+            "original_slug": "string",\
+            "preload": true\
+          }\
+        ],\
+        "preload": true\
+      }\
+    ],
+    "custom_tools": [\
+      {\
+        "slug": "string",\
+        "name": "string",\
+        "description": "string",\
+        "input_schema": {\
+          "property1": null,\
+          "property2": null\
+        },\
+        "output_schema": {\
+          "property1": null,\
+          "property2": null\
+        },\
+        "extends_toolkit": "string",\
+        "original_slug": "string",\
+        "preload": true\
+      }\
+    ]
+  },
+  "warnings": [\
+    {\
+      "code": "PRELOAD_TOOLS_HIGH_CONTEXT_USAGE",\
+      "message": "Session preloads 25 tools; each preloaded tool adds to the agent context window. Consider keeping the list at or under ~20 tools."\
+    }\
+  ]
+}
+```
+
+[Edit this page on GitHub](https://github.com/ComposioHQ/composio/blob/next/docs/content/reference/v3/api-reference/tool-router/postToolRouterSession.mdx)

@@ -101,7 +101,7 @@ export function openaiModel(opts: { id: string; baseUrl: string; model: string; 
     async reason(req, out, signal) {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (key) headers.Authorization = "Bearer " + key;
-      const body: Record<string, unknown> = { model: opts.model, messages: req.messages };
+      const body: Record<string, unknown> = { model: opts.model, messages: toOpenAI(req.messages) };
       if (req.tools.length) {
         body.tools = req.tools.map((t) => ({
           type: "function",
@@ -130,4 +130,41 @@ export function openaiModel(opts: { id: string; baseUrl: string; model: string; 
       }
     },
   };
+}
+
+/** Map harness frames onto OpenAI chat roles. Pin becomes system. */
+export function toOpenAI(messages: readonly Message[]): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const pending = new Set<string>();
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i]!;
+    if (m.role === "pin") {
+      out.push({ role: "system", content: m.content });
+      pending.clear();
+      continue;
+    }
+    if (m.role === "tool") {
+      const id = m.toolCallId ?? "";
+      if (!id || !pending.has(id)) continue;
+      out.push({ role: "tool", content: m.content, tool_call_id: id });
+      continue;
+    }
+    if (m.role === "assistant" && m.toolCalls?.length) {
+      pending.clear();
+      const calls = m.toolCalls.map((tc, j) => {
+        const id = tc.id || "call_" + j;
+        pending.add(id);
+        return {
+          id,
+          type: "function",
+          function: { name: tc.name, arguments: JSON.stringify(tc.arguments ?? {}) },
+        };
+      });
+      out.push({ role: "assistant", content: m.content || null, tool_calls: calls });
+      continue;
+    }
+    pending.clear();
+    out.push({ role: m.role, content: m.content });
+  }
+  return out;
 }

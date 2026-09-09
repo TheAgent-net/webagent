@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "puppeteer-core": "^25.10.0",
     "typescript": "^5.8.2"
   }
 }
