@@ -10,6 +10,7 @@ import type { Tool } from "../tools.ts";
 import { askApps, chunksFromPack } from "./ask.ts";
 import type { TextChunk } from "./clean.ts";
 import { loadGraph } from "./graph.ts";
+import { jobIsConcrete } from "./job.ts";
 import { appsInstruction } from "./prompt.ts";
 import { CORPUS_COMPOSIO, type AppGraph } from "./types.ts";
 
@@ -40,10 +41,20 @@ export function loadAppsPack(dir = CORPUS_COMPOSIO): SitePack {
 function recommendTool(graph: AppGraph, chunks: TextChunk[]): Tool {
   return {
     name: "recommend_app",
-    description: "Hybrid Graph RAG: rank Composio apps by kind/use, then rerank cleaned docs.",
+    description:
+      "Look up Composio apps that match a concrete job the visitor named (e.g. file a Linear issue and open a GitHub PR). Do not call this until they named a product, tool, or job. Never pass a generic help request.",
     schema: { type: "object", properties: { request: { type: "string" } }, required: ["request"] },
     async call(args) {
       const request = String(args.request ?? "");
+      if (!jobIsConcrete(request)) {
+        return {
+          request,
+          insufficient: true,
+          apps: [],
+          docs: [],
+          ask: "Name the product they ship and the jobs already in flight (GitHub, Linear, Slack, MCP, OAuth, CLI).",
+        };
+      }
       const hit = askApps(graph, chunks, request, 6);
       return {
         request,
@@ -72,7 +83,7 @@ function recommendTool(graph: AppGraph, chunks: TextChunk[]): Tool {
 function debugTool(graph: AppGraph, chunks: TextChunk[]): Tool {
   return {
     name: "debug_docs",
-    description: "Hybrid Graph RAG: FAQ and cleaned snippets for an error or app slug, reranked.",
+    description: "Look up Composio FAQ and auth docs for an error or app slug the visitor named.",
     schema: {
       type: "object",
       properties: { error: { type: "string" }, app: { type: "string" } },

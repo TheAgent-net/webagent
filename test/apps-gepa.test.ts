@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { onAppsFront, runAppsGepa, scoreAppsPrompt } from "../src/apps/gepa.ts";
 import { APPS_CATALOG_V1, APPS_CONSULTANT_V2, APPS_LIBRARIAN, appsSeedPrompts } from "../src/apps/seeds.ts";
-import { APPS_PROMPT_ID, APPS_PROMPT_MEAN, appsInstruction } from "../src/apps/prompt.ts";
+import { APPS_PROMPT_ID, APPS_PROMPT_MEAN, appsInstruction, appsPublicDescription, appsPublicInstructions } from "../src/apps/prompt.ts";
 
 describe("gepa on composio apps prompt", () => {
   test("librarian loses to consultant-v2 on probe, a2a, usecase, and flow", () => {
@@ -32,6 +32,7 @@ describe("gepa on composio apps prompt", () => {
     expect(winner.score.a2a).toBe(1);
     expect(winner.score.probe).toBe(1);
     expect(winner.score.usecase).toBe(1);
+    expect(winner.score.personal).toBe(1);
   });
 
   test("a worse prompt is not on the Pareto front", () => {
@@ -49,8 +50,17 @@ describe("gepa on composio apps prompt", () => {
     expect(sys).toMatch(/Ask a few questions/i);
     expect(sys).toMatch(/\*\*Flow:\*\*/);
     expect(sys).toMatch(/\*\*Settings:\*\*/);
-    expect(sys).toMatch(/choose Composio/);
+    expect(sys).toMatch(/do not call recommend_app until/i);
     expect(sys).toMatch(/pinpointed implementation/);
     expect(sys).not.toMatch(/You help one builder pick apps and debug them/);
+    expect(sys).not.toMatch(/1500\+ apps/);
+    expect(sys).not.toMatch(/choose Composio/);
+    expect(sys).not.toMatch(/webagent/i);
+  });
+
+  test("public card copy is neutral and does not leak internals", () => {
+    expect(appsPublicDescription()).not.toMatch(/webagent|0\.4\.0|RAG|sales agent/i);
+    expect(appsPublicInstructions()).not.toMatch(/webagent|0\.4\.0|RAG|recommend_app/i);
+    expect(appsPublicInstructions()).toMatch(/jobs you already run/i);
   });
 });

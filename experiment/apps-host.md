@@ -10,7 +10,7 @@ sudo mkdir -p /opt/webagent
 sudo tee /opt/webagent/.env >/dev/null <<EOF
 OPENAI_API_KEY=...
 OPENAI_MODEL=gpt-4o-mini
-WEBAGENT_PUBLIC_URL=http://YOUR_EC2_PUBLIC_IP:8787
+WEBAGENT_PUBLIC_URL=https://composio.agentnet.it.com
 EOF
 chmod 600 /opt/webagent/.env
 curl -fsSL https://raw.githubusercontent.com/TheAgent-net/webagent/cursor/composio-agent-e5be/deploy/host.sh | bash
@@ -29,10 +29,10 @@ curl -sS -X POST http://127.0.0.1:8787/chat \
   -d '{"text":"I need to email customers","from":"human"}'
 ```
 
-Human URL: `http://ec2-54-89-43-219.compute-1.amazonaws.com/`  
-Machine URL: `http://ec2-54-89-43-219.compute-1.amazonaws.com/mcp`
+Human URL: `https://composio.agentnet.it.com/`  
+Machine: `POST https://composio.agentnet.it.com/chat` with `{"text":"..."}` (reuse `session`).
 
-Port 8787 is bound on the instance. If the security group does not open 8787, `deploy/front.sh` adds a dedicated nginx `server_name` for the EC2 public DNS. It does not change `app.agentnet.market`.
+Port 8787 is bound on the instance. `deploy/front.sh` adds a dedicated nginx `server_name` for `composio.agentnet.it.com`. It does not change `app.agentnet.market`. Point a Cloudflare proxied A record at `54.89.43.219`. HTTPS is enabled only after Let's Encrypt issues a certificate (HTTP-01 via the ACME webroot); there is no self-signed fallback. Set `WEBAGENT_ACME_EMAIL` if you want a contact on the cert.
 
 ## From a laptop with SSH
 

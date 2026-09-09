@@ -3,6 +3,7 @@ import { askApps } from "../src/apps/ask.ts";
 import { attachApps } from "../src/apps/attach.ts";
 import { chunkPages } from "../src/apps/clean.ts";
 import { buildGraph } from "../src/apps/graph.ts";
+import { jobIsConcrete } from "../src/apps/job.ts";
 import { kindOf, useFromTool } from "../src/apps/kind.ts";
 import { parseCatalog, parseAppPage } from "../src/apps/parse.ts";
 import { appsInstruction } from "../src/apps/prompt.ts";
@@ -211,8 +212,29 @@ describe("composio graph rag", () => {
       const rec = run.tools.find((t) => t.name === "recommend_app")!;
       const out = await rec.call({ request: "create a github issue" });
       expect(JSON.stringify(out)).toMatch(/GITHUB|git/i);
+      const vague = (await rec.call({
+        request: "how can this be beneficial to us in short and fully personalised to our work",
+      })) as { insufficient?: boolean; apps: unknown[] };
+      expect(vague.insufficient).toBe(true);
+      expect(vague.apps).toEqual([]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  test("jobIsConcrete rejects generic help and accepts short jobs", () => {
+    expect(jobIsConcrete("how can you help")).toBe(false);
+    expect(jobIsConcrete("help me")).toBe(false);
+    expect(jobIsConcrete("hello")).toBe(false);
+    expect(jobIsConcrete("what is Composio?")).toBe(false);
+    expect(jobIsConcrete("talk to this agent and figure out how it can be beneficial to us")).toBe(false);
+    expect(jobIsConcrete("create a github issue")).toBe(true);
+    expect(jobIsConcrete("file a Linear issue from a failing test and open a GitHub PR")).toBe(true);
+    expect(jobIsConcrete("I need to send an email to a customer")).toBe(true);
+    expect(jobIsConcrete("create a ticket")).toBe(true);
+    expect(jobIsConcrete("sync CRM contacts")).toBe(true);
+    expect(jobIsConcrete("review pull requests")).toBe(true);
+    expect(jobIsConcrete("approve invoices")).toBe(true);
+    expect(jobIsConcrete("monitor my pipeline")).toBe(true);
   });
 });

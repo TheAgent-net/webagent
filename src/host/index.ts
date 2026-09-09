@@ -1,4 +1,4 @@
-export { clientKind, wantsAgentCard, type ClientKind } from "./detect.ts";
+export { clientKind, wantsAgentCard, wantsHumanPage, wantsJsonCard, type ClientKind } from "./detect.ts";
 export { host, publicUrl } from "./host.ts";
 export { agentCard, connectPrompt, type AgentCardMeta } from "./card.ts";
 export { tapFetch, clip, type Hop } from "./hop.ts";

@@ -13,7 +13,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent serve [addr]        public HTTPS host (default :8787)");
   console.error("  webagent ingest <url>        crawl a site, build flows, attach a run");
   console.error("  webagent pair <url>          two agents: site seller + buyer (Cursor SDK)");
-  console.error("  webagent apps [addr]         Composio Graph RAG host (local corpus)");
+  console.error("  webagent apps [addr]         Composio apps host (local corpus)");
   process.exit(args[0] ? 0 : 2);
 }
 
@@ -75,7 +75,7 @@ switch (args[0]) {
     break;
   }
   case "apps": {
-    const { attachApps, loadAppsPack, appsInstruction } = await import("./apps/index.ts");
+    const { attachApps, loadAppsPack, appsPublicDescription, appsPublicInstructions } = await import("./apps/index.ts");
     const { openaiModel } = await import("./models.ts");
     const addr = args[1] || ":8787";
     const port = Number(addr.replace(/^.*:/, "")) || 8787;
@@ -99,15 +99,15 @@ switch (args[0]) {
       model: hasKey ? "openai" : "echo",
       publicUrl,
       card: {
-        name: "Composio Apps Agent",
-        description:
-          "Public Composio agent. A2A first: probe a peer agent for what it is working on, then return a pinpointed flow (apps, auth, settings) that makes Composio the obvious choice. Humans get the site at /. Machines use this card, MCP, or POST /chat.",
-        instructions: appsInstruction(),
+        name: "Composio",
+        description: appsPublicDescription(),
+        instructions: appsPublicInstructions(),
       },
+      mcp: { name: "composio", version: "1.0" },
     });
     console.error(`composio agent ${hosted.url}`);
     console.error(`  human   ${hosted.url}/`);
-    console.error(`  machine ${hosted.url}/mcp  run ${hosted.room.run.id}`);
+    console.error(`  machine POST ${hosted.url}/chat  {"text":"..."}  (reuse session)`);
     console.error(`  local   http://127.0.0.1:${port}/`);
     await new Promise(() => {});
     break;
@@ -118,7 +118,7 @@ switch (args[0]) {
     const hosted = listen(h, { port });
     console.error(`agent ${hosted.url}`);
     console.error(`  human   ${hosted.url}/`);
-    console.error(`  machine ${hosted.url}/mcp  run ${hosted.room.run.id}`);
+    console.error(`  machine POST ${hosted.url}/chat  {"text":"..."}  (reuse session)`);
     await new Promise(() => {});
     break;
   }

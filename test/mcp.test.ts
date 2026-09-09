@@ -85,6 +85,31 @@ describe("mcp surface", () => {
     expect(pong.result).toEqual({});
   });
 
+  test("initialize serverInfo is webagent unless the caller overrides", async () => {
+    const plain = await post(mcp(new Harness()), "http://t/mcp", {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } },
+    });
+    const a = (await plain.json()) as Rpc;
+    expect((a.result as { serverInfo: { name: string; version: string } }).serverInfo).toEqual({
+      name: "webagent",
+      version: "0.4.0",
+    });
+    const branded = await post(mcp(new Harness(), { name: "composio", version: "1.0" }), "http://t/mcp", {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } },
+    });
+    const b = (await branded.json()) as Rpc;
+    expect((b.result as { serverInfo: { name: string; version: string } }).serverInfo).toEqual({
+      name: "composio",
+      version: "1.0",
+    });
+  });
+
   test("tools/list exposes the public verbs", async () => {
     const fetchFn = mcp(new Harness());
     const session = await handshake(fetchFn);

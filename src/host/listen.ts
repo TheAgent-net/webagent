@@ -17,6 +17,7 @@ export interface ListenOpts {
   run?: Run;
   onHop?: (hop: Hop) => void;
   card?: AgentCardMeta;
+  mcp?: { name?: string; version?: string };
 }
 
 export interface Hosted {
@@ -44,8 +45,8 @@ export function listen(harness: Harness, opts: ListenOpts = {}): Hosted {
     hostname,
     tls,
     fetch: opts.onHop
-      ? tapFetch(host(harness, room, printed, opts.card, sessions), opts.onHop)
-      : host(harness, room, printed, opts.card, sessions),
+      ? tapFetch(host(harness, room, printed, opts.card, sessions, opts.mcp), opts.onHop)
+      : host(harness, room, printed, opts.card, sessions, opts.mcp),
   });
   const bound = opts.publicUrl?.replace(/\/+$/, "") ||
     process.env.WEBAGENT_PUBLIC_URL?.replace(/\/+$/, "") ||

@@ -10,12 +10,12 @@ const lines = [
   "Seeds: " + appsSeedPrompts().map((s) => s.id).join(", "),
   "Winner: `" + APPS_PROMPT_ID + "`  mean=" + winner.mean.toFixed(3),
   "",
-  "Goals: probe (ask questions back), a2a (peer-agent discovery), usecase (why choose Composio), flow (entire flow + settings), pinpoint (not semantically close apps), grounded (graph RAG only), short (220 words, one next step).",
+  "Goals: probe (ask questions back), a2a (peer-agent discovery), usecase (why this fits their work), flow (entire flow + settings), pinpoint (not semantically close apps), grounded (graph only), short (220 words, one next step), personal (extract names; no generic catalog).",
   "",
   "## All",
   "",
-  "| id | gen | mean | probe | a2a | usecase | flow | pinpoint | grounded | short |",
-  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+  "| id | gen | mean | probe | a2a | usecase | flow | pinpoint | grounded | short | personal |",
+  "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   ...all.map((c) =>
     [
       c.id,
@@ -28,6 +28,7 @@ const lines = [
       c.score.pinpoint.toFixed(2),
       c.score.grounded.toFixed(2),
       c.score.short.toFixed(2),
+      c.score.personal.toFixed(2),
     ]
       .join(" | ")
       .replace(/^/, "| ")

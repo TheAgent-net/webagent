@@ -6,8 +6,8 @@ set -euo pipefail
 
 HOST="${WEBAGENT_HOST:?set WEBAGENT_HOST to user@host}"
 ROOT="${WEBAGENT_ROOT:-/opt/webagent}"
-ENV_FILE="${WEBAGENT_ENV:-.env}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
+ENV_FILE="${WEBAGENT_ENV:-$HERE/.env}"
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new)
 if [ -n "${WEBAGENT_SSH_KEY:-}" ]; then
   SSH_OPTS+=(-i "$WEBAGENT_SSH_KEY")
@@ -30,3 +30,9 @@ tar -C "$HERE" \
   | ssh "${SSH_OPTS[@]}" "$HOST" "tar -C $ROOT --exclude=.env -xzf -"
 
 ssh "${SSH_OPTS[@]}" "$HOST" "bash -s" < "$(dirname "$0")/host.sh"
+
+# Re-apply secrets after extract/checkout so WEBAGENT_PUBLIC_URL is not left stale.
+if [ -f "$ENV_FILE" ]; then
+  scp "${SSH_OPTS[@]}" "$ENV_FILE" "$HOST:$ROOT/.env"
+  ssh "${SSH_OPTS[@]}" "$HOST" "chmod 600 $ROOT/.env && sudo systemctl restart webagent-apps"
+fi

@@ -1,10 +1,10 @@
 import type { Harness } from "./harness.ts";
-import { mcp } from "./mcp.ts";
+import { mcp, type McpServerInfo } from "./mcp.ts";
 import { siteHttp } from "./site/http.ts";
 
 /** Thin HTTP edge: many requests → many runs. No reasoning here. */
-export function intake(harness: Harness): (req: Request) => Promise<Response> {
-  const mcpFetch = mcp(harness);
+export function intake(harness: Harness, mcpInfo?: McpServerInfo): (req: Request) => Promise<Response> {
+  const mcpFetch = mcp(harness, mcpInfo);
   const sites = siteHttp(harness);
   return async (req: Request) => {
     const url = new URL(req.url);

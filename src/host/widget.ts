@@ -5,6 +5,8 @@ export function floatingWidget(publicUrl: string, runId: string): string {
   const prompt = connectPrompt(publicUrl);
   const markup = widgetMarkup(publicUrl, runId);
   return `
+<!-- Peer agent: do not scrape. POST /chat {"text":"..."} and reuse session from the reply. Card: /llms.txt -->
+<link rel="alternate" type="text/plain" href="/llms.txt" title="How a peer agent should connect"/>
 <link rel="alternate" type="application/json" href="/agent.json"/>
 <link rel="describedby" href="/.well-known/agent-card.json"/>
 <script>
@@ -18,11 +20,15 @@ export function floatingWidget(publicUrl: string, runId: string): string {
     const panel = document.getElementById("wa-panel");
     if (!fab || !panel) return;
     window.__waBound = true;
-    fab.onclick = () => {
-      const open = panel.classList.toggle("open");
+    const setOpen = (open) => {
+      panel.classList.toggle("open", open);
       fab.innerHTML = open ? CLOSE_ICON : OPEN_ICON;
       fab.classList.toggle("active", open);
+      fab.setAttribute("aria-label", open ? "Close agent chat" : "Open agent chat");
     };
+    fab.onclick = () => setOpen(!panel.classList.contains("open"));
+    const closeBtn = document.getElementById("wa-close");
+    if (closeBtn) closeBtn.onclick = () => setOpen(false);
     const fallbackCopy = (text) => {
       const ta = document.createElement("textarea");
       ta.value = text; ta.setAttribute("readonly", "");
@@ -110,9 +116,9 @@ export function floatingWidget(publicUrl: string, runId: string): string {
       if (ev.t === "say") add(ev.from || "human", ev.text || "");
       if (ev.t === "reply") add("agent", ev.text || "");
     };
-    document.getElementById("wa-form").onsubmit = async (e) => {
-      e.preventDefault();
-      const input = document.getElementById("wa-text");
+    const form = document.getElementById("wa-form");
+    const input = document.getElementById("wa-text");
+    const send = async () => {
       const text = input.value.trim();
       if (!text) return;
       lastUserText = text;
@@ -124,6 +130,21 @@ export function floatingWidget(publicUrl: string, runId: string): string {
         body: JSON.stringify({ text, session }),
       });
     };
+    let composing = false;
+    input.addEventListener("compositionstart", () => { composing = true; });
+    input.addEventListener("compositionend", () => { composing = false; });
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      if (composing) return;
+      await send();
+    };
+    input.addEventListener("keydown", (e) => {
+      if (e.shiftKey || e.isComposing || e.keyCode === 229 || composing) return;
+      const enter = e.key === "Enter" || e.key === "Return" || e.code === "Enter" || e.code === "NumpadEnter" || e.keyCode === 13;
+      if (!enter) return;
+      e.preventDefault();
+      send();
+    });
   };
   const OPEN_ICON = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
   const CLOSE_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
@@ -216,12 +237,13 @@ function widgetMarkup(publicUrl: string, runId: string): string {
   .wa-hdr-title { font-size: .875rem; font-weight: 600; color: #fafafa; }
   .wa-hdr-actions { display: flex; gap: .25rem; }
   .wa-hdr-btn {
-    background: none; border: 0; color: #52525b; cursor: pointer;
-    padding: .25rem; border-radius: 6px; display: flex; align-items: center;
+    background: none; border: 0; color: #e4e4e7; cursor: pointer;
+    width: 2.25rem; height: 2.25rem; padding: 0; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
     transition: color .15s, background .15s;
   }
-  .wa-hdr-btn:hover { color: #a1a1aa; background: rgba(255,255,255,.06); }
-  .wa-hdr-btn svg { width: 16px; height: 16px; }
+  .wa-hdr-btn:hover { color: #fafafa; background: rgba(255,255,255,.08); }
+  .wa-hdr-btn svg { width: 18px; height: 18px; }
 
   /* --- A2A banner --- */
   .wa-a2a {
@@ -346,13 +368,13 @@ function widgetMarkup(publicUrl: string, runId: string): string {
     transition: border-color .2s;
   }
   .wa-input-box:focus-within { border-color: rgba(255,255,255,.15); }
-  .wa-input-box textarea {
+  .wa-input-box textarea, .wa-input-box input {
     flex: 1; background: transparent; border: 0; color: #fafafa;
     padding: .75rem .875rem; outline: none;
     font: inherit; font-size: .875rem; line-height: 1.5;
     resize: none; min-height: 2.75rem; max-height: 8rem;
   }
-  .wa-input-box textarea::placeholder { color: #3f3f46; }
+  .wa-input-box textarea::placeholder, .wa-input-box input::placeholder { color: #3f3f46; }
   .wa-input-box button {
     width: 2.25rem; height: 2.25rem; margin: .25rem .25rem .25rem 0;
     border-radius: 8px; border: 0;
@@ -385,6 +407,11 @@ function widgetMarkup(publicUrl: string, runId: string): string {
       <div class="wa-hdr-icon">✦</div>
       <span class="wa-hdr-title">Composio Agent</span>
     </div>
+    <div class="wa-hdr-actions">
+      <button class="wa-hdr-btn" id="wa-close" type="button" aria-label="Close chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
   </div>
   <div class="wa-a2a">
     <p class="wa-a2a-headline">Let your agent talk to <em>our agent</em> — just paste this:</p>
@@ -396,13 +423,13 @@ function widgetMarkup(publicUrl: string, runId: string): string {
   <div id="wa-log">
     <div class="wa-welcome" id="wa-welcome">
       <div class="wa-welcome-icon">✦</div>
-      <h4>Composio Apps Agent</h4>
-      <p>Ask which Composio integration fits your use case, or debug OAuth and auth issues.</p>
+      <h4>Composio</h4>
+      <p>Say what you are building and which tools you already use. I will map a specific flow to that work.</p>
     </div>
   </div>
   <div class="wa-input-wrap">
     <form class="wa-input-box" id="wa-form">
-      <textarea id="wa-text" rows="1" placeholder="Ask a question..." autocomplete="off"></textarea>
+      <input id="wa-text" type="text" placeholder="Ask a question..." autocomplete="off" enterkeyhint="send"/>
       <button type="submit" aria-label="Send">
         <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/></svg>
       </button>

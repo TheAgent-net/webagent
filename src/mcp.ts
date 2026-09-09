@@ -10,6 +10,13 @@ import type { AuthGrant } from "./site/types.ts";
 
 export const MCP_PROTOCOL = "2025-06-18";
 
+export interface McpServerInfo {
+  name?: string;
+  version?: string;
+}
+
+const DEFAULT_SERVER_INFO = { name: "webagent", version: "0.4.0" };
+
 interface ToolDef {
   name: string;
   description: string;
@@ -323,7 +330,11 @@ const BY_NAME = new Map(TOOLS.map((t) => [t.name, t]));
 const MCP_ALLOW = "GET, POST, DELETE, OPTIONS";
 
 /** Fetch handler for one MCP endpoint. Mount at /mcp or use standalone. */
-export function mcp(harness: Harness): (req: Request) => Promise<Response> {
+export function mcp(harness: Harness, serverInfo: McpServerInfo = {}): (req: Request) => Promise<Response> {
+  const info = {
+    name: serverInfo.name || DEFAULT_SERVER_INFO.name,
+    version: serverInfo.version || DEFAULT_SERVER_INFO.version,
+  };
   const sessions = new Set<string>();
   let seq = 0;
 
@@ -339,7 +350,7 @@ export function mcp(harness: Harness): (req: Request) => Promise<Response> {
         type: "mcp",
         protocol: MCP_PROTOCOL,
         howToConnect:
-          "POST JSON-RPC initialize, read Mcp-Session-Id (also result.sessionId), then tools/list or POST /chat.",
+          "Do not handshake MCP to talk. POST /chat {\"text\":\"...\"} and reuse session from the reply. MCP initialize is optional.",
       };
       return Response.json(discover, { headers: { Allow: MCP_ALLOW } });
     }
@@ -367,7 +378,7 @@ export function mcp(harness: Harness): (req: Request) => Promise<Response> {
       const res = await rpc(req, msg.id, {
         protocolVersion: MCP_PROTOCOL,
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "webagent", version: "0.4.0" },
+        serverInfo: info,
         sessionId: sid,
       });
       res.headers.set("Mcp-Session-Id", sid);

@@ -3,7 +3,7 @@ export { Context, type Message } from "./context.ts";
 export { Harness, defaultHarness } from "./harness.ts";
 export { intake } from "./intake.ts";
 export { host, listen, clientKind, Room } from "./host/index.ts";
-export { mcp, MCP_PROTOCOL } from "./mcp.ts";
+export { mcp, MCP_PROTOCOL, type McpServerInfo } from "./mcp.ts";
 export { echoModel, openaiModel, type Model, type ModelInfo } from "./models.ts";
 export { cursorModel, applyReply, type CursorCall, type CursorOpts } from "./cursor.ts";
 export { Run, type CreateOpts, type Explain } from "./run.ts";

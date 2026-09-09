@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { runPair } from "../experiment/run.ts";
 
+delete process.env.WEBAGENT_PUBLIC_URL;
+
 function mockSite() {
   return Bun.serve({
     port: 0,

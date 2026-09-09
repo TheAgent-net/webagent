@@ -200,7 +200,13 @@ function slim(msgs: readonly { role: string; content: string }[]) {
 }
 
 async function probeHosts(sellerUrl: string, buyerUrl: string) {
-  const human = { accept: "text/html", "user-agent": "Mozilla/5.0", "sec-fetch-dest": "document" };
+  const human = {
+    accept: "text/html",
+    "user-agent": "Mozilla/5.0",
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+  };
   const machine = { accept: "application/json", "user-agent": "curl/8.0" };
   const [sellerHtml, sellerCard, sellerWho, buyerHtml, buyerCard, buyerWho] = await Promise.all([
     fetch(sellerUrl + "/", { headers: human }).then(async (r) => ({ status: r.status, kind: r.headers.get("content-type") })),

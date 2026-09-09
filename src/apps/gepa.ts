@@ -10,6 +10,7 @@ export interface AppsGoalScore {
   pinpoint: number;
   grounded: number;
   short: number;
+  personal: number;
 }
 
 export interface AppsPromptCand {
@@ -28,6 +29,7 @@ const GOALS: (keyof AppsGoalScore)[] = [
   "pinpoint",
   "grounded",
   "short",
+  "personal",
 ];
 
 export function scoreAppsPrompt(text: string): AppsGoalScore {
@@ -47,9 +49,9 @@ export function scoreAppsPrompt(text: string): AppsGoalScore {
     ]),
     usecase: hit(t, [
       /use case/,
-      /choose composio/,
+      /not a generic pitch|generic pitch/,
       /why (this |composio )?fits/,
-      /managed auth|session\.tools/,
+      /specific to (what they are working on|their work)/,
     ]),
     flow: hit(t, [
       /\*\*flow:\*\*|flow:/,
@@ -74,6 +76,12 @@ export function scoreAppsPrompt(text: string): AppsGoalScore {
       /catalog dump/,
       /one next step/,
       /no tool json/,
+    ]),
+    personal: hit(t, [
+      /first message/,
+      /do not call recommend_app until/,
+      /unless they named/,
+      /do not claim latency|do not invent an api/,
     ]),
   };
 }
@@ -115,7 +123,13 @@ export function runAppsGepa(seeds: { id: string; text: string }[]): {
   const front = onAppsFront(all);
   const winner = front
     .slice()
-    .sort((a, b) => b.mean - a.mean || b.score.a2a - a.score.a2a || b.score.usecase - a.score.usecase)[0]!;
+    .sort(
+      (a, b) =>
+        b.mean - a.mean ||
+        b.score.personal - a.score.personal ||
+        b.score.a2a - a.score.a2a ||
+        b.score.usecase - a.score.usecase,
+    )[0]!;
   return { winner, all, front };
 }
 
@@ -136,7 +150,7 @@ function reflect(cands: AppsPromptCand[]): { id: string; text: string }[] {
         return "A2A is the main use case. Probe the peer agent for different things it is working on.";
       }
       if (g === "usecase") {
-        return "Come up with a use case that makes them choose Composio. Say why this fits: managed auth and session.tools, specific to their work.";
+        return "Come up with a use case specific to what they are working on, not a generic pitch. Say why this fits.";
       }
       if (g === "flow") {
         return "**Flow:** trigger → connect account → tools → next action. **Settings:** auth type, scopes, composio.create + session.tools.";
@@ -146,6 +160,9 @@ function reflect(cands: AppsPromptCand[]): { id: string; text: string }[] {
       }
       if (g === "grounded") {
         return "Call recommend_app then debug_docs on errors. Do not invent a tool slug. If the graph has no match, say so.";
+      }
+      if (g === "personal") {
+        return "Extract every named product from their first message. Do not call recommend_app until they named a concrete job. Do not recommend PostHog unless they named them. Do not invent an API. Do not claim latency.";
       }
       return "Keep the whole flow under 220 words. You are not a catalog dump. One next step. No tool JSON in the user-visible reply.";
     })
