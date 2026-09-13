@@ -28,6 +28,7 @@ import (
 	"github.com/TheAgent-net/webagent/observability"
 	"github.com/TheAgent-net/webagent/present"
 	"github.com/TheAgent-net/webagent/retrieval"
+	"github.com/TheAgent-net/webagent/secrets"
 	"github.com/TheAgent-net/webagent/spec"
 	"github.com/TheAgent-net/webagent/spi"
 )
@@ -49,6 +50,7 @@ func main() {
 		printSlot("channel", channels.Registry.Options(), channels.Registry.Default())
 		printSlot("presenter", present.Registry.Options(), present.Registry.Default())
 		printSlot("observability", observability.Registry.Options(), observability.Registry.Default())
+		printSlot("secrets", secrets.Registry.Options(), secrets.Registry.Default())
 	case "validate":
 		s := mustLoad()
 		a, err := build.Build(context.Background(), s)
@@ -59,6 +61,10 @@ func main() {
 		if prov == "" {
 			prov = action.Registry.Default()
 		}
+		sec := s.Secrets.Type
+		if sec == "" {
+			sec = secrets.Registry.Default()
+		}
 		fmt.Printf("OK  %s (%s)\n", a.Name, s.Business)
 		fmt.Printf("  action    : provider=%s (%d tools)\n", prov, len(a.Tools))
 		fmt.Printf("  model     : %s\n", a.Brain.Name())
@@ -66,6 +72,7 @@ func main() {
 		fmt.Printf("  memory    : %s\n", a.Memory.Name())
 		fmt.Printf("  guardrail : %s\n", a.Guardrail.Name())
 		fmt.Printf("  observ.   : %s\n", a.Observer.Name())
+		fmt.Printf("  secrets   : %s\n", sec)
 		for _, b := range a.Bindings {
 			fmt.Printf("  channel   : %s (presenter=%s)\n", b.Channel.Name(), b.Presenter.Name())
 		}

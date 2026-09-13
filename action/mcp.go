@@ -21,6 +21,7 @@ func init() {
 // config.url; apiKeyEnv names the env var holding a bearer token (the key is never in the spec).
 type mcpConfig struct {
 	URL       string `json:"url"`
+	APIKey    string `json:"apiKey"`
 	APIKeyEnv string `json:"apiKeyEnv"`
 }
 
@@ -34,8 +35,8 @@ func newMCP(cfg map[string]any) (Provider, error) {
 	if c.URL == "" {
 		return nil, fmt.Errorf("mcp provider: a server url is required (set action.mcpUrl or action.config.url)")
 	}
-	key := ""
-	if c.APIKeyEnv != "" {
+	key := c.APIKey
+	if key == "" && c.APIKeyEnv != "" {
 		key = os.Getenv(c.APIKeyEnv)
 	}
 	return &mcpProvider{client: mcp.NewClient(c.URL, key)}, nil

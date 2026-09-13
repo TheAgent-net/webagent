@@ -32,6 +32,7 @@ type gatewayBrain struct {
 type gatewayConfig struct {
 	BaseURL   string `json:"baseUrl"`   // OpenAI-compatible base, e.g. https://openrouter.ai/api/v1
 	Model     string `json:"model"`     // provider/model id, e.g. "anthropic/claude-sonnet-5"
+	APIKey    string `json:"apiKey"`    // direct or vault-resolved API key
 	APIKeyEnv string `json:"apiKeyEnv"` // env var holding the key (keys never live in a spec)
 	MaxSteps  int    `json:"maxSteps"`  // tool-call rounds before giving up
 }
@@ -125,7 +126,11 @@ func (g *gatewayBrain) complete(ctx context.Context, msgs []chatMessage, tools [
 		return chatMessage{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if key := os.Getenv(g.cfg.APIKeyEnv); key != "" {
+	key := g.cfg.APIKey
+	if key == "" && g.cfg.APIKeyEnv != "" {
+		key = os.Getenv(g.cfg.APIKeyEnv)
+	}
+	if key != "" {
 		req.Header.Set("Authorization", "Bearer "+key)
 	}
 

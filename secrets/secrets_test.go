@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/TheAgent-net/webagent/conformance"
 	"github.com/TheAgent-net/webagent/core"
 )
 
@@ -19,6 +20,7 @@ func TestEnvProviderIsDefaultAndPrefersTenantScope(t *testing.T) {
 	if v.Name() != "env" {
 		t.Fatalf("default secrets provider should be env, got %s", v.Name())
 	}
+	conformance.Secrets(t, v)
 
 	t.Setenv("SHARED_KEY", "global-value")
 	t.Setenv("ACME_CORP_SHARED_KEY", "tenant-value")
@@ -61,6 +63,7 @@ func TestFileProviderIsolatesTenants(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	conformance.Secrets(t, v)
 
 	acme, err := v.Get(context.Background(), "acme", "TOKEN")
 	if err != nil || acme != "acme-token" {
@@ -93,6 +96,7 @@ func TestFileProviderRequiresPath(t *testing.T) {
 
 func TestStaticProvider(t *testing.T) {
 	v := NewStatic(map[string]map[string]string{"acme": {"K": "v1"}})
+	conformance.Secrets(t, v)
 	got, err := v.Get(context.Background(), "acme", "K")
 	if err != nil || got != "v1" {
 		t.Fatalf("got %q %v", got, err)

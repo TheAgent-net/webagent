@@ -6,6 +6,7 @@ package conformance
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/TheAgent-net/webagent/core"
@@ -71,5 +72,17 @@ func Guardrail(t T, g core.Guardrail) {
 	d, err := g.Inspect(context.Background(), core.GuardInput{Stage: core.StageInput, Content: "hello"})
 	if err != nil || !d.Allow {
 		t.Fatalf("benign input should be allowed (allow=%v err=%v)", d.Allow, err)
+	}
+}
+
+// Secrets asserts a Secrets provider honors the contract: a non-empty name and returning
+// core.ErrSecretNotFound when an unconfigured secret is requested.
+func Secrets(t T, s core.Secrets) {
+	t.Helper()
+	if s.Name() == "" {
+		t.Fatalf("Secrets.Name() must be non-empty")
+	}
+	if _, err := s.Get(context.Background(), "nonexistent_tenant", "NONEXISTENT_KEY_12345"); !errors.Is(err, core.ErrSecretNotFound) {
+		t.Fatalf("expected core.ErrSecretNotFound for absent secret, got %v", err)
 	}
 }
