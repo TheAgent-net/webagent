@@ -111,3 +111,31 @@ func TestBrainProviderDefaults(t *testing.T) {
 		t.Fatal("gateway should require an explicit baseUrl")
 	}
 }
+
+func TestGatewayBrainUsesDirectAPIKey(t *testing.T) {
+	authReceived := ""
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authReceived = r.Header.Get("Authorization")
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"choices": []map[string]any{{"message": map[string]any{"role": "assistant", "content": "hi"}}},
+		})
+	}))
+	defer srv.Close()
+
+	b, err := Registry.Get("gateway", map[string]any{
+		"baseUrl": srv.URL,
+		"model":   "test-model",
+		"apiKey":  "test-secret-key",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = b.Respond(context.Background(), core.BrainInput{Text: "hi"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if authReceived != "Bearer test-secret-key" {
+		t.Fatalf("expected Authorization 'Bearer test-secret-key', got %q", authReceived)
+	}
+}

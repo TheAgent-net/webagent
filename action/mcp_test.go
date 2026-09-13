@@ -119,3 +119,43 @@ func TestMCPProviderRequiresURL(t *testing.T) {
 		t.Fatal("mcp provider should require a server url")
 	}
 }
+
+func TestMCPProviderUsesDirectAPIKey(t *testing.T) {
+	authReceived := ""
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authReceived = r.Header.Get("Authorization")
+		w.Header().Set("Content-Type", "application/json")
+		var req struct {
+			ID     any    `json:"id"`
+			Method string `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		if req.Method == "initialize" {
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"jsonrpc": "2.0", "id": req.ID,
+				"result": map[string]any{"protocolVersion": "2025-06-18", "capabilities": map[string]any{}},
+			})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"jsonrpc": "2.0", "id": req.ID,
+			"result": map[string]any{"tools": []any{}},
+		})
+	}))
+	defer srv.Close()
+
+	p, err := Registry.Get("mcp", map[string]any{
+		"url":    srv.URL,
+		"apiKey": "test-mcp-key",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = p.Tools(context.Background())
+	if err != nil {
+		t.Fatalf("Tools: %v", err)
+	}
+	if authReceived != "Bearer test-mcp-key" {
+		t.Fatalf("expected Authorization 'Bearer test-mcp-key', got %q", authReceived)
+	}
+}
