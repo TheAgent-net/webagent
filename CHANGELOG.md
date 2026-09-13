@@ -6,6 +6,16 @@ All notable changes are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Token usage on `TurnTrace`**: the `openrouter`/`gateway` brain reports each turn's token
+  usage on `core.AgentMessage.Usage` — accumulated across every round of the tool-calling loop
+  (both the classic and the newer usage spellings), scoped to the turn so concurrent turns never
+  mix counts, nil when the provider reports none, and preserved when a turn fails (a failed
+  turn's partial usage is still cost). `Agent.Handle` copies it onto the turn's trace and the
+  `log` observer emits it as `gen_ai.usage.input_tokens` / `gen_ai.usage.output_tokens` — the
+  raw material for the per-tenant cost meter.
+
 ## [0.3.0] - 2026-08-07
 
 ### Added
