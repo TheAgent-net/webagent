@@ -6,6 +6,19 @@ All notable changes are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Bounded retry/backoff for the network providers** (`internal/backoff`): capped exponential
+  backoff with full jitter; provider-supplied `Retry-After` hints (gateway and MCP rate limits)
+  are honored but clamped to the policy's cap, so a remote delay can never suspend work
+  unboundedly. Retries are conservative — a failure that might duplicate an already-executed
+  operation is never replayed:
+  - the model gateway retries only 429s (the provider rejected the request before executing it)
+    and dial-time failures where the request provably never reached the provider; 5xx,
+    ambiguous transport failures, client faults, and undecodable replies fail fast;
+  - the MCP client retries only idempotent requests (initialize, tools/list, notifications) and
+    never replays a `tools/call`, which may already have run server-side.
+
 ## [0.3.0] - 2026-08-07
 
 ### Added

@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/TheAgent-net/webagent/core"
+	"github.com/TheAgent-net/webagent/internal/backoff"
 	"github.com/TheAgent-net/webagent/spi"
 )
 
@@ -27,6 +31,8 @@ type gatewayBrain struct {
 	name string
 	cfg  gatewayConfig
 	http *http.Client
+	// retry bounds the completion retries. Zero uses the defaults (see backoff.Policy).
+	retry backoff.Policy
 }
 
 type gatewayConfig struct {
@@ -58,7 +64,11 @@ func newGateway(name, defaultBaseURL, defaultKeyEnv string) spi.Constructor[core
 		if c.MaxSteps == 0 {
 			c.MaxSteps = 6
 		}
-		return &gatewayBrain{name: name, cfg: c, http: &http.Client{Timeout: 60 * time.Second}}, nil
+		return &gatewayBrain{
+			name: name, cfg: c,
+			http:  &http.Client{Timeout: 60 * time.Second},
+			retry: gatewayRetryPolicy,
+		}, nil
 	}
 }
 
@@ -113,43 +123,87 @@ type toolCall struct {
 	} `json:"function"`
 }
 
+// gatewayRetryPolicy bounds completion retries. Retries are deliberately conservative: a
+// completion is billable, so only failures that cannot duplicate it are retried — 429s (the
+// provider rejected the request before processing it) and dial-time failures (the request
+// never left this process). Max also caps provider-supplied Retry-After hints.
+var gatewayRetryPolicy = backoff.Policy{Attempts: 3, Base: 500 * time.Millisecond, Max: 60 * time.Second}
+
 func (g *gatewayBrain) complete(ctx context.Context, msgs []chatMessage, tools []map[string]any) (chatMessage, error) {
 	body := map[string]any{"model": g.cfg.Model, "messages": msgs}
 	if len(tools) > 0 {
 		body["tools"] = tools
 	}
 	buf, _ := json.Marshal(body)
+	url := strings.TrimRight(g.cfg.BaseURL, "/") + "/chat/completions"
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(g.cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(buf))
+	var reply chatMessage
+	err := backoff.Do(ctx, g.retry, func() error {
+		// A fresh reader per attempt: an HTTP request consumes its body.
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(buf))
+		if err != nil {
+			return backoff.Terminal(err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		if key := os.Getenv(g.cfg.APIKeyEnv); key != "" {
+			req.Header.Set("Authorization", "Bearer "+key)
+		}
+
+		resp, err := g.http.Do(req)
+		if err != nil {
+			if requestNeverSent(err) {
+				// DNS failure or refused connection: the request never reached the provider,
+				// so a retry cannot bill twice.
+				return err
+			}
+			// Timeouts, resets, and body-read failures are ambiguous: the provider may have
+			// processed and billed the completion already. Do not replay it.
+			return backoff.Terminal(err)
+		}
+		defer func() { _ = resp.Body.Close() }()
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+			err := fmt.Errorf("gateway %s: %s", resp.Status, strings.TrimSpace(string(b)))
+			// A 429 means the provider rejected the request before executing it: retrying is
+			// safe. The hint is clamped by the policy.
+			return backoff.WithAfter(err, backoff.RetryAfterDelay(resp.Header.Get("Retry-After")))
+		}
+		if resp.StatusCode >= 300 {
+			// 5xx is ambiguous too: the provider may have billed the completion. Fail fast.
+			b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+			return backoff.Terminal(fmt.Errorf("gateway %s: %s", resp.Status, strings.TrimSpace(string(b))))
+		}
+		var out struct {
+			Choices []struct {
+				Message chatMessage `json:"message"`
+			} `json:"choices"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+			return backoff.Terminal(err)
+		}
+		if len(out.Choices) == 0 {
+			return backoff.Terminal(fmt.Errorf("gateway returned no choices"))
+		}
+		reply = out.Choices[0].Message
+		return nil
+	})
 	if err != nil {
 		return chatMessage{}, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	if key := os.Getenv(g.cfg.APIKeyEnv); key != "" {
-		req.Header.Set("Authorization", "Bearer "+key)
-	}
+	return reply, nil
+}
 
-	resp, err := g.http.Do(req)
-	if err != nil {
-		return chatMessage{}, err
+// requestNeverSent reports whether a transport error definitely occurred before the request
+// reached the provider — DNS resolution failures and refused connections. Anything past the
+// dial (timeouts, resets, body-read failures) is ambiguous and must not be replayed, because
+// the provider may have processed the request before the failure surfaced.
+func requestNeverSent(err error) bool {
+	var dns *net.DNSError
+	if errors.As(err, &dns) {
+		return true
 	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return chatMessage{}, fmt.Errorf("gateway %s: %s", resp.Status, strings.TrimSpace(string(b)))
-	}
-	var out struct {
-		Choices []struct {
-			Message chatMessage `json:"message"`
-		} `json:"choices"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return chatMessage{}, err
-	}
-	if len(out.Choices) == 0 {
-		return chatMessage{}, fmt.Errorf("gateway returned no choices")
-	}
-	return out.Choices[0].Message, nil
+	return errors.Is(err, syscall.ECONNREFUSED)
 }
 
 func openAITools(tools []core.Tool) []map[string]any {
