@@ -56,6 +56,12 @@ func TestVerifyMetaSignature(t *testing.T) {
 	if err := verifyMetaSignature(testAppSecret, "md5=abc", body); err == nil {
 		t.Fatal("unexpected signature format must be rejected")
 	}
+	// Uppercase hex in signature must be accepted.
+	sig := signMeta(testAppSecret, body)
+	upperSig := "sha256=" + strings.ToUpper(strings.TrimPrefix(sig, "sha256="))
+	if err := verifyMetaSignature(testAppSecret, upperSig, body); err != nil {
+		t.Fatalf("uppercase signature hex must be accepted: %v", err)
+	}
 }
 
 // Meta's subscription handshake: echo hub.challenge only when the verify token matches.

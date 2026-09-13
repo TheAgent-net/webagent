@@ -145,6 +145,9 @@ func readSSEResponse(r io.Reader) (rpcResponse, error) {
 			continue
 		}
 		if v, ok := strings.CutPrefix(line, "data:"); ok {
+			if data.Len() > 0 {
+				data.WriteByte('\n')
+			}
 			data.WriteString(strings.TrimPrefix(v, " "))
 		}
 	}
@@ -226,6 +229,9 @@ func (c *Client) ListTools(ctx context.Context) ([]Tool, error) {
 func (c *Client) CallTool(ctx context.Context, name string, args map[string]any) (map[string]any, error) {
 	if err := c.initialize(ctx); err != nil {
 		return nil, err
+	}
+	if args == nil {
+		args = map[string]any{}
 	}
 	res, _, err := c.send(ctx, "tools/call", map[string]any{"name": name, "arguments": args}, c.nextID())
 	if err != nil {
