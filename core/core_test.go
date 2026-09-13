@@ -68,6 +68,60 @@ func TestHandleNormalEmitsTrace(t *testing.T) {
 	}
 }
 
+// meteredBrain reports a fixed usage on its reply.
+type meteredBrain struct{ usage Usage }
+
+func (meteredBrain) Name() string { return "metered" }
+func (m meteredBrain) Respond(context.Context, BrainInput) (AgentMessage, error) {
+	return AgentMessage{Text: "ok", Usage: &m.usage}, nil
+}
+
+// A brain that reports usage on its reply has it recorded on the turn trace.
+func TestHandleRecordsUsage(t *testing.T) {
+	obs := &recObserver{}
+	a := &Agent{Brain: meteredBrain{usage: Usage{InputTokens: 12, OutputTokens: 7}}, Observer: obs}
+	if _, err := a.Handle(context.Background(), Turn{Text: "hi"}); err != nil {
+		t.Fatal(err)
+	}
+	u := obs.last.Usage
+	if u == nil || u.InputTokens != 12 || u.OutputTokens != 7 {
+		t.Fatalf("usage not recorded on the trace: %+v", u)
+	}
+}
+
+// failingMeteredBrain errors but still carries the usage its provider billed.
+type failingMeteredBrain struct{ usage Usage }
+
+func (failingMeteredBrain) Name() string { return "failing-metered" }
+func (f failingMeteredBrain) Respond(context.Context, BrainInput) (AgentMessage, error) {
+	return AgentMessage{Usage: &f.usage}, errors.New("model down")
+}
+
+// A failed turn keeps its partial usage on the trace (a failed turn's usage is still cost).
+func TestHandleRecordsUsageOnError(t *testing.T) {
+	obs := &recObserver{}
+	a := &Agent{Brain: failingMeteredBrain{usage: Usage{InputTokens: 5}}, Observer: obs}
+	if _, err := a.Handle(context.Background(), Turn{Text: "hi"}); err == nil {
+		t.Fatal("expected the brain error to surface")
+	}
+	u := obs.last.Usage
+	if u == nil || u.InputTokens != 5 {
+		t.Fatalf("partial usage must survive a failed turn: %+v", u)
+	}
+}
+
+// A brain without a usage meter leaves the trace usage nil rather than fabricating zero.
+func TestHandleLeavesUsageNilWithoutReporter(t *testing.T) {
+	obs := &recObserver{}
+	a := &Agent{Brain: stubBrain{reply: "ok"}, Observer: obs}
+	if _, err := a.Handle(context.Background(), Turn{Text: "hi"}); err != nil {
+		t.Fatal(err)
+	}
+	if obs.last.Usage != nil {
+		t.Fatalf("no reporter should mean nil usage, got %+v", obs.last.Usage)
+	}
+}
+
 // Fail-closed: an input guardrail that errors must block before the brain runs.
 func TestHandleFailsClosedOnInputGuardError(t *testing.T) {
 	obs := &recObserver{}

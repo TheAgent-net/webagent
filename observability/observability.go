@@ -56,6 +56,10 @@ func (o *logObserver) Observe(_ context.Context, t core.TurnTrace) {
 		"blocked":              t.Blocked,
 		"spans_ms":             spans,
 	}
+	if t.Usage != nil {
+		rec["gen_ai.usage.input_tokens"] = t.Usage.InputTokens
+		rec["gen_ai.usage.output_tokens"] = t.Usage.OutputTokens
+	}
 	if t.Err != "" {
 		rec["error"] = t.Err
 	}

@@ -169,6 +169,11 @@ type Element struct {
 type AgentMessage struct {
 	Text     string
 	Elements []Element
+	// Usage, when non-nil, is the token usage of this reply as reported by the brain. It
+	// travels with the reply, so concurrent turns each report their own usage and a failed
+	// turn keeps the partial usage its provider already billed. nil means the brain did not
+	// report usage (not "zero tokens").
+	Usage *Usage
 }
 
 // Turn is an inbound message from a user on some channel.
@@ -241,6 +246,14 @@ type Span struct {
 	Err      string
 }
 
+// Usage is the token usage of one turn, aligned with the OpenTelemetry GenAI semantic
+// conventions (gen_ai.usage.input_tokens / output_tokens). Zero values mean "not reported"
+// — the echo brain and providers without a usage meter report nothing.
+type Usage struct {
+	InputTokens  int
+	OutputTokens int
+}
+
 // TurnTrace is the observable record of one Handle call. Field names align with the
 // OpenTelemetry GenAI semantic conventions where applicable (e.g. Model = gen_ai.request.model),
 // so an OTel exporter provider maps cleanly without changing this type.
@@ -251,6 +264,7 @@ type TurnTrace struct {
 	Output  string
 	Blocked bool   // a guardrail blocked the turn (at input or output)
 	Err     string // non-empty if the turn errored
+	Usage   *Usage // token usage, when the brain reports it (nil otherwise)
 	Spans   []Span
 	Total   time.Duration
 }
@@ -354,6 +368,12 @@ func (a *Agent) Handle(ctx context.Context, t Turn) (msg AgentMessage, err error
 		Candidates: cands, Memories: mems, Tools: a.Tools,
 	})
 	tr.Spans = append(tr.Spans, span("reason", rs, err))
+	// Record token usage when the brain reported it. It rides on the reply itself, so it is
+	// scoped to this turn and survives a failed Respond (a failed turn's partial usage is
+	// still cost).
+	if msg.Usage != nil {
+		tr.Usage = msg.Usage
+	}
 	if err != nil {
 		return AgentMessage{}, err
 	}

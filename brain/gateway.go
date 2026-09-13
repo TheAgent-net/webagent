@@ -78,13 +78,30 @@ func (g *gatewayBrain) Respond(ctx context.Context, in core.BrainInput) (core.Ag
 		byName[t.Name()] = t
 	}
 
+	// usage is scoped to this Respond call — concurrent turns each accumulate their own, so
+	// the token counts returned here can never be mixed with another turn's. It stays nil
+	// until a response actually reports a usage block (nil = "not reported", not "zero").
+	var usage *core.Usage
+	addUsage := func(u *usageBlock) {
+		if u == nil {
+			return
+		}
+		if usage == nil {
+			usage = &core.Usage{}
+		}
+		usage.InputTokens += u.input()
+		usage.OutputTokens += u.output()
+	}
+
 	for step := 0; step < g.cfg.MaxSteps; step++ {
-		reply, err := g.complete(ctx, msgs, tools)
+		reply, u, err := g.complete(ctx, msgs, tools)
+		addUsage(u)
 		if err != nil {
-			return core.AgentMessage{}, err
+			// A failed turn keeps the partial usage its provider already billed.
+			return core.AgentMessage{Usage: usage}, err
 		}
 		if len(reply.ToolCalls) == 0 {
-			return core.AgentMessage{Text: reply.Content}, nil
+			return core.AgentMessage{Text: reply.Content, Usage: usage}, nil
 		}
 		// record the assistant turn (carrying its tool calls), then each tool's result
 		msgs = append(msgs, reply)
@@ -92,7 +109,7 @@ func (g *gatewayBrain) Respond(ctx context.Context, in core.BrainInput) (core.Ag
 			msgs = append(msgs, chatMessage{Role: "tool", ToolCallID: tc.ID, Content: runTool(ctx, byName, tc)})
 		}
 	}
-	return core.AgentMessage{Text: "(stopped: reached max tool steps)"}, nil
+	return core.AgentMessage{Text: "(stopped: reached max tool steps)", Usage: usage}, nil
 }
 
 // --- OpenAI-compatible Chat Completions wire types ---
@@ -113,7 +130,7 @@ type toolCall struct {
 	} `json:"function"`
 }
 
-func (g *gatewayBrain) complete(ctx context.Context, msgs []chatMessage, tools []map[string]any) (chatMessage, error) {
+func (g *gatewayBrain) complete(ctx context.Context, msgs []chatMessage, tools []map[string]any) (chatMessage, *usageBlock, error) {
 	body := map[string]any{"model": g.cfg.Model, "messages": msgs}
 	if len(tools) > 0 {
 		body["tools"] = tools
@@ -122,7 +139,7 @@ func (g *gatewayBrain) complete(ctx context.Context, msgs []chatMessage, tools [
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(g.cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(buf))
 	if err != nil {
-		return chatMessage{}, err
+		return chatMessage{}, nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if key := os.Getenv(g.cfg.APIKeyEnv); key != "" {
@@ -131,25 +148,51 @@ func (g *gatewayBrain) complete(ctx context.Context, msgs []chatMessage, tools [
 
 	resp, err := g.http.Do(req)
 	if err != nil {
-		return chatMessage{}, err
+		return chatMessage{}, nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return chatMessage{}, fmt.Errorf("gateway %s: %s", resp.Status, strings.TrimSpace(string(b)))
+		return chatMessage{}, nil, fmt.Errorf("gateway %s: %s", resp.Status, strings.TrimSpace(string(b)))
 	}
 	var out struct {
 		Choices []struct {
 			Message chatMessage `json:"message"`
 		} `json:"choices"`
+		Usage *usageBlock `json:"usage"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return chatMessage{}, err
+		return chatMessage{}, nil, err
 	}
 	if len(out.Choices) == 0 {
-		return chatMessage{}, fmt.Errorf("gateway returned no choices")
+		// The provider may still have billed this response: report the usage alongside the
+		// error rather than dropping it.
+		return chatMessage{}, out.Usage, fmt.Errorf("gateway returned no choices")
 	}
-	return out.Choices[0].Message, nil
+	return out.Choices[0].Message, out.Usage, nil
+}
+
+// usageBlock covers both spellings of the OpenAI-compatible usage object: the classic
+// prompt_tokens/completion_tokens and the newer input_tokens/output_tokens.
+type usageBlock struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	InputTokens      int `json:"input_tokens"`
+	OutputTokens     int `json:"output_tokens"`
+}
+
+func (u *usageBlock) input() int {
+	if u.PromptTokens > 0 {
+		return u.PromptTokens
+	}
+	return u.InputTokens
+}
+
+func (u *usageBlock) output() int {
+	if u.CompletionTokens > 0 {
+		return u.CompletionTokens
+	}
+	return u.OutputTokens
 }
 
 func openAITools(tools []core.Tool) []map[string]any {
