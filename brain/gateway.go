@@ -186,6 +186,9 @@ func runTool(ctx context.Context, byName map[string]core.Tool, tc toolCall) stri
 			return fmt.Sprintf("error: bad arguments: %v", err)
 		}
 	}
+	if args == nil {
+		args = map[string]any{}
+	}
 	res, err := t.Call(ctx, args)
 	if err != nil {
 		return fmt.Sprintf("error: %v", err)

@@ -233,3 +233,33 @@ func TestSlackRequiresCredentials(t *testing.T) {
 		t.Fatal("slack must require a signing secret")
 	}
 }
+
+func TestVerifySlackSignatureCaseInsensitive(t *testing.T) {
+	body := []byte(`{"type":"event_callback"}`)
+	now := time.Now()
+	sig, ts := signSlack(t, testSigningSecret, body, now)
+	upperSig := "v0=" + strings.ToUpper(strings.TrimPrefix(sig, "v0="))
+
+	valid := http.Header{}
+	valid.Set("X-Slack-Signature", upperSig)
+	valid.Set("X-Slack-Request-Timestamp", ts)
+	if err := verifySlackSignature(testSigningSecret, valid, body, now); err != nil {
+		t.Fatalf("uppercase signature hex must be accepted: %v", err)
+	}
+}
+
+func TestSlackPostMessageReportsHTTPError(t *testing.T) {
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "rate_limited", http.StatusTooManyRequests)
+	}))
+	defer api.Close()
+
+	s := newTestSlack(t, api.URL)
+	err := s.postMessage(context.Background(), "C1", "", "hello")
+	if err == nil {
+		t.Fatal("expected error on non-200 HTTP status")
+	}
+	if !strings.Contains(err.Error(), "429") || !strings.Contains(err.Error(), "rate_limited") {
+		t.Fatalf("expected status code 429 and response body in error, got: %v", err)
+	}
+}

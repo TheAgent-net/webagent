@@ -211,10 +211,13 @@ func verifyMetaSignature(appSecret, header string, body []byte) error {
 	if !ok {
 		return fmt.Errorf("unexpected signature format")
 	}
+	gotBytes, err := hex.DecodeString(sig)
+	if err != nil {
+		return fmt.Errorf("invalid signature encoding: %w", err)
+	}
 	mac := hmac.New(sha256.New, []byte(appSecret))
 	mac.Write(body)
-	want := hex.EncodeToString(mac.Sum(nil))
-	if !hmac.Equal([]byte(want), []byte(sig)) {
+	if !hmac.Equal(mac.Sum(nil), gotBytes) {
 		return fmt.Errorf("signature mismatch")
 	}
 	return nil

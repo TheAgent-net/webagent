@@ -184,6 +184,10 @@ func (s *slackChannel) postMessage(ctx context.Context, channel, thread, text st
 		return err
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode >= 300 {
+		msg, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return fmt.Errorf("slack chat.postMessage: %s: %s", resp.Status, strings.TrimSpace(string(msg)))
+	}
 	// Slack reports application errors in a 200 body.
 	var res struct {
 		OK    bool   `json:"ok"`
@@ -191,6 +195,9 @@ func (s *slackChannel) postMessage(ctx context.Context, channel, thread, text st
 	}
 	_ = json.NewDecoder(resp.Body).Decode(&res)
 	if !res.OK {
+		if res.Error == "" {
+			res.Error = "unknown slack error"
+		}
 		return fmt.Errorf("slack chat.postMessage: %s", res.Error)
 	}
 	return nil
@@ -212,11 +219,18 @@ func verifySlackSignature(secret string, h http.Header, body []byte, now time.Ti
 	if d := now.Sub(time.Unix(ts, 0)); d > 5*time.Minute || d < -5*time.Minute {
 		return fmt.Errorf("stale timestamp (replay window exceeded)")
 	}
+	sig, ok := strings.CutPrefix(got, "v0=")
+	if !ok {
+		return fmt.Errorf("unexpected signature format")
+	}
+	gotBytes, err := hex.DecodeString(sig)
+	if err != nil {
+		return fmt.Errorf("invalid signature encoding: %w", err)
+	}
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte("v0:" + tsStr + ":"))
 	mac.Write(body)
-	want := "v0=" + hex.EncodeToString(mac.Sum(nil))
-	if !hmac.Equal([]byte(want), []byte(got)) {
+	if !hmac.Equal(mac.Sum(nil), gotBytes) {
 		return fmt.Errorf("signature mismatch")
 	}
 	return nil
