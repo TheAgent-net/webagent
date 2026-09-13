@@ -17,9 +17,15 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/TheAgent-net/webagent/internal/backoff"
 )
 
 const protocolVersion = "2025-06-18"
+
+// mcpRetryPolicy bounds retries of a JSON-RPC round trip: 3 attempts with 500ms-4s backoff;
+// provider-supplied Retry-After hints are honored up to the 60s cap.
+var mcpRetryPolicy = backoff.Policy{Attempts: 3, Base: 500 * time.Millisecond, Max: 60 * time.Second}
 
 // Client talks to one MCP endpoint over Streamable HTTP.
 type Client struct {
@@ -61,7 +67,14 @@ type rpcResponse struct {
 func (c *Client) nextID() int64 { return atomic.AddInt64(&c.id, 1) }
 
 // send posts a single JSON-RPC message. id == 0 means a notification (no id, no parsed result).
-func (c *Client) send(ctx context.Context, method string, params any, id int64) (json.RawMessage, http.Header, error) {
+//
+// retryable controls whether transient failures (transport errors, 429, 5xx) are retried with
+// bounded exponential backoff. Only idempotent requests may pass true — a tools/call may
+// already have executed server-side when its response was lost, and this client has no way to
+// know, so it never replays one. Reusing the same request id across retries lets a server that
+// does implement de-duplication collapse them. Client faults (other 4xx), undecodable replies,
+// and JSON-RPC application errors always fail fast.
+func (c *Client) send(ctx context.Context, method string, params any, id int64, retryable bool) (json.RawMessage, http.Header, error) {
 	body := map[string]any{"jsonrpc": "2.0", "method": method}
 	if id != 0 {
 		body["id"] = id
@@ -71,52 +84,101 @@ func (c *Client) send(ctx context.Context, method string, params any, id int64) 
 	}
 	buf, _ := json.Marshal(body)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.url, bytes.NewReader(buf))
-	if err != nil {
-		return nil, nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json, text/event-stream")
-	if c.apiKey != "" {
-		req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	}
-	if c.sessionID != "" {
-		req.Header.Set("Mcp-Session-Id", c.sessionID)
-	}
-	if c.initDone {
-		req.Header.Set("MCP-Protocol-Version", protocolVersion)
-	}
-
-	resp, err := c.httpc.Do(req)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	if id == 0 { // notification: any 2xx is success, nothing to parse
-		if resp.StatusCode >= 300 {
-			return nil, resp.Header, fmt.Errorf("mcp %s: %s", method, resp.Status)
+	var result json.RawMessage
+	var hdr http.Header
+	// retry wraps an error per the request's idempotency: when retries are disallowed (e.g.
+	// tools/call), every failure is terminal.
+	retry := func(err error) error {
+		if !retryable {
+			return backoff.Terminal(err)
 		}
-		return nil, resp.Header, nil
+		return err
 	}
-	if resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		return nil, resp.Header, fmt.Errorf("mcp %s: %s: %s", method, resp.Status, strings.TrimSpace(string(b)))
+	// retryRateLimit additionally honors a provider-supplied Retry-After hint (clamped by the
+	// policy's Max).
+	retryRateLimit := func(err error, h string) error {
+		if !retryable {
+			return backoff.Terminal(err)
+		}
+		return backoff.WithAfter(err, backoff.RetryAfterDelay(h))
 	}
 
-	var rr rpcResponse
-	if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/event-stream") {
-		rr, err = readSSEResponse(resp.Body)
-	} else {
-		err = json.NewDecoder(resp.Body).Decode(&rr)
-	}
+	err := backoff.Do(ctx, mcpRetryPolicy, func() error {
+		// A fresh reader per attempt: an HTTP request consumes its body.
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.url, bytes.NewReader(buf))
+		if err != nil {
+			return backoff.Terminal(err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Accept", "application/json, text/event-stream")
+		if c.apiKey != "" {
+			req.Header.Set("Authorization", "Bearer "+c.apiKey)
+		}
+		if c.sessionID != "" {
+			req.Header.Set("Mcp-Session-Id", c.sessionID)
+		}
+		if c.initDone {
+			req.Header.Set("MCP-Protocol-Version", protocolVersion)
+		}
+
+		resp, err := c.httpc.Do(req)
+		if err != nil {
+			return retry(err) // transport failure
+		}
+		defer func() { _ = resp.Body.Close() }()
+		hdr = resp.Header.Clone()
+
+		if id == 0 { // notification: any 2xx is success, nothing to parse
+			if resp.StatusCode >= 300 {
+				b, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+				err := fmt.Errorf("mcp %s: %s: %s", method, resp.Status, strings.TrimSpace(string(b)))
+				if resp.StatusCode == http.StatusTooManyRequests {
+					return retryRateLimit(err, resp.Header.Get("Retry-After"))
+				}
+				if retryableStatus(resp.StatusCode) {
+					return retry(err)
+				}
+				return backoff.Terminal(err)
+			}
+			return nil
+		}
+		if resp.StatusCode >= 300 {
+			b, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+			err := fmt.Errorf("mcp %s: %s: %s", method, resp.Status, strings.TrimSpace(string(b)))
+			if resp.StatusCode == http.StatusTooManyRequests {
+				return retryRateLimit(err, resp.Header.Get("Retry-After"))
+			}
+			if retryableStatus(resp.StatusCode) {
+				return retry(err)
+			}
+			return backoff.Terminal(err)
+		}
+
+		var rr rpcResponse
+		if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/event-stream") {
+			rr, err = readSSEResponse(resp.Body)
+		} else {
+			err = json.NewDecoder(resp.Body).Decode(&rr)
+		}
+		if err != nil {
+			return backoff.Terminal(fmt.Errorf("mcp %s: decode: %w", method, err))
+		}
+		if rr.Error != nil {
+			return backoff.Terminal(fmt.Errorf("mcp %s: %s (code %d)", method, rr.Error.Message, rr.Error.Code))
+		}
+		result = rr.Result
+		return nil
+	})
 	if err != nil {
-		return nil, resp.Header, fmt.Errorf("mcp %s: decode: %w", method, err)
+		return nil, hdr, err
 	}
-	if rr.Error != nil {
-		return nil, resp.Header, fmt.Errorf("mcp %s: %s (code %d)", method, rr.Error.Message, rr.Error.Code)
-	}
-	return rr.Result, resp.Header, nil
+	return result, hdr, nil
+}
+
+// retryableStatus reports whether an HTTP status is worth another attempt (rate limits and
+// server faults) as opposed to client faults like auth (other 4xx).
+func retryableStatus(code int) bool {
+	return code == http.StatusTooManyRequests || code >= 500
 }
 
 // readSSEResponse parses a single-response SSE stream and returns the first event that decodes
@@ -170,7 +232,7 @@ func (c *Client) initialize(ctx context.Context) error {
 		"capabilities":    map[string]any{},
 		"clientInfo":      map[string]any{"name": "webagent", "version": "0.2.0"},
 	}
-	_, hdr, err := c.send(ctx, "initialize", params, c.nextID())
+	_, hdr, err := c.send(ctx, "initialize", params, c.nextID(), true)
 	if err != nil {
 		return err
 	}
@@ -178,7 +240,7 @@ func (c *Client) initialize(ctx context.Context) error {
 		c.sessionID = sid
 	}
 	c.initDone = true // subsequent requests carry the protocol-version header
-	if _, _, err := c.send(ctx, "notifications/initialized", nil, 0); err != nil {
+	if _, _, err := c.send(ctx, "notifications/initialized", nil, 0, true); err != nil {
 		return err
 	}
 	return nil
@@ -196,7 +258,7 @@ func (c *Client) ListTools(ctx context.Context) ([]Tool, error) {
 		if cursor != "" {
 			params["cursor"] = cursor
 		}
-		res, _, err := c.send(ctx, "tools/list", params, c.nextID())
+		res, _, err := c.send(ctx, "tools/list", params, c.nextID(), true)
 		if err != nil {
 			return nil, err
 		}
@@ -227,7 +289,10 @@ func (c *Client) CallTool(ctx context.Context, name string, args map[string]any)
 	if err := c.initialize(ctx); err != nil {
 		return nil, err
 	}
-	res, _, err := c.send(ctx, "tools/call", map[string]any{"name": name, "arguments": args}, c.nextID())
+	// tools/call is never retried: the server may already have executed the first attempt
+	// when its response was lost, and this client cannot tell — replaying it could run a
+	// side-effecting tool twice.
+	res, _, err := c.send(ctx, "tools/call", map[string]any{"name": name, "arguments": args}, c.nextID(), false)
 	if err != nil {
 		return nil, err
 	}
