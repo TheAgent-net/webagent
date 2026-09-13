@@ -13,6 +13,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"sync"
 	"time"
 )
 
@@ -280,7 +281,15 @@ type Agent struct {
 	// Logger is the framework's structured logger. When nil, the framework logs nothing
 	// (a library must not impose output). Applications inject one to see operational logs.
 	Logger *slog.Logger
+	// DrainTimeout bounds how long Run waits for in-flight turns to finish after its context
+	// is cancelled. Non-positive values use the default (30s). When the timeout elapses,
+	// remaining turns are abandoned and Run returns.
+	DrainTimeout time.Duration
 }
+
+// ErrShuttingDown is returned by a channel's Dispatch when the agent has begun shutting down:
+// new turns are rejected so the in-flight ones can drain.
+var ErrShuttingDown = errors.New("agent shutting down")
 
 // discardLogger drops all records; used when no Logger is injected.
 var discardLogger = slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -398,26 +407,83 @@ func span(name string, start time.Time, err error) Span {
 // fails with a non-nil error. Each channel gets a Dispatch that handles the turn and renders
 // it via that binding's presenter.
 //
-// A channel that returns nil has stopped cleanly (an inert stub channel, or a live channel
-// closed by ctx cancellation) and must NOT tear down the others — otherwise a single stub
-// channel in the spec would kill the whole agent. Only a non-nil error aborts.
+// A channel that returns nil has stopped cleanly (an inert channel, or a live channel closed
+// by ctx cancellation) and must NOT tear down the others — otherwise a single inert channel
+// in the spec would kill the whole agent. Only a non-nil error aborts.
+//
+// Shutdown drains: when ctx is done, Run stops admitting new turns (Dispatch returns
+// ErrShuttingDown), waits up to DrainTimeout for in-flight turns to complete, and only then
+// cancels the channels' context and returns ctx.Err(). Customers mid-turn keep their replies;
+// turns that outlive the drain timeout are abandoned.
 func (a *Agent) Run(ctx context.Context) error {
+	drainTimeout := a.DrainTimeout
+	if drainTimeout <= 0 {
+		drainTimeout = defaultDrainTimeout
+	}
+	// baseCtx is what channels see. It must NOT be cancelled when the parent ctx is done —
+	// that happens only after in-flight turns drain — so a turn in progress keeps a live
+	// context for its model call and its outbound reply. WithoutCancel detaches it from the
+	// parent's cancellation (values are preserved); stop() is the only thing that ends it.
+	baseCtx, stop := context.WithCancel(context.WithoutCancel(ctx))
+	defer stop()
+
+	// Admission accounting. mu synchronizes turn admission with the drain wait: a turn
+	// admitted before shutdown begins is always counted (and drained), one that arrives after
+	// is rejected with ErrShuttingDown. drained closes once, when draining begins with no
+	// turns left or when the last admitted turn releases.
+	var mu sync.Mutex
+	draining := false
+	inFlight := 0
+	drained := make(chan struct{})
+
+	release := func() {
+		mu.Lock()
+		inFlight--
+		if draining && inFlight == 0 {
+			close(drained)
+		}
+		mu.Unlock()
+	}
+
 	errCh := make(chan error, len(a.Bindings))
 	for _, b := range a.Bindings {
 		b := b
 		a.logger().Info("channel starting", "channel", b.Channel.Name())
-		d := func(ctx context.Context, t Turn) (Payload, error) {
-			msg, err := a.Handle(ctx, t)
+		d := func(turnCtx context.Context, t Turn) (Payload, error) {
+			mu.Lock()
+			if draining {
+				mu.Unlock()
+				return Payload{}, ErrShuttingDown
+			}
+			inFlight++
+			mu.Unlock()
+			defer release()
+
+			msg, err := a.Handle(turnCtx, t)
 			if err != nil {
 				return Payload{}, err
 			}
 			return b.Presenter.Render(msg), nil
 		}
-		go func() { errCh <- b.Channel.Start(ctx, d) }()
+		go func() { errCh <- b.Channel.Start(baseCtx, d) }()
 	}
+
 	for {
 		select {
 		case <-ctx.Done():
+			// Stop admitting new turns; existing ones run to completion.
+			mu.Lock()
+			draining = true
+			if inFlight == 0 {
+				close(drained)
+			}
+			mu.Unlock()
+			select {
+			case <-drained:
+			case <-time.After(drainTimeout):
+				a.logger().Warn("drain timeout elapsed; abandoning in-flight turns", "agent", a.Name)
+			}
+			stop() // close the channels' servers and cancel any stragglers
 			return ctx.Err()
 		case err := <-errCh:
 			if err != nil {
@@ -427,6 +493,8 @@ func (a *Agent) Run(ctx context.Context) error {
 		}
 	}
 }
+
+const defaultDrainTimeout = 30 * time.Second
 
 // Decode re-decodes a loosely-typed config map (the spec's per-provider `config`) into a
 // typed struct — the passthrough that lets a provider declare its own config shape.

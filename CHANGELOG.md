@@ -6,6 +6,14 @@ All notable changes are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Graceful shutdown with in-flight draining** in `Agent.Run`: after the context is cancelled
+  it stops admitting new turns (a channel's `Dispatch` returns `core.ErrShuttingDown`), waits up
+  to `Agent.DrainTimeout` (default 30s) for active turns to finish — so a customer mid-answer
+  keeps their reply — and only then cancels the channels' context and returns. Turns that outlive
+  the drain timeout are abandoned.
+
 ## [0.3.0] - 2026-08-07
 
 ### Added
