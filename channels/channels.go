@@ -1,7 +1,7 @@
 // Package channels is the channel slot: the menu of transport options. A Channel receives
 // user turns and sends back rendered payloads via the Dispatch it is given at Start. a2a
-// and web are runnable HTTP channels; the messaging channels are registered stubs that
-// report "not configured" until a platform adapter + credentials are wired.
+// and web are runnable HTTP channels; the messaging channels (slack, whatsapp, telegram)
+// are live adapters registered in their own files.
 package channels
 
 import (
@@ -15,17 +15,21 @@ import (
 	"github.com/TheAgent-net/webagent/spi"
 )
 
-// ErrNotConfigured is returned by a stub channel that has no live adapter yet.
-var ErrNotConfigured = errors.New("channel not configured")
-
 // Registry is the channel slot.
 var Registry = spi.New[core.Channel]("channel")
+
+// ErrNotConfigured is the historical sentinel returned by a stub channel that had no live
+// adapter yet. No registered channel is inert anymore, so nothing returns it — but it was an
+// exported symbol, and per COMPATIBILITY.md an exported identifier is deprecated, never
+// removed, so downstream references keep compiling.
+//
+// Deprecated: every registered channel is live; no provider returns this error.
+var ErrNotConfigured = errors.New("channel not configured")
 
 func init() {
 	Registry.Register(spi.Descriptor{Name: "a2a", Summary: "agent-to-agent HTTP endpoint (marketplace)"}, newHTTP("a2a", ":8787", "/a2a"))
 	Registry.Register(spi.Descriptor{Name: "web", Summary: "website widget HTTP endpoint"}, newHTTP("web", ":9090", "/chat"))
-	// slack and whatsapp are live adapters registered in their own files.
-	Registry.Register(spi.Descriptor{Name: "telegram", Summary: "Telegram (stub until adapter + credentials)"}, newStub("telegram"))
+	// slack, whatsapp, and telegram are live adapters registered in their own files.
 	Registry.SetDefault("a2a")
 }
 
@@ -84,21 +88,5 @@ func (h *httpChannel) Start(ctx context.Context, dispatch core.Dispatch) error {
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
-	return nil
-}
-
-// --- stub: a selectable-but-inert channel; replace with a real adapter to activate. ---
-
-type stub struct{ name string }
-
-func newStub(name string) spi.Constructor[core.Channel] {
-	return func(map[string]any) (core.Channel, error) { return &stub{name: name}, nil }
-}
-
-func (s *stub) Name() string { return s.name }
-
-// Start is inert: a stub channel accepts no traffic until a real adapter replaces it. It
-// returns nil so it never takes down the other (live) channels sharing the agent.
-func (s *stub) Start(context.Context, core.Dispatch) error {
 	return nil
 }

@@ -17,7 +17,7 @@ nobody forks the core.
 | Retrieval | `Retriever` | live, keyword, hybrid | live |
 | Memory | `Memory` | session (+ partner adapters) | session |
 | Guardrail | `Guardrail` | basic, off (+ partner adapters) | basic |
-| Channel | `Channel` | a2a, web, **slack**, **whatsapp** (live); telegram (stub) | a2a |
+| Channel | `Channel` | a2a, web, slack, whatsapp, telegram (all live) | a2a |
 | Secrets | `Secrets` | env, file, static (managed vaults to come) | env |
 | Presenter | `Presenter` | text, terminal (QR), web | text |
 | Model | `Brain` | echo, openrouter, gateway (any OpenAI-compatible) | echo |
@@ -38,10 +38,10 @@ Both examples use the offline-friendly `demo` action provider (no network) so
 `validate`/`serve` work without credentials or a live MCP. Swap in `"provider": "mcp"`
 and an `mcpUrl` when you have a real server (see below).
 
-- [`examples/zomato.json`](examples/zomato.json) — food delivery: `live` retrieval, `a2a` +
-  `whatsapp` (stub until adapter).
+- [`examples/zomato.json`](examples/zomato.json) — food delivery: `live` retrieval, `a2a`
+  channel.
 - [`examples/bakery.json`](examples/bakery.json) — a bakery: `keyword` retrieval over its own
-  catalog, `web` + `slack` (stub until adapter).
+  catalog, `web` channel.
 
 ## CLI
 
@@ -85,11 +85,12 @@ agent (each guarded):
 count. Streamable HTTP (JSON and SSE) and bearer/api-key auth are supported; OAuth-gated servers
 are a follow-up.
 
-## Reach your customers: Slack and WhatsApp
+## Reach your customers: Slack, WhatsApp, and Telegram
 
-Live channel adapters put the same agent where customers already are. Both verify every
-inbound webhook signature, acknowledge immediately (then reply through the platform API),
-ignore their own messages, and de-duplicate retried deliveries.
+Live channel adapters put the same agent where customers already are. All three verify every
+inbound webhook, acknowledge immediately (then reply through the platform API), ignore their
+own messages, and de-duplicate retried deliveries. Slack and WhatsApp use HMAC request
+signatures; Telegram authenticates its webhook with a secret token header.
 
 ```json
 "channels": [
@@ -100,12 +101,16 @@ ignore their own messages, and de-duplicate retried deliveries.
       "phoneNumberId": "1234567890",
       "accessTokenSecret": "WHATSAPP_ACCESS_TOKEN",
       "appSecretSecret": "WHATSAPP_APP_SECRET",
-      "verifyTokenSecret": "WHATSAPP_VERIFY_TOKEN" } }
+      "verifyTokenSecret": "WHATSAPP_VERIFY_TOKEN" } },
+  { "type": "telegram", "presenter": "text", "config": {
+      "botTokenSecret": "TELEGRAM_BOT_TOKEN",
+      "secretTokenSecret": "TELEGRAM_SECRET_TOKEN" } }
 ]
 ```
 
 See [`examples/support-live-channels.json`](examples/support-live-channels.json). Point Slack's
-Request URL at `/slack/events` and Meta's callback URL at `/whatsapp/webhook`.
+Request URL at `/slack/events`, Meta's callback URL at `/whatsapp/webhook`, and set Telegram's
+webhook (via `setWebhook` with the same secret token) at `/telegram/webhook`.
 
 ## Secrets: a spec names them, never contains them
 
@@ -135,13 +140,13 @@ Complete and green (build/vet/test):
 - **Phase 4 — observability + eval:** per-turn `TurnTrace` (OTel GenAI-aligned) to a pluggable
   observer (none/log/memory), and an [`eval/`](eval/eval.go) harness (scenarios + checks).
 
-- **Phase 5 — reach + credentials:** live **Slack** and **WhatsApp** channel adapters (signed
-  webhooks, fast ack, loop-safe, de-duplicated) and a multi-tenant **secrets vault** that
-  resolves `<name>Secret` references for every slot.
+- **Phase 5 — reach + credentials:** live **Slack**, **WhatsApp**, and **Telegram** channel
+  adapters (signed webhooks, fast ack, loop-safe, de-duplicated) and a multi-tenant **secrets
+  vault** that resolves `<name>Secret` references for every slot.
 
 **Works today:** echo/openrouter/gateway brains; `mcp` over Streamable HTTP (JSON + SSE,
-bearer/api-key); HTTP `a2a`/`web` channels; live Slack + WhatsApp; secrets vault (env/file/static);
-GuardAll; TurnTrace; `keys` CLI.
+bearer/api-key); HTTP `a2a`/`web` channels; live Slack + WhatsApp + Telegram; secrets vault
+(env/file/static); GuardAll; TurnTrace; `keys` CLI.
 
-**Not yet:** browser action provider; OAuth-gated MCP; OTel exporter; Telegram adapter; partner
-memory/guardrail adapters; AgentNet identity forwarding + billing. See [DESIGN.md](DESIGN.md).
+**Not yet:** browser action provider; OAuth-gated MCP; OTel exporter; partner memory/guardrail
+adapters; AgentNet identity forwarding + billing. See [DESIGN.md](DESIGN.md).
