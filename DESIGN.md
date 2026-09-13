@@ -173,7 +173,5 @@ These are understood and scheduled, not overlooked. They are surfaced here (and 
   dedup/idempotency so a retry does not double-execute.
 - **Rate limits, quotas, and cost caps** per tenant/user (the model gateway is the natural
   meter).
-- **Graceful shutdown / in-flight draining** in `Agent.Run` (currently ctx-cancel closes
-  channels without draining active turns).
 - **Multi-tenant credential vault** and per-tenant provider credentials, and the AgentNet
   identity-forwarding + escrow/billing integration.

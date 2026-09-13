@@ -46,6 +46,6 @@ CI runs `govulncheck` on every push and pull request. Dependencies are pinned vi
 
 Tracked in [DESIGN.md](DESIGN.md) §13: per-slot fallback/circuit-breaker, PII/secret redaction in
 traces and memory, idempotency keys for side-effecting *tools* (the webhook layer is already
-de-duplicated), rate limits / cost caps, and graceful in-flight draining. The multi-tenant
-credential vault has landed (see [`secrets/`](secrets/secrets.go)); managed/cloud vault providers
-are still to come.
+de-duplicated), and rate limits / cost caps. Graceful in-flight draining has landed
+(`Agent.Run` + `Agent.DrainTimeout`). The multi-tenant credential vault has landed (see
+[`secrets/`](secrets/secrets.go)); managed/cloud vault providers are still to come.
