@@ -6,6 +6,22 @@ All notable changes are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Live Telegram channel adapter** (Bot API): authenticates webhook deliveries with the secret
+  token (`X-Telegram-Bot-Api-Secret-Token`, constant-time compare), acknowledges immediately and
+  replies through `sendMessage`, skips bot and non-text updates so the agent cannot loop, and
+  de-duplicates retried deliveries by `update_id`. `examples/support-live-channels.json` shows it
+  configured by secret reference.
+
+### Changed
+
+- Telegram reply delivery failures are recorded on the standard `slog` logger seam (hosts
+  redirect it with `slog.SetDefault`) instead of being silently discarded after the webhook is
+  acknowledged.
+- The generic stub channel mechanism is gone (no registered channel is inert); the exported
+  `ErrNotConfigured` sentinel is retained as deprecated so downstream references keep compiling.
+
 ## [0.3.0] - 2026-08-07
 
 ### Added

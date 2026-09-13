@@ -33,6 +33,16 @@
         "appSecretSecret": "WHATSAPP_APP_SECRET",
         "verifyTokenSecret": "WHATSAPP_VERIFY_TOKEN"
       }
+    },
+    {
+      "type": "telegram",
+      "presenter": "text",
+      "config": {
+        "addr": ":8082",
+        "path": "/telegram/webhook",
+        "botTokenSecret": "TELEGRAM_BOT_TOKEN",
+        "secretTokenSecret": "TELEGRAM_SECRET_TOKEN"
+      }
     }
   ]
 }

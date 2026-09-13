@@ -48,14 +48,3 @@ func TestHTTPChannelRejectsBadJSON(t *testing.T) {
 		t.Fatalf("want 400 on bad JSON, got %d", resp.StatusCode)
 	}
 }
-
-// A stub channel is inert: Start returns nil immediately (so it never tears down the agent).
-func TestStubChannelIsInert(t *testing.T) {
-	c, err := Registry.Get("telegram", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := c.Start(context.Background(), nil); err != nil {
-		t.Fatalf("stub Start should return nil, got %v", err)
-	}
-}
