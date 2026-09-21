@@ -1,0 +1,17 @@
+[Unit]
+Description=Corgi insurance advisor webagent
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/opt/webagent-corgi
+Environment=PATH=/home/ec2-user/.bun/bin:/usr/local/bin:/usr/bin
+EnvironmentFile=-/opt/webagent-corgi/.env.corgi
+ExecStart=/home/ec2-user/.bun/bin/bun src/cli.ts corgi :8788
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

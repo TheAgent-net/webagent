@@ -30,6 +30,77 @@ describe("copy-on-write context", () => {
 });
 
 describe("models", () => {
+  test("toOpenAI maps pin to system", async () => {
+    const { toOpenAI } = await import("../src/models.ts");
+    const out = toOpenAI([
+      { role: "system", content: "you are the insurance advisor" },
+      { role: "pin", content: "Site pack: Corgi quote flow." },
+      { role: "user", content: "we are a seed SaaS" },
+    ]);
+    expect(out[1]).toEqual({ role: "system", content: "Site pack: Corgi quote flow." });
+    expect(out.map((m) => (m as { role: string }).role)).not.toContain("pin");
+  });
+
+  test("toOpenAI keeps assistant tool_calls ahead of tool results", async () => {
+    const { toOpenAI } = await import("../src/models.ts");
+    const out = toOpenAI([
+      { role: "user", content: "map our risks" },
+      {
+        role: "assistant",
+        content: "",
+        toolCalls: [{ id: "c1", name: "map_risks", arguments: { category: "SaaS", does: "analytics" } }],
+      },
+      { role: "tool", content: "{\"offer\":\"Seed\"}", toolCallId: "c1" },
+      { role: "tool", content: "orphan", toolCallId: "missing" },
+    ]);
+    expect(out[1]).toEqual({
+      role: "assistant",
+      content: null,
+      tool_calls: [
+        {
+          id: "c1",
+          type: "function",
+          function: { name: "map_risks", arguments: "{\"category\":\"SaaS\",\"does\":\"analytics\"}" },
+        },
+      ],
+    });
+    expect(out[2]).toEqual({ role: "tool", content: "{\"offer\":\"Seed\"}", tool_call_id: "c1" });
+    expect(out).toHaveLength(3);
+  });
+
+  test("start records tool_calls so a second model step can run", async () => {
+    const h = new Harness();
+    let n = 0;
+    h.addModel({
+      id: "mock",
+      ready: true,
+      supportsTools: true,
+      async reason(req, out) {
+        n++;
+        if (n === 1) {
+          out.pushToolDelta(0, "c1", "lookup", '{"q":"x"}');
+          return;
+        }
+        const asst = req.messages.find((m) => m.role === "assistant" && m.toolCalls?.length);
+        expect(asst?.toolCalls?.[0]).toEqual({ id: "c1", name: "lookup", arguments: { q: "x" } });
+        expect(req.messages.some((m) => m.role === "tool" && m.toolCallId === "c1")).toBe(true);
+        out.pushText("gmail");
+      },
+    });
+    const lookup = {
+      name: "lookup",
+      async call() {
+        return { ok: true };
+      },
+    };
+    h.addTool(lookup);
+    const run = h.create({ model: "mock", tools: [lookup] });
+    run.inject({ text: "email customers" });
+    const ex = await run.start();
+    expect(n).toBe(2);
+    expect(ex.lastText).toBe("gmail");
+  });
+
   test("getAvailableModels lists echo ready and openrouter not ready without a key", () => {
     const prev = process.env.OPENROUTER_API_KEY;
     delete process.env.OPENROUTER_API_KEY;

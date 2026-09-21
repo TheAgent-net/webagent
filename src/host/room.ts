@@ -46,9 +46,15 @@ export class Room {
     if (!msg) return this.peek();
     this.run.inject({ text: `[${from}] ${msg}` });
     this.emit({ t: "say", from, text: msg });
-    const ex = await this.harness.scheduler.run(() => this.run.start());
-    this.emit({ t: "reply", text: ex.lastText });
-    return { ...ex, from };
+    try {
+      const ex = await this.harness.scheduler.run(() => this.run.start());
+      this.emit({ t: "reply", text: ex.lastText });
+      return { ...ex, from };
+    } catch (e) {
+      const text = "I hit a snag generating that. Send the same message again.";
+      this.emit({ t: "reply", text });
+      return { ...this.run.explain(), lastText: text, from, error: String(e) };
+    }
   }
 
   subscribe(fn: (ev: RoomEvent) => void): () => void {

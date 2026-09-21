@@ -19,3 +19,9 @@ export function clientKind(req: Request): ClientKind {
   if (req.method === "GET" && /mozilla|chrome|safari|firefox|edg\//i.test(ua)) return "human";
   return "machine";
 }
+
+/** Query flags that force the agent card even from a browser. */
+export function wantsAgentCard(url: URL): boolean {
+  const q = url.searchParams;
+  return q.get("agent") === "1" || q.get("format") === "json" || q.get("card") === "1";
+}

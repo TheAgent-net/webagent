@@ -16,6 +16,12 @@ experiment/last-report.json
 experiment/last-report.md
 experiment/gepa/last.json
 
+# mirrored site snapshots — too large for git; re-run mirror scripts locally
+site/corgi/**
+!site/corgi/images/
+!site/corgi/images/corgi logo vector.svg
+site/composio/
+
 # graphify — commit the graph; keep machine-local cache/cost out of git
 graphify-out/cost.json
 graphify-out/cache/

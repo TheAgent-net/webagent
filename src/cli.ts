@@ -12,6 +12,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent serve [addr]        public HTTPS host (default :8787)");
   console.error("  webagent ingest <url>        crawl a site, build flows, attach a run");
   console.error("  webagent pair <url>          two agents: site seller + buyer (Cursor SDK)");
+  console.error("  webagent corgi [addr]        Corgi insurance advisor (crawl + sales)");
   process.exit(args[0] ? 0 : 2);
 }
 
@@ -72,6 +73,56 @@ switch (args[0]) {
     }
     break;
   }
+  case "corgi": {
+    const addr = args[1] || ":8787";
+    const port = Number(addr.replace(/^.*:/, "")) || 8787;
+    const { attachSales, corgiPublicDescription } = await import("./sales/index.ts");
+    const { corgiHost } = await import("./sales/host.ts");
+    const { siteBook } = await import("./site/index.ts");
+    const { Room } = await import("./host/room.ts");
+    const { Sessions } = await import("./sales/sessions.ts");
+    const { openaiModel } = await import("./models.ts");
+
+    const hasKey = !!process.env.OPENAI_API_KEY;
+    if (hasKey) {
+      h.addModel(
+        openaiModel({
+          id: "openai",
+          baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+          model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+          apiKeyEnv: "OPENAI_API_KEY",
+        }),
+      );
+    }
+    const modelId = hasKey ? "openai" : "echo";
+
+    console.error("crawling https://www.corgi.insure ...");
+    const job = await siteBook(h).ingest("https://www.corgi.insure", { maxPages: 40 });
+    console.error(`  ${job.pack.pages.length} pages, ${job.pack.flows.length} flows`);
+
+    const run = attachSales(h, job.pack, { model: modelId });
+    const room = new Room(h, { run, model: modelId });
+    const sessions = new Sessions(h, room);
+    const publicUrlStr = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + port;
+
+    const tls = tlsEnv();
+    const server = Bun.serve({
+      port,
+      hostname: "0.0.0.0",
+      idleTimeout: 120,
+      tls,
+      fetch: corgiHost(h, room, publicUrlStr, sessions),
+    });
+
+    const bound = publicUrlStr || `http://127.0.0.1:${server.port}`;
+    console.error(`corgi agent ${bound}`);
+    console.error(`  human   ${bound}/`);
+    console.error(`  machine ${bound}/agent.json  run ${room.run.id}`);
+    console.error(`  chat    POST ${bound}/chat`);
+    console.error(`  local   http://127.0.0.1:${server.port}/`);
+    await new Promise(() => {});
+    break;
+  }
   case "serve": {
     const addr = args[1] || ":8787";
     const port = Number(addr.replace(/^.*:/, "")) || 8787;
@@ -85,4 +136,25 @@ switch (args[0]) {
   default:
     console.error("unknown command");
     process.exit(2);
+}
+
+function lanIp(): string {
+  try {
+    const { networkInterfaces } = require("node:os");
+    for (const addrs of Object.values(networkInterfaces())) {
+      for (const a of (addrs as any[]) ?? []) {
+        if (a.family === "IPv4" && !a.internal) return a.address;
+      }
+    }
+  } catch {
+    /* no interfaces */
+  }
+  return "127.0.0.1";
+}
+
+function tlsEnv(): { cert: ReturnType<typeof Bun.file>; key: ReturnType<typeof Bun.file> } | undefined {
+  const certPath = process.env.WEBAGENT_TLS_CERT;
+  const keyPath = process.env.WEBAGENT_TLS_KEY;
+  if (!certPath || !keyPath) return undefined;
+  return { cert: Bun.file(certPath), key: Bun.file(keyPath) };
 }

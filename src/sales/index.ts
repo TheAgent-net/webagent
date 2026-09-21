@@ -1,4 +1,11 @@
-export { attachSales, riskTool } from "./attach.ts";
+export { attachSales, riskTool, quoteGuideTool } from "./attach.ts";
+export { corgiAgentCard, corgiConnectPrompt, corgiCopyPrompt } from "./card.ts";
 export { runGepa, scorePrompt, onFront, type GoalScore, type PromptCand } from "./gepa.ts";
-export { salesInstruction, SALES_PROMPT_ID, SALES_PROMPT_MEAN, SALES_GEPA } from "./prompt.ts";
-export { mapRisks, reportText, type RiskNote, type RiskAsk } from "./risks.ts";
+export { corgiHost } from "./host.ts";
+export { corgiChatPage } from "./page.ts";
+export { corgiSiteResponse, hasCorgiSnapshot, speedCorgiHtml } from "./site.ts";
+export { salesInstruction, SALES_PROMPT_ID, SALES_PROMPT_MEAN, SALES_GEPA, corgiPublicDescription, corgiPublicInstructions } from "./prompt.ts";
+export { mapRisks, reportText, vulnerabilityReport, type RiskNote, type RiskAsk, type Vulnerability } from "./risks.ts";
+export { extractKnown, knownPin, type KnownFacts } from "./known.ts";
+export { Sessions } from "./sessions.ts";
+export { corgiWidget } from "./widget.ts";
