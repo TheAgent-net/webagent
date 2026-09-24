@@ -16,3 +16,12 @@ export { attachPack, siteBook, crawlSite, inferFlows, buildPack, loadCorpus, loo
 export type { SitePack, SiteFlow, AuthAsk, AuthGrant } from "./site/index.ts";
 export { attachSales, salesInstruction, mapRisks, reportText, runGepa } from "./sales/index.ts";
 export { attachApps, loadAppsPack, buildGraph, queryGraph, askApps, appsInstruction, runAppsGepa } from "./apps/index.ts";
+export {
+  buildCompany,
+  attachCompany,
+  companyHost,
+  inferFormWalks,
+  parseGithubInput,
+  isGithubInput,
+} from "./company/index.ts";
+export type { CompanyPack, CompanyProfile, FormWalk } from "./company/index.ts";

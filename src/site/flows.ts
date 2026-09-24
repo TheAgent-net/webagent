@@ -7,7 +7,9 @@ const KINDS: { id: string; name: string; purpose: string; match: RegExp; hint: s
   { id: "checkout", name: "Checkout", purpose: "Cart, payment, or booking confirmation", match: /cart|checkout|pay|booking|confirm|order/i, hint: "Review the cart, then confirm" },
   { id: "change", name: "Change or cancel", purpose: "Change dates, cancel, or manage an existing booking", match: /change|cancel|manage|pnr|itinerary|modify/i, hint: "Look up the booking, then pick a change" },
   { id: "support", name: "Help", purpose: "Help, FAQ, contact, or policy", match: /help|faq|support|contact|policy|terms|privacy/i, hint: "Read the article or send a question" },
-  { id: "quote", name: "Quote", purpose: "Get a price or start coverage", match: /quote|insure|premium|coverage|polic(y|ies)|demo/i, hint: "Open the quote or coverage page" },
+  { id: "quote", name: "Quote", purpose: "Get a price or start coverage", match: /quote|insure|premium|coverage|polic(y|ies)/i, hint: "Open the quote or coverage page" },
+  { id: "signup", name: "Sign up", purpose: "Create an account or start a trial", match: /sign[-]?up|register|join|trial/i, hint: "Fill the sign-up form field by field" },
+  { id: "demo", name: "Book a demo", purpose: "Talk to sales or book a walkthrough", match: /demo|book[- ]?a|talk to sales|meeting/i, hint: "Open the demo or contact form" },
 ];
 
 export function inferFlows(pages: PageShot[]): SiteFlow[] {
