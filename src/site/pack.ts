@@ -58,6 +58,8 @@ function questionsFrom(pages: PageShot[], flows: ReturnType<typeof inferFlows>):
     if (f.id === "change") qs.push("How do I change or cancel something I already booked?");
     if (f.id === "support") qs.push("Where do I get help or read the policy?");
     if (f.id === "quote") qs.push("How do I get a quote and what does coverage cost?");
+    if (f.id === "signup") qs.push("How do I sign up or start a trial?");
+    if (f.id === "demo") qs.push("How do I book a demo or talk to sales?");
   }
   for (const p of pages) {
     for (const h of p.headings.slice(0, 3)) {

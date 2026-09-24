@@ -12,6 +12,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent ask <text>          one echo run");
   console.error("  webagent serve [addr]        public HTTPS host (default :8787)");
   console.error("  webagent ingest <url>        crawl a site, build flows, attach a run");
+  console.error("  webagent company <src> [addr]  website or GitHub → crawl, forms, live webagent");
   console.error("  webagent pair <url>          two agents: site seller + buyer (Cursor SDK)");
   console.error("  webagent apps [addr]         Composio Graph RAG host (local corpus)");
   process.exit(args[0] ? 0 : 2);
@@ -49,6 +50,56 @@ switch (args[0]) {
     }
     const run = job.pack.pages.length ? attachPack(h, job.pack, { model: "echo" }) : undefined;
     console.log(JSON.stringify({ id: job.id, runId: run?.id, pack: job.pack }, null, 2));
+    break;
+  }
+  case "company": {
+    const src = args[1];
+    if (!src) {
+      console.error("usage: webagent company <website-or-github> [addr]");
+      process.exit(2);
+    }
+    const addr = args[2] || ":8787";
+    const port = Number(addr.replace(/^.*:/, "")) || 8787;
+    const { buildCompany, attachCompany, companyHost } = await import("./company/index.ts");
+    const { openaiModel } = await import("./models.ts");
+    const { Room } = await import("./host/room.ts");
+    const { Sessions } = await import("./host/sessions.ts");
+
+    console.error("building company webagent from " + src + " ...");
+    const pack = await buildCompany(src, { maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 80 });
+    console.error(
+      `  ${pack.profile.name}: ${pack.pages.length} pages, ${pack.flows.length} flows, ${pack.forms.length} forms` +
+        (pack.github ? ` + github ${pack.github.owner}/${pack.github.name}` : ""),
+    );
+
+    const hasKey = !!process.env.OPENAI_API_KEY;
+    if (hasKey) {
+      h.addModel(
+        openaiModel({
+          id: "openai",
+          baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+          model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+          apiKeyEnv: "OPENAI_API_KEY",
+        }),
+      );
+    }
+    const modelId = hasKey ? "openai" : "echo";
+    const run = attachCompany(h, pack, { model: modelId });
+    const room = new Room(h, { run, model: modelId });
+    const sessions = new Sessions(h, room);
+    const publicUrlStr = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + port;
+    const server = Bun.serve({
+      port,
+      hostname: "0.0.0.0",
+      idleTimeout: 120,
+      fetch: companyHost(h, room, pack, publicUrlStr, sessions),
+    });
+    console.error(`company agent ${publicUrlStr}`);
+    console.error(`  human   ${publicUrlStr}/`);
+    console.error(`  machine ${publicUrlStr}/agent.json  run ${room.run.id}`);
+    console.error(`  chat    POST ${publicUrlStr}/chat`);
+    console.error(`  local   http://127.0.0.1:${server.port}/`);
+    await new Promise(() => {});
     break;
   }
   case "pair": {
