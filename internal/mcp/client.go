@@ -2,7 +2,9 @@
 // transport (spec 2025-06-18). It covers exactly what the action layer needs: initialize,
 // tools/list, and tools/call. It handles both response shapes the spec allows
 // (application/json and a single-response text/event-stream), session ids, and the protocol
-// version header. OAuth-gated servers are out of scope for this client (bearer/api-key only).
+// version header. Credentials may be static or supplied for each request. Authorization
+// metadata discovery is available separately; consent, token refresh, and user connection
+// management are not implemented here.
 package mcp
 
 import (
@@ -23,9 +25,10 @@ const protocolVersion = "2025-06-18"
 
 // Client talks to one MCP endpoint over Streamable HTTP.
 type Client struct {
-	url    string
-	apiKey string
-	httpc  *http.Client
+	url         string
+	apiKey      string
+	tokenSource TokenSource
+	httpc       *http.Client
 
 	id        int64
 	mu        sync.Mutex
@@ -46,6 +49,43 @@ func NewClient(url, apiKey string) *Client {
 	return &Client{url: url, apiKey: apiKey, httpc: &http.Client{Timeout: 60 * time.Second}}
 }
 
+// TokenSource supplies a non-empty bearer token before each MCP request, including
+// initialization and notifications. It must respect ctx and be safe for concurrent calls.
+// Any caching, refresh, and expiry checks belong to the source. Errors must not contain
+// credentials because callers may log them.
+//
+// A source must remain bound to one user connection and MCP resource for the client's
+// lifetime: refresh may replace that connection's token, but must not switch users.
+type TokenSource func(ctx context.Context) (string, error)
+
+// NewClientWithTokenSource creates a client that obtains credentials for each request.
+// A missing source is a configuration error. An empty token or source error prevents
+// the request; there is no anonymous fallback or automatic tool-call retry.
+func NewClientWithTokenSource(url string, source TokenSource) (*Client, error) {
+	if source == nil {
+		return nil, fmt.Errorf("mcp: token source is required")
+	}
+	c := NewClient(url, "")
+	c.tokenSource = source
+	return c, nil
+}
+
+// NewClientWithTokenSourceAndHTTPClient uses a caller-owned transport. The caller
+// is responsible for destination validation, redirect policy and client lifetime.
+// This internal seam lets connection-scoped clients share a restricted transport
+// while keeping their MCP session IDs and tool catalogs separate.
+func NewClientWithTokenSourceAndHTTPClient(url string, source TokenSource, httpc *http.Client) (*Client, error) {
+	if httpc == nil {
+		return nil, fmt.Errorf("mcp: HTTP client is required")
+	}
+	c, err := NewClientWithTokenSource(url, source)
+	if err != nil {
+		return nil, err
+	}
+	c.httpc = httpc
+	return c, nil
+}
+
 type rpcError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -62,6 +102,9 @@ func (c *Client) nextID() int64 { return atomic.AddInt64(&c.id, 1) }
 
 // send posts a single JSON-RPC message. id == 0 means a notification (no id, no parsed result).
 func (c *Client) send(ctx context.Context, method string, params any, id int64) (json.RawMessage, http.Header, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
 	body := map[string]any{"jsonrpc": "2.0", "method": method}
 	if id != 0 {
 		body["id"] = id
@@ -77,8 +120,18 @@ func (c *Client) send(ctx context.Context, method string, params any, id int64) 
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
-	if c.apiKey != "" {
-		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	token := c.apiKey
+	if c.tokenSource != nil {
+		token, err = c.tokenSource(ctx)
+		if err != nil {
+			return nil, nil, fmt.Errorf("mcp %s: obtain access token: %w", method, err)
+		}
+		if strings.TrimSpace(token) == "" {
+			return nil, nil, fmt.Errorf("mcp %s: token source returned an empty token", method)
+		}
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	if c.sessionID != "" {
 		req.Header.Set("Mcp-Session-Id", c.sessionID)
@@ -93,15 +146,15 @@ func (c *Client) send(ctx context.Context, method string, params any, id int64) 
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if id == 0 { // notification: any 2xx is success, nothing to parse
-		if resp.StatusCode >= 300 {
-			return nil, resp.Header, fmt.Errorf("mcp %s: %s", method, resp.Status)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, resp.Header, &HTTPError{
+			Method:          method,
+			StatusCode:      resp.StatusCode,
+			WWWAuthenticate: append([]string(nil), resp.Header.Values("WWW-Authenticate")...),
 		}
-		return nil, resp.Header, nil
 	}
-	if resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		return nil, resp.Header, fmt.Errorf("mcp %s: %s: %s", method, resp.Status, strings.TrimSpace(string(b)))
+	if id == 0 { // notification: any 2xx is success, nothing to parse
+		return nil, resp.Header, nil
 	}
 
 	var rr rpcResponse
@@ -179,6 +232,8 @@ func (c *Client) initialize(ctx context.Context) error {
 	}
 	c.initDone = true // subsequent requests carry the protocol-version header
 	if _, _, err := c.send(ctx, "notifications/initialized", nil, 0); err != nil {
+		c.initDone = false
+		c.sessionID = ""
 		return err
 	}
 	return nil
