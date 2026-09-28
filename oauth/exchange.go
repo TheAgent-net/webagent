@@ -142,19 +142,16 @@ func uniqueJSONFields(body []byte) bool {
 	return errors.Is(err, io.EOF)
 }
 
+// Treat provider credentials as opaque. Some deployed OAuth servers issue tokens
+// containing punctuation outside RFC 6750's b64token alphabet (for example,
+// colon-delimited tokens). Preserve them verbatim, but require visible ASCII with
+// no whitespace or control bytes so they remain safe in the Authorization header.
 func validBearerToken(token string) bool {
-	if token == "" || token[0] == '=' {
+	if token == "" {
 		return false
 	}
-	padding := false
 	for i := 0; i < len(token); i++ {
-		b := token[i]
-		if b == '=' {
-			padding = true
-			continue
-		}
-		allowed := (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9') || strings.ContainsRune("-._~+/", rune(b))
-		if padding || !allowed {
+		if token[i] < 0x21 || token[i] > 0x7e {
 			return false
 		}
 	}

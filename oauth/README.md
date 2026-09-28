@@ -140,6 +140,12 @@ personal-agent route; these helpers do not turn `/chat` into a login system.
 
 ## Verification
 
+Access tokens are opaque credentials: the client preserves visible ASCII
+punctuation, including the colon-delimited format used by some OAuth servers,
+instead of enforcing RFC 6750's narrower `b64token` alphabet. Empty tokens,
+whitespace, control bytes, and non-ASCII bytes are rejected before storage from
+an exchange and before MCP transmission. Token type must still be `Bearer`.
+
 Run from the repository root:
 
 ```sh
