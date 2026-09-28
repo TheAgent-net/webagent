@@ -28,15 +28,24 @@ import (
 type Option func(*options)
 
 type options struct {
-	tools   []core.Tool
-	logger  *slog.Logger
-	secrets core.Secrets
+	tools      []core.Tool
+	logger     *slog.Logger
+	secrets    core.Secrets
+	toolSource core.ToolSource
 }
 
 // WithTools injects extra tools in addition to the action provider's — e.g. a live MCP client
 // built with per-user auth the framework can't construct from a spec. All tools are guarded.
 func WithTools(tools ...core.Tool) Option {
 	return func(o *options) { o.tools = append(o.tools, tools...) }
+}
+
+// WithToolSource adds tools resolved for each turn, after the input guardrail and
+// before retrieval, memory, or reasoning. These tools also receive the action
+// guardrail. The source is not called at build time. The host must authenticate
+// requests before attaching core.Identity for a personal connection source.
+func WithToolSource(source core.ToolSource) Option {
+	return func(o *options) { o.toolSource = source }
 }
 
 // WithLogger sets the framework's structured logger. Without it, the framework logs nothing.
@@ -192,6 +201,10 @@ func Build(ctx context.Context, s *spec.AgentSpec, opts ...Option) (*core.Agent,
 		bindings = append(bindings, core.ChannelBinding{Channel: ch, Presenter: p})
 	}
 
+	var toolSource core.ToolSource
+	if o.toolSource != nil {
+		toolSource = guardedToolSource{source: o.toolSource, guard: guard}
+	}
 	return &core.Agent{
 		Name:        s.Name,
 		Instruction: s.Instruction,
@@ -201,11 +214,30 @@ func Build(ctx context.Context, s *spec.AgentSpec, opts ...Option) (*core.Agent,
 		Guardrail:   guard,
 		// Every tool is wrapped so the guardrail inspects the action before it executes —
 		// the model cannot bypass this (it is code-enforced, not prompt-enforced).
-		Tools:    action.GuardAll(tools, guard),
-		Bindings: bindings,
-		Observer: obs,
-		Logger:   o.logger,
+		Tools:      action.GuardAll(tools, guard),
+		ToolSource: toolSource,
+		Bindings:   bindings,
+		Observer:   obs,
+		Logger:     o.logger,
 	}, nil
+}
+
+type guardedToolSource struct {
+	source core.ToolSource
+	guard  core.Guardrail
+}
+
+func (s guardedToolSource) Tools(ctx context.Context) ([]core.Tool, error) {
+	tools, err := s.source.Tools(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, tool := range tools {
+		if tool == nil {
+			return nil, fmt.Errorf("build: tool source returned a nil tool")
+		}
+	}
+	return action.GuardAll(tools, s.guard), nil
 }
 
 func wrap(s *spec.AgentSpec, err error) error { return fmt.Errorf("%s: %w", s.Name, err) }

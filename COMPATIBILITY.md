@@ -45,6 +45,8 @@ also implement. Callers detect it with a type assertion and fall back gracefully
 Examples already in the codebase:
 
 - `core.ToolSchema` — a `Tool` may also advertise a description + JSON schema.
+- `core.ToolSource` — a host may supply tools resolved per turn through
+  `build.WithToolSource`, without changing `Tool`, `Brain`, or `action.Provider`.
 - `spi.Capable` — a provider may advertise runtime `Capabilities`, so a consumer can branch on
   what a specific provider supports without changing the slot's required interface.
 

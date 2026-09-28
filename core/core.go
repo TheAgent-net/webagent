@@ -134,6 +134,14 @@ type Tool interface {
 	Call(ctx context.Context, args map[string]any) (map[string]any, error)
 }
 
+// ToolSource is an optional source of tools resolved for each turn, using its
+// request context. Implementations must isolate identities, honor cancellation,
+// and be safe for concurrent turns. Errors abort the turn before memory or reasoning.
+// Returned tools must remain bound to their original identity when called.
+type ToolSource interface {
+	Tools(context.Context) ([]Tool, error)
+}
+
 // ToolSchema is an optional capability a Tool may implement to advertise a description and a
 // JSON schema for its arguments, so the model can call it precisely. Tools that don't
 // implement it are offered with a permissive object schema. Wrappers (e.g. the action guard)
@@ -277,6 +285,9 @@ type Agent struct {
 	Tools       []Tool
 	Bindings    []ChannelBinding
 	Observer    Observer
+	// ToolSource supplies additional per-turn tools. Like Tools, these must be
+	// guarded by the assembler. build.WithToolSource applies that wrapper.
+	ToolSource ToolSource
 	// Logger is the framework's structured logger. When nil, the framework logs nothing
 	// (a library must not impose output). Applications inject one to see operational logs.
 	Logger *slog.Logger
@@ -292,10 +303,14 @@ func (a *Agent) logger() *slog.Logger {
 	return discardLogger
 }
 
-// Handle runs one turn through the full pipeline: input guardrail → retrieve + recall →
+// Handle runs one turn through the full pipeline: input guardrail → per-turn tools → retrieve + recall →
 // reason → output guardrail → persist. Missing providers are simply skipped. Each step is
 // timed and a single TurnTrace is emitted to the Observer when the turn returns.
 func (a *Agent) Handle(ctx context.Context, t Turn) (msg AgentMessage, err error) {
+	if identity, ok := IdentityFromContext(ctx); ok {
+		// Channel user names are not authoritative for authenticated conversations.
+		t.ChannelUserID = identityUserKey(identity)
+	}
 	start := time.Now()
 	tr := TurnTrace{UserID: t.ChannelUserID, Input: t.Text}
 	if a.Brain != nil {
@@ -333,6 +348,15 @@ func (a *Agent) Handle(ctx context.Context, t Turn) (msg AgentMessage, err error
 		}
 	}
 
+	toolsStarted := time.Now()
+	tools, err := a.turnTools(ctx)
+	if a.ToolSource != nil {
+		tr.Spans = append(tr.Spans, span("tools", toolsStarted, err))
+	}
+	if err != nil {
+		return AgentMessage{}, err
+	}
+
 	var cands []Candidate
 	if a.Retriever != nil {
 		s := time.Now()
@@ -351,7 +375,7 @@ func (a *Agent) Handle(ctx context.Context, t Turn) (msg AgentMessage, err error
 	rs := time.Now()
 	msg, err = a.Brain.Respond(ctx, BrainInput{
 		UserID: t.ChannelUserID, Text: t.Text, Instruction: a.Instruction,
-		Candidates: cands, Memories: mems, Tools: a.Tools,
+		Candidates: cands, Memories: mems, Tools: tools,
 	})
 	tr.Spans = append(tr.Spans, span("reason", rs, err))
 	if err != nil {
