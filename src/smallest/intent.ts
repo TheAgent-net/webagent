@@ -70,7 +70,13 @@ export function missingFields(intent: Intent): string[] {
 }
 
 export function enoughIntent(intent: Intent): boolean {
+  if (stillExploring(intent.notes) && !inferIntent(intent.notes).useCase) return false;
   return missingFields(intent).length === 0;
+}
+
+/** Visitor is still figuring it out — do not treat a guessed SKU as enough. */
+export function stillExploring(notes: string): boolean {
+  return /\b(not sure|unsure|don'?t know|no idea|still figuring|\bidk\b)\b/i.test(notes);
 }
 
 /** One question. Never dump a form. */
@@ -79,10 +85,13 @@ export function nextQuestion(intent: Intent): string | null {
   if (!miss.length) return null;
   const field = miss[0]!;
   if (field === "useCase") {
-    return "What should the agent do — support, outbound sales, bookings, collections, or something else?";
+    if (isGreeting(intent.notes) || !intent.notes.trim()) {
+      return "What are you trying to get working?";
+    }
+    return "What should this do for you — and who is on the other end of the conversation?";
   }
   if (field === "channel") {
-    return `For ${intent.useCase || "this"}, do you want a phone number, a website/widget, a mobile app, or Smallest models inside your own stack (Pipecat/LiveKit)?`;
+    return "Where should that live — a phone line, a website, or inside something you already built?";
   }
   if (field === "direction") {
     return "Should customers call in, should the agent dial out, or both?";
@@ -137,7 +146,7 @@ function scaleFrom(t: string): Scale | undefined {
 
 function langsFrom(t: string): string[] {
   const map: [RegExp, string][] = [
-    [/\bhindi\b|\bhi\b/, "hi"],
+    [/\bhindi\b|\bhi-in\b|\bindic\b/, "hi"],
     [/\bspanish\b|\bespañol\b|\bes\b/, "es"],
     [/\bfrench\b|\bfr\b/, "fr"],
     [/\bgerman\b|\bde\b/, "de"],
@@ -164,6 +173,14 @@ function toolsFrom(t: string): string[] {
   if (/dtmf|keypad|press [0-9]/.test(t)) out.push("dtmf");
   if (/webhook/.test(t)) out.push("webhooks");
   return uniq(out);
+}
+
+export function isGreeting(notes: string): boolean {
+  const t = notes.trim();
+  if (!t) return true;
+  return /^(?:(hi|hey|hello|yo|thanks|thank you|sup|hola)[.!?]*)(?:\s+(?:hi|hey|hello|yo|thanks|thank you|sup|hola)[.!?]*)*$/i.test(
+    t,
+  );
 }
 
 function uniq(xs: string[]): string[] {

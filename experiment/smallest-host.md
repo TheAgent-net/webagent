@@ -20,7 +20,7 @@ Cloudflare terminates HTTPS; nginx sees HTTP on port 80.
 
 ```bash
 # copies OPENAI_API_KEY from /opt/webagent/.env
-curl -fsSL https://raw.githubusercontent.com/TheAgent-net/webagent/cursor/smallest-webagent-e5be/deploy/smallest-host.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TheAgent-net/webagent/cursor/smallest-chat-ui-e5be/deploy/smallest-host.sh | bash
 cd /opt/webagent-smallest
 bash deploy/smallest-front.sh
 ```

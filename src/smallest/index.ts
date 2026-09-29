@@ -3,7 +3,7 @@ export { buildSmallest } from "./build.ts";
 export { smallestAgentCard, smallestConnectPrompt, smallestCopyPrompt } from "./card.ts";
 export { crawlSmallest } from "./crawl.ts";
 export { smallestHost } from "./host.ts";
-export { enoughIntent, inferIntent, mergeIntent, nextQuestion } from "./intent.ts";
+export { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
 export { pageFromMarkdown, parseLlmsTxt, rankDocs } from "./markdown.ts";
 export { smallestPage } from "./page.ts";
 export { hasSmallestSnapshot, smallestSiteResponse } from "./site.ts";

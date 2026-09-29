@@ -2,7 +2,7 @@ import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
-import { enoughIntent, inferIntent, mergeIntent, nextQuestion, emptyIntent } from "./intent.ts";
+import { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, emptyIntent, stillExploring } from "./intent.ts";
 import { smallestInstruction } from "./prompt.ts";
 import { recommendSettings } from "./settings.ts";
 import type { Channel, Direction, Intent, Scale, SmallestPack } from "./types.ts";
@@ -17,9 +17,10 @@ export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: 
   run.useTool(rec);
   run.inject({
     vars: [
-      "Smallest AI: realtime voice (Lightning TTS, Pulse STT, Electron LLM, Hydra S2S) plus hosted Atoms agents.",
-      "Docs at " + pack.docsOrigin + ". " + pack.docs.length + " doc pages in the pack.",
-      "Call capture_intent every turn, then recommend_settings when enough.",
+      "Explore the visitor first. Do not dump products, models, or a company brief.",
+      "First turn: two short sentences on how you can help, then one open question about them.",
+      "Name a Smallest path only after it matches what they said.",
+      "Docs at " + pack.docsOrigin + ". " + pack.docs.length + " doc pages in the pack — look them up after you know what they need.",
     ].join("\n"),
   });
   return run;
@@ -48,6 +49,7 @@ export function captureIntentTool(): Tool {
     async call(args) {
       const inferred = inferIntent(String(args.said ?? ""));
       const patch = fromArgs(args);
+      if (stillExploring(inferred.notes) && !inferred.useCase) delete patch.useCase;
       const intent = mergeIntent(inferred, patch);
       const next = nextQuestion(intent);
       const enough = enoughIntent(intent);
@@ -57,7 +59,9 @@ export function captureIntentTool(): Tool {
         next_question: next,
         hint: enough
           ? "Call recommend_settings now with these fields. Do not ask another question."
-          : "Ask only next_question. Do not dump a form.",
+          : isGreeting(String(args.said ?? "")) || isGreeting(intent.notes)
+            ? "Greeting. Two short sentences on how you can help, then ask next_question. Do not name products."
+            : "Ask only next_question. Reflect one thing they said. Do not dump a catalog.",
       };
     },
   };
@@ -84,11 +88,21 @@ export function recommendSettingsTool(): Tool {
       required: ["use_case"],
     },
     async call(args) {
-      const intent = mergeIntent(emptyIntent(), fromArgs(args));
-      if (!intent.useCase) intent.useCase = String(args.use_case ?? "support");
+      const inferred = inferIntent(String(args.notes ?? args.use_case ?? ""));
+      const patch = fromArgs(args);
+      if (stillExploring(inferred.notes) && !inferred.useCase) delete patch.useCase;
+      const intent = mergeIntent(inferred, patch);
       if (!intent.notes) intent.notes = String(args.notes ?? "");
+      if (!enoughIntent(intent)) {
+        const next = nextQuestion(intent);
+        return {
+          enough: false,
+          next_question: next,
+          hint: "Not enough yet. Ask next_question. Do not write the plan or name products they did not mention.",
+        };
+      }
       const plan = recommendSettings(intent);
-      return { ...plan, report: planText(plan) };
+      return { ...plan, enough: true, report: planText(plan) };
     },
   };
 }

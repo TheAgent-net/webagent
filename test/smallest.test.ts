@@ -115,6 +115,20 @@ describe("intent", () => {
     expect(nextQuestion(a)).toMatch(/phone|widget|Pipecat/i);
   });
 
+  test("greeting is not Hindi and asks what they are trying to get working", () => {
+    const a = inferIntent("hi");
+    expect(a.languages).not.toContain("hi");
+    expect(a.useCase).toBeUndefined();
+    expect(nextQuestion(a)).toMatch(/trying to get working/i);
+    expect(nextQuestion(a)).not.toMatch(/bookings|collections|Atoms|Lightning/i);
+  });
+
+  test("unsure visitors stay in exploration", () => {
+    const a = inferIntent("not sure yet — I just want people to be able to talk to us");
+    expect(enoughIntent(a)).toBe(false);
+    expect(nextQuestion(a)).toMatch(/what should this do|trying to get working|who/i);
+  });
+
   test("pipecat + Hindi outbound is enough", () => {
     const a = inferIntent("Lightning TTS inside Pipecat for Hindi outbound sales");
     expect(a.channel).toBe("own_stack");
@@ -185,6 +199,19 @@ describe("settings", () => {
 });
 
 describe("tools", () => {
+  test("capture_intent on a greeting does not shove products", async () => {
+    const tool = captureIntentTool();
+    const first = (await tool.call({ said: "hi" })) as {
+      enough: boolean;
+      next_question: string | null;
+      hint: string;
+    };
+    expect(first.enough).toBe(false);
+    expect(first.next_question).toMatch(/trying to get working/i);
+    expect(first.hint).toMatch(/do not name products/i);
+    expect(first.next_question).not.toMatch(/Lightning|Atoms|Waves|bookings/i);
+  });
+
   test("capture_intent returns the next question until enough", async () => {
     const tool = captureIntentTool();
     const first = (await tool.call({ said: "collections agent" })) as {
@@ -211,6 +238,18 @@ describe("tools", () => {
     expect(out.path).toBe("atoms_standard");
     expect(out.report).toMatch(/Path:/);
   });
+
+  test("recommend_settings refuses a guessed plan while they are still exploring", async () => {
+    const rec = recommendSettingsTool();
+    const out = (await rec.call({
+      use_case: "support",
+      channel: "phone",
+      notes: "not sure yet — I just want people to be able to talk to us",
+    })) as { enough?: boolean; next_question?: string; report?: string };
+    expect(out.enough).toBe(false);
+    expect(out.next_question).toBeTruthy();
+    expect(out.report).toBeUndefined();
+  });
 });
 
 describe("build + host", () => {
@@ -218,7 +257,8 @@ describe("build + host", () => {
     const pack = await buildSmallest({ maxPages: 20, fetch: mockSmallestFetch() });
     expect(pack.docs.length).toBeGreaterThanOrEqual(2);
     expect(pack.pages.some((p) => /Speech/i.test(p.title) || /1\.2x/.test(p.text))).toBe(true);
-    expect(pack.starterQuestions[0]).toMatch(/inbound support/i);
+    expect(pack.starterQuestions[0]).toMatch(/not sure where to start|trying to get working|call us/i);
+    expect(pack.facts[0]).toMatch(/do not recite/i);
 
     const h = new Harness();
     const run = attachSmallest(h, pack, { model: "echo" });
@@ -230,6 +270,13 @@ describe("build + host", () => {
     expect(sys).toContain("ONE question");
     expect(sys).toContain("recommend_settings");
     expect(sys).toContain("Never re-ask");
+    const pins = run
+      .getContext()
+      .filter((m) => m.role === "pin")
+      .map((m) => m.content)
+      .join("\n");
+    expect(pins).toMatch(/Explore the visitor first/i);
+    expect(pins).toMatch(/Do not dump products/i);
   });
 
   test("human GET / is branded HTML; machine GET / is the card; chat keeps a session", async () => {
@@ -250,6 +297,11 @@ describe("build + host", () => {
     expect(body).toContain("Smallest AI");
     expect(body).toContain("Go talk to the Smallest AI agent");
     expect(body).toContain("Ask Smallest");
+    expect(body).toContain("smallest.ai");
+    expect(body).toContain("font-family: Geist");
+    expect(body).toContain("background: #191919");
+    expect(body).toContain("background: #f5f5f5");
+    expect(body).not.toContain("#7CFFB2");
     expect(body).toMatch(/Voice AI Platform|Lightning|Pulse/);
     expect(body).toContain("framerusercontent.com");
 
@@ -304,7 +356,13 @@ describe("copy prompt and instruction", () => {
     });
     expect(text).toContain("ONE question");
     expect(text).toContain("recommend_settings");
+    expect(text).toContain("Never re-ask");
     expect(text).toContain("Lightning v3.1");
+    expect(text).toContain("Explore them first");
+    expect(text).toContain("how you can help");
+    expect(text).toContain("Do not name Lightning");
+    expect(text).toMatch(/Do not shove|never recite/i);
+    expect(text).toMatch(/stay curious|ONLY if capture_intent\.enough/i);
     expect(text).not.toContain("Lightning v2 (current");
   });
 });
