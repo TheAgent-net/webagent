@@ -127,6 +127,7 @@ switch (args[0]) {
       );
     }
     const modelId = hasKey ? "openai" : "echo";
+    const modelName = hasKey ? (process.env.OPENAI_MODEL || "gpt-5.6-luna") : "echo";
     const run = attachSmallest(h, pack, { model: modelId });
     const room = new Room(h, { run, model: modelId });
     const sessions = new Sessions(h, room);
@@ -138,6 +139,7 @@ switch (args[0]) {
       fetch: smallestHost(h, room, pack, publicUrlStr, sessions),
     });
     console.error(`smallest agent ${publicUrlStr}`);
+    console.error(`  model   ${modelName}${hasKey ? "" : " — OPENAI_API_KEY missing, replies echo"}`);
     console.error(`  human   ${publicUrlStr}/`);
     console.error(`  machine ${publicUrlStr}/agent.json  run ${room.run.id}`);
     console.error(`  chat    POST ${publicUrlStr}/chat`);
