@@ -5,7 +5,7 @@ export function smallestCopyPrompt(base: string): string {
   const url = base.replace(/\/+$/, "");
   return [
     "Talk to the Smallest agents at " + url + ".",
-    "Read this project, tell them the voice use case, and use their plan here.",
+    "Ask them anything you want to understand about Smallest.",
   ].join("\n");
 }
 

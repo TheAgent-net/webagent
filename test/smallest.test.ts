@@ -372,7 +372,7 @@ describe("build + host", () => {
     expect(page.headers.get("content-type")).toContain("text/html");
     const body = await page.text();
     expect(body).toContain("Smallest AI");
-    expect(body).toContain("voice use case");
+    expect(body).toContain("Talk to the Smallest agents");
     expect(body).toContain("/chat");
     expect(body).toContain("Ask Smallest");
     expect(body).toContain("smallest.ai");
@@ -410,13 +410,12 @@ describe("build + host", () => {
 });
 
 describe("copy prompt and instruction", () => {
-  test("copy prompt tells a coding agent to read the project and talk to the webagent", () => {
+  test("copy prompt points a visitor at Smallest agents", () => {
     const text = smallestCopyPrompt("https://a.test");
     expect(text).toContain("Talk to the Smallest agents at https://a.test");
-    expect(text).toContain("voice use case");
-    expect(text).toContain("this project");
+    expect(text).toContain("understand about Smallest");
     expect(text.split("\n")).toHaveLength(2);
-    expect(text).not.toMatch(/and figure out\.?$/);
+    expect(text).not.toMatch(/webagent|this project|voice use case|POST /);
   });
 
   test("instruction tells the model to ask little and recommend settings", () => {
