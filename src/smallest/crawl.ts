@@ -34,7 +34,7 @@ export async function crawlSmallest(opts: { maxPages?: number; fetch?: FetchLike
 async function crawlMarketing(fetchFn: typeof fetch, maxPages: number): Promise<PageShot[]> {
   try {
     const state = await crawlSite(MARKET + "/", { maxPages, fetch: fetchFn });
-    const pages = state.pages.filter((p) => p.status > 0);
+    const pages = state.pages.filter((p) => p.status > 0 && !isMapFile(p.url));
     if (pages.length) return pages;
   } catch {
     /* fall through to a direct home fetch */
@@ -118,4 +118,8 @@ async function getHtml(url: string, fetchFn: typeof fetch): Promise<PageShot | n
 
 function looksLikeMarkdown(s: string): boolean {
   return /^#\s|^\s*> This page is part of Smallest/m.test(s.slice(0, 400));
+}
+
+function isMapFile(url: string): boolean {
+  return /\.xml($|\?)/i.test(url) || /sitemap/i.test(url);
 }
