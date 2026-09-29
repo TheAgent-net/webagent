@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="${WEBAGENT_ROOT:-/opt/webagent-smallest}"
-BRANCH="${WEBAGENT_BRANCH:-cursor/smallest-webagent-e5be}"
+BRANCH="${WEBAGENT_BRANCH:-cursor/smallest-chat-ui-e5be}"
 REPO="${WEBAGENT_REPO:-https://github.com/TheAgent-net/webagent.git}"
 PORT="${WEBAGENT_SMALLEST_PORT:-8789}"
 ENV_SRC="${WEBAGENT_ENV_SRC:-/opt/webagent/.env}"
