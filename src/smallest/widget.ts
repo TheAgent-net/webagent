@@ -20,6 +20,7 @@ export function smallestWidget(publicUrl: string, runId: string, pack: SmallestP
     window.__waBound = true;
     const setOpen = (open) => {
       panel.classList.toggle("open", open);
+      fab.classList.toggle("open", open);
       fab.textContent = open ? "Close" : "Ask Smallest";
     };
     fab.onclick = () => setOpen(!panel.classList.contains("open"));
@@ -105,6 +106,11 @@ function widgetMarkup(publicUrl: string, runId: string, pack: SmallestPack): str
     transition: transform .15s ease, background .15s ease;
   }
   #wa-fab:hover { background: #010101; transform: translateY(-1px); }
+  #wa-fab.open {
+    background: #fff; color: #191919; border: 1px solid #e5e5e5;
+    box-shadow: 0 8px 24px rgba(1,1,1,.08);
+  }
+  #wa-fab.open:hover { background: #f5f5f5; }
   #wa-panel {
     display: none; position: fixed; right: 20px; bottom: 72px; z-index: 99999;
     width: min(400px, calc(100vw - 24px));
