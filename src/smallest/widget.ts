@@ -1,4 +1,5 @@
 import { smallestCopyPrompt } from "./card.ts";
+import { renderChatMarkdown } from "./md.ts";
 import type { SmallestPack } from "./types.ts";
 
 export function smallestWidget(publicUrl: string, runId: string, pack: SmallestPack): string {
@@ -33,12 +34,14 @@ export function smallestWidget(publicUrl: string, runId: string, pack: SmallestP
       setTimeout(() => { copyBtn.textContent = prev; }, 1200);
     };
     const log = document.getElementById("wa-log");
+    const md = ${renderChatMarkdown.toString()};
     const add = (cls, text) => {
       const welcome = document.getElementById("wa-welcome");
       if (welcome) welcome.remove();
       const d = document.createElement("div");
       d.className = "wa-msg " + cls;
-      d.textContent = text;
+      if (cls === "agent") d.innerHTML = md(text);
+      else d.textContent = text;
       log.appendChild(d);
       log.scrollTop = log.scrollHeight;
     };
@@ -182,16 +185,54 @@ function widgetMarkup(publicUrl: string, runId: string, pack: SmallestPack): str
   #wa-log { flex: 1; overflow: auto; padding: 16px; background: #fff; }
   .wa-msg {
     margin: 8px 0; padding: 10px 14px; border-radius: 16px;
-    white-space: pre-wrap; font-size: 14px; line-height: 1.5;
+    font-size: 14px; line-height: 1.55;
   }
   .wa-msg.human {
     background: #191919; color: #fff;
     margin-left: 36px; border-bottom-right-radius: 6px;
+    white-space: pre-wrap;
   }
   .wa-msg.agent {
     background: #f5f5f5; color: #191919;
     margin-right: 36px; border-bottom-left-radius: 6px;
+    white-space: normal;
   }
+  .wa-msg.agent p { margin: 0 0 .65em; }
+  .wa-msg.agent p:last-child { margin-bottom: 0; }
+  .wa-msg.agent strong { font-weight: 600; color: #010101; }
+  .wa-msg.agent em { font-style: italic; }
+  .wa-md-h {
+    font-family: Archivo, Geist, sans-serif;
+    font-size: 15px; font-weight: 600; letter-spacing: -0.03em;
+    margin: .7em 0 .3em; line-height: 1.3; color: #191919;
+  }
+  .wa-md-h:first-child { margin-top: 0; }
+  .wa-md-ul, .wa-md-ol { margin: .2em 0 .7em; padding-left: 1.2em; }
+  .wa-md-ul { list-style: disc; }
+  .wa-md-ol { list-style: decimal; }
+  .wa-md-ul li, .wa-md-ol li { margin: .2em 0; }
+  .wa-md-link { color: #191919; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+  .wa-md-link:hover { color: #010101; }
+  .wa-inline-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .84em; background: #ececec; color: #191919;
+    padding: .1em .35em; border-radius: 4px;
+  }
+  .wa-code-wrap {
+    margin: .5em 0; border-radius: 10px; background: #191919; color: #f5f5f5;
+    overflow: hidden;
+  }
+  .wa-code-lang {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+    color: #a1a1a1; padding: 6px 10px; border-bottom: 1px solid #2a2a2a;
+  }
+  .wa-code {
+    margin: 0; padding: 10px 12px; overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px; line-height: 1.5; color: #f5f5f5;
+  }
+  .wa-code code { font: inherit; color: inherit; }
   .wa-welcome { color: #191919; }
   .wa-welcome h4 {
     margin: 4px 0 8px;

@@ -23,6 +23,7 @@ import {
   smallestHost,
   smallestInstruction,
   hasSmallestSnapshot,
+  renderChatMarkdown,
 } from "../src/smallest/index.ts";
 import type { FetchLike } from "../src/smallest/types.ts";
 
@@ -380,6 +381,8 @@ describe("build + host", () => {
     expect(body).not.toContain("#7CFFB2");
     expect(body).toMatch(/Voice AI Platform|Lightning|Pulse/);
     expect(body).toContain("framerusercontent.com");
+    expect(body).toContain("wa-md-link");
+    expect(body).toContain("innerHTML = md");
 
     const cardRes = await fetchFn(new Request("http://t/", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
     const card = (await cardRes.json()) as { name: string; type: string; skills: { id: string }[] };
@@ -512,5 +515,39 @@ describe("retrieval", () => {
     expect(out.source).toBe("hybrid");
     expect(out.hits.length).toBeGreaterThan(0);
     expect(out.hits[0]!.url).not.toMatch(/pipecat/i);
+  });
+});
+
+describe("chat markdown", () => {
+  test("renders bold, lists, and markdown links", () => {
+    const html = renderChatMarkdown(
+      "The **[Speech Settings](https://docs.smallest.ai/voice-agents/platform/create-agent/agent-settings/speech-settings)** page covers pacing.\n\n- **Speech speed:** 1.2×\n- **Allow interruptions:** On\n",
+    );
+    expect(html).toContain("<strong>");
+    expect(html).toContain('<a class="wa-md-link" href="https://docs.smallest.ai/voice-agents/platform/create-agent/agent-settings/speech-settings"');
+    expect(html).toContain("Speech Settings");
+    expect(html).toContain('<ul class="wa-md-ul">');
+    expect(html).toContain("<strong>Speech speed:</strong>");
+    expect(html).not.toContain("**");
+  });
+
+  test("autolinks bare https URLs and keeps paragraphs", () => {
+    const html = renderChatMarkdown("See https://docs.smallest.ai/voice-agents/platform/get-started/quick-start for the setup.");
+    expect(html).toContain('<a class="wa-md-link" href="https://docs.smallest.ai/voice-agents/platform/get-started/quick-start"');
+    expect(html).toContain("<p>");
+  });
+
+  test("escapes HTML and does not turn javascript: into a link", () => {
+    const html = renderChatMarkdown("Hi <script>alert(1)</script> [x](javascript:alert(1))");
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).not.toContain('href="javascript:');
+  });
+
+  test("renders fenced code without interpreting markdown inside", () => {
+    const html = renderChatMarkdown("Use:\n```js\nconst x = 1;\n**not bold**\n```\n");
+    expect(html).toContain('<pre class="wa-code">');
+    expect(html).toContain("**not bold**");
+    expect(html).toContain('class="wa-code-lang">js');
   });
 });
