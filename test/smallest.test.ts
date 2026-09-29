@@ -414,7 +414,8 @@ describe("copy prompt and instruction", () => {
     const text = smallestCopyPrompt("https://a.test");
     expect(text).toContain("Talk to the Smallest agents at https://a.test/chat");
     expect(text).toContain('POST {"text":"<question>"}');
-    expect(text).toContain("do not open a browser");
+    expect(text).toContain("do not open a browser or probe the URL");
+    expect(text).toContain("Reuse session from the JSON");
     expect(text).toContain("understand about Smallest");
     expect(text.split("\n")).toHaveLength(2);
     expect(text).not.toMatch(/webagent|this project|voice use case/);

@@ -37,7 +37,7 @@ curl -sS https://smallest.agentnet.it.com/agent.json | jq .name
 
 Human URL: `https://smallest.agentnet.it.com/`
 Machine: `POST https://smallest.agentnet.it.com/chat` with `{"text":"..."}` (reuse `session`).
-Copy prompt (chat widget): two lines — talk to the Smallest agents at `/chat` with POST JSON; do not open a browser. Ask anything you want to understand about Smallest.
+Copy prompt (chat widget): two lines — POST `/chat` with the question (no browser, no probing); reuse `session` from the JSON on every following POST.
 
 ## Coexistence
 
