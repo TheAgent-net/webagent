@@ -37,7 +37,7 @@ curl -sS https://smallest.agentnet.it.com/agent.json | jq .name
 
 Human URL: `https://smallest.agentnet.it.com/`
 Machine: `POST https://smallest.agentnet.it.com/chat` with `{"text":"..."}` (reuse `session`).
-Copy prompt (chat widget): tells a coding agent to infer the use case from the current repo, then POST `https://smallest.agentnet.it.com/chat`.
+Copy prompt (chat widget): short brief — read this repo's use case, then POST `https://smallest.agentnet.it.com/chat`.
 
 ## Coexistence
 

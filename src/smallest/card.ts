@@ -3,36 +3,15 @@ import type { SmallestPack } from "./types.ts";
 
 export function smallestCopyPrompt(base: string): string {
   const chat = base.replace(/\/+$/, "") + "/chat";
-  const card = base.replace(/\/+$/, "") + "/.well-known/agent-card.json";
-  const mcp = base.replace(/\/+$/, "") + "/mcp";
   return [
-    "You are adding Smallest voice AI to this project. Use the Smallest webagent — do not scrape smallest.ai or invent APIs.",
+    "Read this project and learn the voice use case — who talks, phone or web, what they need done.",
     "",
-    "1. Understand the use case in this repo first:",
-    "   - What should callers/visitors get done (support, outbound sales, bookings, collections, or something else)?",
-    "   - How do they reach it (phone, website widget, in-app)?",
-    "   - Which languages?",
-    "   - Does this codebase already have a voice pipeline (Pipecat, LiveKit) that you must keep, or can Smallest host the agent?",
+    "Then ask the Smallest webagent. POST " + chat,
+    'Content-Type: application/json',
+    '{"text":"<that use case>"}',
+    "Keep the session from the first reply.",
     "",
-    "2. Talk to the Smallest webagent with those facts, in this project's words.",
-    "   GET " + card,
-    "   POST " + chat,
-    "   Content-Type: application/json",
-    "",
-    '   {"text":"<use case from this repo>"}',
-    "",
-    "   First reply JSON includes session. Send that same session on every following POST.",
-    "   Optional: MCP initialize at " + mcp + " (protocol 2025-06-18).",
-    "",
-    "3. The webagent leads with Smallest's own hosted stack (Atoms). Mention Pipecat/LiveKit only if this repo must keep that pipeline.",
-    "",
-    "4. Bring the answer back here:",
-    "   - recommended path and why",
-    "   - exact agent / model / speech settings",
-    "   - 3–5 implementation steps mapped onto files in this project",
-    "   - one docs.smallest.ai URL",
-    "",
-    "Do not invent prices, voice_ids, latency, or endpoints. Quote the webagent.",
+    "Use its plan in this repo. Don't scrape smallest.ai or invent APIs.",
   ].join("\n");
 }
 

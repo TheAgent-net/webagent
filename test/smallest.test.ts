@@ -372,8 +372,8 @@ describe("build + host", () => {
     expect(page.headers.get("content-type")).toContain("text/html");
     const body = await page.text();
     expect(body).toContain("Smallest AI");
-    expect(body).toContain("use case in this repo");
-    expect(body).toContain("/.well-known/agent-card.json");
+    expect(body).toContain("voice use case");
+    expect(body).toContain("/chat");
     expect(body).toContain("Ask Smallest");
     expect(body).toContain("smallest.ai");
     expect(body).toContain("font-family: Geist");
@@ -412,11 +412,11 @@ describe("build + host", () => {
 describe("copy prompt and instruction", () => {
   test("copy prompt tells a coding agent to read the project and talk to the webagent", () => {
     const text = smallestCopyPrompt("https://a.test");
-    expect(text).toContain("Understand the use case in this repo");
+    expect(text).toContain("voice use case");
     expect(text).toContain("https://a.test/chat");
-    expect(text).toContain("https://a.test/.well-known/agent-card.json");
-    expect(text).toContain("Atoms");
-    expect(text).toContain("mapped onto files in this project");
+    expect(text).toContain("Keep the session");
+    expect(text).toContain("this repo");
+    expect(text.split("\n").length).toBeLessThan(12);
     expect(text).not.toMatch(/and figure out\.?$/);
   });
 
