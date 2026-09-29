@@ -2,10 +2,10 @@ import type { Room } from "../host/room.ts";
 import type { SmallestPack } from "./types.ts";
 
 export function smallestCopyPrompt(base: string): string {
-  const chat = base.replace(/\/+$/, "") + "/chat";
+  const url = base.replace(/\/+$/, "");
   return [
-    "Read this project and learn the voice use case. POST it to " + chat + ' as {"text":"<use case>"} and keep the session.',
-    "Use the webagent's plan in this repo. Don't scrape smallest.ai.",
+    "Talk to the Smallest agents at " + url + ".",
+    "Read this project, tell them the voice use case, and use their plan here.",
   ].join("\n");
 }
 
