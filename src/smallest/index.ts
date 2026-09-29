@@ -13,5 +13,6 @@ export { hashedEmbed, fillVectors, EMBED_MODEL } from "./embed.ts";
 export { kindOf, embedInput } from "./chunk.ts";
 export { recommendSettings } from "./settings.ts";
 export { smallestWidget } from "./widget.ts";
+export { renderChatMarkdown } from "./md.ts";
 export { DOC, DOCS, MARKET, STARTER_QUESTIONS } from "./catalog.ts";
 export type { Intent, SettingsPlan, SmallestPack, PathId, FetchLike, DocHit, DocKind, RetrievalInfo } from "./types.ts";
