@@ -70,7 +70,13 @@ export function missingFields(intent: Intent): string[] {
 }
 
 export function enoughIntent(intent: Intent): boolean {
+  if (stillExploring(intent.notes) && !inferIntent(intent.notes).useCase) return false;
   return missingFields(intent).length === 0;
+}
+
+/** Visitor is still figuring it out — do not treat a guessed SKU as enough. */
+export function stillExploring(notes: string): boolean {
+  return /\b(not sure|unsure|don'?t know|no idea|still figuring|\bidk\b)\b/i.test(notes);
 }
 
 /** One question. Never dump a form. */

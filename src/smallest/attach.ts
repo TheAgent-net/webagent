@@ -2,7 +2,7 @@ import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
-import { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, emptyIntent } from "./intent.ts";
+import { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, emptyIntent, stillExploring } from "./intent.ts";
 import { smallestInstruction } from "./prompt.ts";
 import { recommendSettings } from "./settings.ts";
 import type { Channel, Direction, Intent, Scale, SmallestPack } from "./types.ts";
@@ -49,6 +49,7 @@ export function captureIntentTool(): Tool {
     async call(args) {
       const inferred = inferIntent(String(args.said ?? ""));
       const patch = fromArgs(args);
+      if (stillExploring(inferred.notes) && !inferred.useCase) delete patch.useCase;
       const intent = mergeIntent(inferred, patch);
       const next = nextQuestion(intent);
       const enough = enoughIntent(intent);
@@ -87,11 +88,21 @@ export function recommendSettingsTool(): Tool {
       required: ["use_case"],
     },
     async call(args) {
-      const intent = mergeIntent(emptyIntent(), fromArgs(args));
-      if (!intent.useCase) intent.useCase = String(args.use_case ?? "support");
+      const inferred = inferIntent(String(args.notes ?? args.use_case ?? ""));
+      const patch = fromArgs(args);
+      if (stillExploring(inferred.notes) && !inferred.useCase) delete patch.useCase;
+      const intent = mergeIntent(inferred, patch);
       if (!intent.notes) intent.notes = String(args.notes ?? "");
+      if (!enoughIntent(intent)) {
+        const next = nextQuestion(intent);
+        return {
+          enough: false,
+          next_question: next,
+          hint: "Not enough yet. Ask next_question. Do not write the plan or name products they did not mention.",
+        };
+      }
       const plan = recommendSettings(intent);
-      return { ...plan, report: planText(plan) };
+      return { ...plan, enough: true, report: planText(plan) };
     },
   };
 }

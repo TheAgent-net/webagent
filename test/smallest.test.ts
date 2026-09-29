@@ -123,6 +123,12 @@ describe("intent", () => {
     expect(nextQuestion(a)).not.toMatch(/bookings|collections|Atoms|Lightning/i);
   });
 
+  test("unsure visitors stay in exploration", () => {
+    const a = inferIntent("not sure yet — I just want people to be able to talk to us");
+    expect(enoughIntent(a)).toBe(false);
+    expect(nextQuestion(a)).toMatch(/what should this do|trying to get working|who/i);
+  });
+
   test("pipecat + Hindi outbound is enough", () => {
     const a = inferIntent("Lightning TTS inside Pipecat for Hindi outbound sales");
     expect(a.channel).toBe("own_stack");
@@ -231,6 +237,18 @@ describe("tools", () => {
     };
     expect(out.path).toBe("atoms_standard");
     expect(out.report).toMatch(/Path:/);
+  });
+
+  test("recommend_settings refuses a guessed plan while they are still exploring", async () => {
+    const rec = recommendSettingsTool();
+    const out = (await rec.call({
+      use_case: "support",
+      channel: "phone",
+      notes: "not sure yet — I just want people to be able to talk to us",
+    })) as { enough?: boolean; next_question?: string; report?: string };
+    expect(out.enough).toBe(false);
+    expect(out.next_question).toBeTruthy();
+    expect(out.report).toBeUndefined();
   });
 });
 
@@ -344,6 +362,7 @@ describe("copy prompt and instruction", () => {
     expect(text).toContain("how you can help");
     expect(text).toContain("Do not name Lightning");
     expect(text).toMatch(/Do not shove|never recite/i);
+    expect(text).toMatch(/stay curious|ONLY if capture_intent\.enough/i);
     expect(text).not.toContain("Lightning v2 (current");
   });
 });
