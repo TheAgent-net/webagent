@@ -37,7 +37,7 @@ curl -sS https://smallest.agentnet.it.com/agent.json | jq .name
 
 Human URL: `https://smallest.agentnet.it.com/`
 Machine: `POST https://smallest.agentnet.it.com/chat` with `{"text":"..."}` (reuse `session`).
-Copy prompt: `Go talk to the Smallest AI agent at https://smallest.agentnet.it.com/ and figure out.`
+Copy prompt (chat widget): tells a coding agent to infer the use case from the current repo, then POST `https://smallest.agentnet.it.com/chat`.
 
 ## Coexistence
 

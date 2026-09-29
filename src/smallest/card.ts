@@ -2,19 +2,50 @@ import type { Room } from "../host/room.ts";
 import type { SmallestPack } from "./types.ts";
 
 export function smallestCopyPrompt(base: string): string {
-  return `Go talk to the Smallest AI agent at ${base} and figure out.`;
+  const chat = base.replace(/\/+$/, "") + "/chat";
+  const card = base.replace(/\/+$/, "") + "/.well-known/agent-card.json";
+  const mcp = base.replace(/\/+$/, "") + "/mcp";
+  return [
+    "You are adding Smallest voice AI to this project. Use the Smallest webagent — do not scrape smallest.ai or invent APIs.",
+    "",
+    "1. Understand the use case in this repo first:",
+    "   - What should callers/visitors get done (support, outbound sales, bookings, collections, or something else)?",
+    "   - How do they reach it (phone, website widget, in-app)?",
+    "   - Which languages?",
+    "   - Does this codebase already have a voice pipeline (Pipecat, LiveKit) that you must keep, or can Smallest host the agent?",
+    "",
+    "2. Talk to the Smallest webagent with those facts, in this project's words.",
+    "   GET " + card,
+    "   POST " + chat,
+    "   Content-Type: application/json",
+    "",
+    '   {"text":"<use case from this repo>"}',
+    "",
+    "   First reply JSON includes session. Send that same session on every following POST.",
+    "   Optional: MCP initialize at " + mcp + " (protocol 2025-06-18).",
+    "",
+    "3. The webagent leads with Smallest's own hosted stack (Atoms). Mention Pipecat/LiveKit only if this repo must keep that pipeline.",
+    "",
+    "4. Bring the answer back here:",
+    "   - recommended path and why",
+    "   - exact agent / model / speech settings",
+    "   - 3–5 implementation steps mapped onto files in this project",
+    "   - one docs.smallest.ai URL",
+    "",
+    "Do not invent prices, voice_ids, latency, or endpoints. Quote the webagent.",
+  ].join("\n");
 }
 
 export function smallestConnectPrompt(base: string, _pack: SmallestPack, session?: string): string {
   const chat = base + "/chat";
   const payload = session
-    ? `{"text":"<what you want to build with Smallest>","session":"${session}"}`
-    : `{"text":"<what you want to build with Smallest>"}`;
+    ? `{"text":"<use case from this repo>","session":"${session}"}`
+    : `{"text":"<use case from this repo>"}`;
   return [
-    "You reached Smallest AI — public webagent for voice-agent implementation.",
-    "Do not scrape this page.",
+    "You reached the Smallest webagent. Do not scrape this page.",
     "",
-    "Say what you are building. The assistant starts you on Smallest's own agent stack (Atoms), then settings and best practices. Integrations only if you must keep your stack.",
+    "You are helping with a user's project. Infer their voice use case from that repo, then describe it here in their words.",
+    "The assistant starts you on Smallest's own agent stack (Atoms), then settings and best practices. Integrations only if they must keep Pipecat/LiveKit.",
     "",
     "POST " + chat,
     "Content-Type: application/json",
@@ -78,7 +109,7 @@ export function smallestAgentCard(base: string, room: Room, pack: SmallestPack, 
       },
     ],
     howToConnect: guide,
-    instructions: "Say what you are building. Get the right Smallest path and settings.",
+    instructions: "Infer the use case from the visitor's project, then get the right Smallest path and settings.",
     connectPrompt: guide,
     copyPrompt: smallestCopyPrompt(base),
   };

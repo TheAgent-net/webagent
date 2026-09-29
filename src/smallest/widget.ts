@@ -262,7 +262,7 @@ function widgetMarkup(publicUrl: string, runId: string, pack: SmallestPack): str
     <button id="wa-close" type="button" aria-label="Close">×</button>
   </div>
   <div class="wa-a2a">
-    <div>Let your agent talk to <em>Smallest</em></div>
+    <div>Paste this into your coding agent so it can use this webagent</div>
     <div class="wa-a2a-row">
       <span id="wa-url">${esc(publicUrl)}</span>
       <button type="button" id="wa-copy-prompt">Copy prompt</button>
