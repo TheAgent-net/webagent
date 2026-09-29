@@ -412,10 +412,12 @@ describe("build + host", () => {
 describe("copy prompt and instruction", () => {
   test("copy prompt points a visitor at Smallest agents", () => {
     const text = smallestCopyPrompt("https://a.test");
-    expect(text).toContain("Talk to the Smallest agents at https://a.test");
+    expect(text).toContain("Talk to the Smallest agents at https://a.test/chat");
+    expect(text).toContain('POST {"text":"<question>"}');
+    expect(text).toContain("do not open a browser");
     expect(text).toContain("understand about Smallest");
     expect(text.split("\n")).toHaveLength(2);
-    expect(text).not.toMatch(/webagent|this project|voice use case|POST /);
+    expect(text).not.toMatch(/webagent|this project|voice use case/);
   });
 
   test("instruction tells the model to ask little and recommend settings", () => {

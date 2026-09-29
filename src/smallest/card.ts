@@ -2,9 +2,9 @@ import type { Room } from "../host/room.ts";
 import type { SmallestPack } from "./types.ts";
 
 export function smallestCopyPrompt(base: string): string {
-  const url = base.replace(/\/+$/, "");
+  const chat = base.replace(/\/+$/, "") + "/chat";
   return [
-    "Talk to the Smallest agents at " + url + ".",
+    "Talk to the Smallest agents at " + chat + '. POST {"text":"<question>"} — do not open a browser.',
     "Ask them anything you want to understand about Smallest.",
   ].join("\n");
 }
