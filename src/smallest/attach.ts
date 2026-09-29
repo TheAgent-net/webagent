@@ -19,7 +19,7 @@ export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: 
     vars: [
       "Smallest AI: realtime voice (Lightning TTS, Pulse STT, Electron LLM, Hydra S2S) plus hosted Atoms agents.",
       "Docs at " + pack.docsOrigin + ". " + pack.docs.length + " doc pages in the pack.",
-      "Call capture_intent every turn, then recommend_settings when enough.",
+      "Every turn: capture_intent. When enough: recommend_settings, then the short plan. Greetings are not a use case.",
     ].join("\n"),
   });
   return run;

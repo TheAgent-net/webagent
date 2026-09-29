@@ -309,7 +309,9 @@ describe("copy prompt and instruction", () => {
     });
     expect(text).toContain("ONE question");
     expect(text).toContain("recommend_settings");
+    expect(text).toContain("Never re-ask");
     expect(text).toContain("Lightning v3.1");
+    expect(text).toContain("Greet in one line");
     expect(text).not.toContain("Lightning v2 (current");
   });
 });
