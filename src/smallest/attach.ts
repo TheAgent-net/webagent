@@ -2,7 +2,7 @@ import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
-import { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
+import { enoughIntent, inferIntent, isGreeting, lockedOwnStack, mentionedIntegration, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
 import { smallestInstruction } from "./prompt.ts";
 import { expandQuery, searchDocs } from "./retrieve.ts";
 import { recommendSettings } from "./settings.ts";
@@ -24,7 +24,7 @@ export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: 
       "You are the Smallest assistant. Lead with Smallest's own agent stack (Atoms).",
       "Explore the visitor first. Do not dump products or a company brief.",
       "First turn: two short sentences on how you can help, then one open question about them.",
-      "Pipecat/LiveKit are a second path only if they must keep that pipeline.",
+      "If they mention Pipecat or LiveKit, do not start there. Atoms first. That stack is only if they must keep it.",
       "Docs at " + pack.docsOrigin + ". " + (pack.chunks?.length ?? pack.docs.length) + " indexed sections — docs_lookup Atoms/platform first.",
     ].join("\n"),
   });
@@ -63,10 +63,14 @@ export function captureIntentTool(): Tool {
         enough,
         next_question: next,
         hint: enough
-          ? "Call recommend_settings now with these fields. Do not ask another question."
+          ? mentionedIntegration(intent.notes) && !lockedOwnStack(intent.notes)
+            ? "Enough. Call recommend_settings. Path must be Atoms first. Treat Pipecat/LiveKit as a footnote only if they must keep that pipeline."
+            : "Call recommend_settings now with these fields. Do not ask another question."
           : isGreeting(String(args.said ?? "")) || isGreeting(intent.notes)
             ? "Greeting. Two short sentences on how you can help, then ask next_question. Do not name products."
-            : "Ask only next_question. Reflect one thing they said. Do not dump a catalog.",
+            : mentionedIntegration(intent.notes) && !lockedOwnStack(intent.notes)
+              ? "They named another stack. Do not start there. Offer Smallest's own agent (Atoms) as the first way, then ask only next_question."
+              : "Ask only next_question. Reflect one thing they said. Do not dump a catalog.",
       };
     },
   };

@@ -252,6 +252,12 @@ describe("tools", () => {
     };
     expect(first.enough).toBe(false);
     expect(first.next_question).toBeTruthy();
+    const named = (await tool.call({ said: "I already have Pipecat. I just need it to speak." })) as {
+      hint: string;
+      enough: boolean;
+    };
+    expect(named.enough).toBe(false);
+    expect(named.hint).toMatch(/Do not start there|Atoms/i);
     const second = (await tool.call({
       said: "inbound phone line, English, noisy call center",
       use_case: "collections",
