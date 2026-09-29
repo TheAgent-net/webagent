@@ -2,7 +2,7 @@ import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
-import { enoughIntent, inferIntent, mergeIntent, nextQuestion, emptyIntent } from "./intent.ts";
+import { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, emptyIntent } from "./intent.ts";
 import { smallestInstruction } from "./prompt.ts";
 import { recommendSettings } from "./settings.ts";
 import type { Channel, Direction, Intent, Scale, SmallestPack } from "./types.ts";
@@ -17,9 +17,10 @@ export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: 
   run.useTool(rec);
   run.inject({
     vars: [
-      "Smallest AI: realtime voice (Lightning TTS, Pulse STT, Electron LLM, Hydra S2S) plus hosted Atoms agents.",
-      "Docs at " + pack.docsOrigin + ". " + pack.docs.length + " doc pages in the pack.",
-      "Onboard the company first (Lightning, Pulse, Electron, Atoms vs Waves). Do not open with support/sales/bookings. Then one door: learn, hosted Atoms, or own stack.",
+      "Explore the visitor first. Do not dump products, models, or a company brief.",
+      "First turn: two short sentences on how you can help, then one open question about them.",
+      "Name a Smallest path only after it matches what they said.",
+      "Docs at " + pack.docsOrigin + ". " + pack.docs.length + " doc pages in the pack — look them up after you know what they need.",
     ].join("\n"),
   });
   return run;
@@ -57,7 +58,9 @@ export function captureIntentTool(): Tool {
         next_question: next,
         hint: enough
           ? "Call recommend_settings now with these fields. Do not ask another question."
-          : "Ask only next_question. Do not dump a form.",
+          : isGreeting(String(args.said ?? "")) || isGreeting(intent.notes)
+            ? "Greeting. Two short sentences on how you can help, then ask next_question. Do not name products."
+            : "Ask only next_question. Reflect one thing they said. Do not dump a catalog.",
       };
     },
   };

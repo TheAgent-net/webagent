@@ -80,12 +80,12 @@ export function nextQuestion(intent: Intent): string | null {
   const field = miss[0]!;
   if (field === "useCase") {
     if (isGreeting(intent.notes) || !intent.notes.trim()) {
-      return "What brought you to Smallest — understand the products, start a hosted Atoms agent, or drop Lightning/Pulse into your own stack?";
+      return "What are you trying to get working?";
     }
-    return "Are you here to learn the platform, launch a hosted Atoms agent, or plug Lightning/Pulse into a stack you already have?";
+    return "What should this do for you — and who is on the other end of the conversation?";
   }
   if (field === "channel") {
-    return `For ${intent.useCase || "this"}, do you want a phone number, a website/widget, a mobile app, or Smallest models inside your own stack (Pipecat/LiveKit)?`;
+    return "Where should that live — a phone line, a website, or inside something you already built?";
   }
   if (field === "direction") {
     return "Should customers call in, should the agent dial out, or both?";
@@ -169,8 +169,12 @@ function toolsFrom(t: string): string[] {
   return uniq(out);
 }
 
-function isGreeting(notes: string): boolean {
-  return /^(hi|hey|hello|yo|thanks|thank you|sup|hola)\b[.!?]*$/i.test(notes.trim());
+export function isGreeting(notes: string): boolean {
+  const t = notes.trim();
+  if (!t) return true;
+  return /^(?:(hi|hey|hello|yo|thanks|thank you|sup|hola)[.!?]*)(?:\s+(?:hi|hey|hello|yo|thanks|thank you|sup|hola)[.!?]*)*$/i.test(
+    t,
+  );
 }
 
 function uniq(xs: string[]): string[] {

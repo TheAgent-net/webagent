@@ -40,10 +40,10 @@ export const DOC = {
 };
 
 export const STARTER_QUESTIONS = [
-  "What does Smallest actually sell?",
-  "I want to launch a hosted Atoms voice agent",
-  "I already have Pipecat — add Lightning TTS",
-  "Help me pick the right agent settings",
+  "I'm new and not sure where to start",
+  "People should be able to call us and talk to an AI",
+  "I already have an app — I just need it to speak",
+  "Walk me through the right setup for my case",
 ];
 
 export const PRIORITY_DOCS = [

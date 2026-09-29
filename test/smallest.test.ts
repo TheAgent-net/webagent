@@ -115,12 +115,12 @@ describe("intent", () => {
     expect(nextQuestion(a)).toMatch(/phone|widget|Pipecat/i);
   });
 
-  test("greeting is not Hindi and asks how they want to start with Smallest", () => {
+  test("greeting is not Hindi and asks what they are trying to get working", () => {
     const a = inferIntent("hi");
     expect(a.languages).not.toContain("hi");
     expect(a.useCase).toBeUndefined();
-    expect(nextQuestion(a)).toMatch(/Atoms|Lightning|products/i);
-    expect(nextQuestion(a)).not.toMatch(/bookings|collections/i);
+    expect(nextQuestion(a)).toMatch(/trying to get working/i);
+    expect(nextQuestion(a)).not.toMatch(/bookings|collections|Atoms|Lightning/i);
   });
 
   test("pipecat + Hindi outbound is enough", () => {
@@ -193,6 +193,19 @@ describe("settings", () => {
 });
 
 describe("tools", () => {
+  test("capture_intent on a greeting does not shove products", async () => {
+    const tool = captureIntentTool();
+    const first = (await tool.call({ said: "hi" })) as {
+      enough: boolean;
+      next_question: string | null;
+      hint: string;
+    };
+    expect(first.enough).toBe(false);
+    expect(first.next_question).toMatch(/trying to get working/i);
+    expect(first.hint).toMatch(/do not name products/i);
+    expect(first.next_question).not.toMatch(/Lightning|Atoms|Waves|bookings/i);
+  });
+
   test("capture_intent returns the next question until enough", async () => {
     const tool = captureIntentTool();
     const first = (await tool.call({ said: "collections agent" })) as {
@@ -226,7 +239,8 @@ describe("build + host", () => {
     const pack = await buildSmallest({ maxPages: 20, fetch: mockSmallestFetch() });
     expect(pack.docs.length).toBeGreaterThanOrEqual(2);
     expect(pack.pages.some((p) => /Speech/i.test(p.title) || /1\.2x/.test(p.text))).toBe(true);
-    expect(pack.starterQuestions[0]).toMatch(/Smallest|sell|Atoms/i);
+    expect(pack.starterQuestions[0]).toMatch(/not sure where to start|trying to get working|call us/i);
+    expect(pack.facts[0]).toMatch(/do not recite/i);
 
     const h = new Harness();
     const run = attachSmallest(h, pack, { model: "echo" });
@@ -238,6 +252,13 @@ describe("build + host", () => {
     expect(sys).toContain("ONE question");
     expect(sys).toContain("recommend_settings");
     expect(sys).toContain("Never re-ask");
+    const pins = run
+      .getContext()
+      .filter((m) => m.role === "pin")
+      .map((m) => m.content)
+      .join("\n");
+    expect(pins).toMatch(/Explore the visitor first/i);
+    expect(pins).toMatch(/Do not dump products/i);
   });
 
   test("human GET / is branded HTML; machine GET / is the card; chat keeps a session", async () => {
@@ -319,8 +340,10 @@ describe("copy prompt and instruction", () => {
     expect(text).toContain("recommend_settings");
     expect(text).toContain("Never re-ask");
     expect(text).toContain("Lightning v3.1");
-    expect(text).toContain("onboarding");
-    expect(text).toContain("Atoms vs Waves");
+    expect(text).toContain("Explore them first");
+    expect(text).toContain("how you can help");
+    expect(text).toContain("Do not name Lightning");
+    expect(text).toMatch(/Do not shove|never recite/i);
     expect(text).not.toContain("Lightning v2 (current");
   });
 });

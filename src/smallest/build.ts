@@ -16,10 +16,11 @@ export async function buildSmallest(opts: BuildSmallestOpts = {}): Promise<Small
   const site = buildPack(state);
   site.starterQuestions = STARTER_QUESTIONS;
   const facts = [
+    "Pocket facts — do not recite on the first turn. Explore the visitor, then spend these only when they match what they said.",
     ...site.facts,
     `Docs origin ${crawled.docsOrigin}. ${crawled.docs.length} doc pages, ${crawled.marketing.length} marketing pages.`,
-    "Current models: Lightning v3.1 TTS, Pulse STT, Electron LLM, Hydra S2S (beta). Lightning v2 is deprecated.",
-    "Two build paths: hosted Atoms (standard platform LLM vs crew/custom LLM) or own stack (Pipecat/LiveKit) using Waves APIs.",
+    "Current models (name only after they match): Lightning v3.1 TTS, Pulse STT, Electron LLM, Hydra S2S (beta). Lightning v2 is deprecated.",
+    "Paths (name only after they match): hosted Atoms, or own stack (Pipecat/LiveKit) using Waves APIs.",
   ];
   site.facts = facts;
   return {
