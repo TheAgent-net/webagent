@@ -6,6 +6,7 @@ export { smallestHost } from "./host.ts";
 export { enoughIntent, inferIntent, mergeIntent, nextQuestion } from "./intent.ts";
 export { pageFromMarkdown, parseLlmsTxt, rankDocs } from "./markdown.ts";
 export { smallestPage } from "./page.ts";
+export { hasSmallestSnapshot, smallestSiteResponse } from "./site.ts";
 export { smallestInstruction } from "./prompt.ts";
 export { recommendSettings } from "./settings.ts";
 export { smallestWidget } from "./widget.ts";

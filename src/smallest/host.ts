@@ -7,6 +7,7 @@ import { Room } from "../host/room.ts";
 import { Sessions } from "../host/sessions.ts";
 import { smallestAgentCard, smallestConnectPrompt } from "./card.ts";
 import { smallestPage } from "./page.ts";
+import { smallestSiteResponse } from "./site.ts";
 import type { SmallestPack } from "./types.ts";
 
 const CARD_PATHS = new Set([
@@ -63,6 +64,13 @@ async function route(
     const hit = sessions.open(url.searchParams.get("session"));
     return hit.room.stream();
   }
+  if ((req.method === "GET" || req.method === "HEAD") && url.pathname !== "/") {
+    const asset = smallestSiteResponse(url);
+    if (asset) return asset;
+    if (kind === "human" && !reservedPath(url.pathname)) {
+      return Response.redirect("https://smallest.ai" + url.pathname + url.search, 302);
+    }
+  }
   if (url.pathname === "/chat" && req.method === "POST") {
     const body = (await req.json().catch(() => ({}))) as {
       text?: string;
@@ -94,6 +102,17 @@ async function route(
     }
   }
   return api(req);
+}
+
+function reservedPath(pathname: string): boolean {
+  return (
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/live") ||
+    pathname.startsWith("/mcp") ||
+    pathname.startsWith("/session") ||
+    pathname.startsWith("/who") ||
+    pathname.startsWith("/.")
+  );
 }
 
 function chatFrom(req: Request): "human" | "machine" {

@@ -16,6 +16,7 @@ import {
   smallestCopyPrompt,
   smallestHost,
   smallestInstruction,
+  hasSmallestSnapshot,
 } from "../src/smallest/index.ts";
 import type { FetchLike } from "../src/smallest/types.ts";
 
@@ -249,12 +250,19 @@ describe("build + host", () => {
     expect(body).toContain("Smallest AI");
     expect(body).toContain("Go talk to the Smallest AI agent");
     expect(body).toContain("Ask Smallest");
+    expect(body).toMatch(/Voice AI Platform|Lightning|Pulse/);
+    expect(body).toContain("framerusercontent.com");
 
     const cardRes = await fetchFn(new Request("http://t/", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
     const card = (await cardRes.json()) as { name: string; type: string; skills: { id: string }[] };
     expect(card.type).toBe("webagent");
     expect(card.name).toBe("Smallest AI");
+    expect(hasSmallestSnapshot()).toBe(true);
     expect(card.skills.some((s) => s.id === "settings")).toBe(true);
+
+    const icon = await fetchFn(new Request("http://t/_ext/framerusercontent.com/images/8aGg1mfHwnBJJYiECyUmneAyRVA.png"));
+    expect([200, 404]).toContain(icon.status);
+    if (icon.status === 200) expect(icon.headers.get("content-type")).toMatch(/image|octet/);
 
     const chat = await fetchFn(
       new Request("http://t/chat", {
