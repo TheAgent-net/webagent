@@ -68,6 +68,33 @@ describe("models", () => {
     expect(out).toHaveLength(3);
   });
 
+  test("toResponsesInput maps tool rounds for GPT-6 Astra", async () => {
+    const { toResponsesInput } = await import("../src/models.ts");
+    const out = toResponsesInput([
+      { role: "pin", content: "You are the Smallest assistant." },
+      { role: "user", content: "hi" },
+      {
+        role: "assistant",
+        content: "",
+        toolCalls: [{ id: "call_1", name: "capture_intent", arguments: { said: "hi" } }],
+      },
+      { role: "tool", content: "{\"enough\":false}", toolCallId: "call_1" },
+    ]);
+    expect(out[0]).toEqual({ role: "system", content: "You are the Smallest assistant." });
+    expect(out[1]).toEqual({ role: "user", content: "hi" });
+    expect(out[2]).toEqual({
+      type: "function_call",
+      call_id: "call_1",
+      name: "capture_intent",
+      arguments: "{\"said\":\"hi\"}",
+    });
+    expect(out[3]).toEqual({
+      type: "function_call_output",
+      call_id: "call_1",
+      output: "{\"enough\":false}",
+    });
+  });
+
   test("start records tool_calls so a second model step can run", async () => {
     const h = new Harness();
     let n = 0;

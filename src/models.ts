@@ -101,8 +101,13 @@ export function openaiModel(opts: { id: string; baseUrl: string; model: string; 
     async reason(req, out, signal) {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (key) headers.Authorization = "Bearer " + key;
+      const base = opts.baseUrl.replace(/\/+$/, "");
+      if (/gpt-6/i.test(opts.model)) {
+        await reasonResponses(base, opts.model, req, out, headers, signal);
+        return;
+      }
       const body: Record<string, unknown> = { model: opts.model, messages: toOpenAI(req.messages) };
-      if (/gpt-5|gpt-6/i.test(opts.model)) {
+      if (/gpt-5/i.test(opts.model)) {
         body.reasoning_effort = process.env.OPENAI_REASONING_EFFORT || "none";
       }
       if (req.tools.length) {
@@ -111,7 +116,7 @@ export function openaiModel(opts: { id: string; baseUrl: string; model: string; 
           function: { name: t.name, description: t.description ?? "", parameters: t.schema ?? { type: "object", properties: {} } },
         }));
       }
-      const resp = await fetch(opts.baseUrl.replace(/\/+$/, "") + "/chat/completions", {
+      const resp = await fetch(base + "/chat/completions", {
         method: "POST",
         headers,
         body: JSON.stringify(body),
@@ -170,4 +175,90 @@ export function toOpenAI(messages: readonly Message[]): Record<string, unknown>[
     out.push({ role: m.role, content: m.content });
   }
   return out;
+}
+
+/** GPT-6 Astra cannot use function tools on chat/completions — map onto /v1/responses. */
+export function toResponsesInput(messages: readonly Message[]): Record<string, unknown>[] {
+  const chat = toOpenAI(messages);
+  const out: Record<string, unknown>[] = [];
+  for (const m of chat) {
+    const role = String(m.role ?? "");
+    if (role === "tool") {
+      out.push({
+        type: "function_call_output",
+        call_id: String(m.tool_call_id ?? ""),
+        output: typeof m.content === "string" ? m.content : JSON.stringify(m.content ?? ""),
+      });
+      continue;
+    }
+    if (role === "assistant" && Array.isArray(m.tool_calls)) {
+      if (typeof m.content === "string" && m.content) out.push({ role: "assistant", content: m.content });
+      for (const tc of m.tool_calls as { id?: string; function?: { name?: string; arguments?: string } }[]) {
+        out.push({
+          type: "function_call",
+          call_id: tc.id,
+          name: tc.function?.name,
+          arguments: tc.function?.arguments ?? "{}",
+        });
+      }
+      continue;
+    }
+    out.push({ role, content: m.content });
+  }
+  return out;
+}
+
+async function reasonResponses(
+  base: string,
+  model: string,
+  req: ModelRequest,
+  out: Assembler,
+  headers: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<void> {
+  const body: Record<string, unknown> = {
+    model,
+    input: toResponsesInput(req.messages),
+  };
+  if (req.tools.length) {
+    body.tools = req.tools.map((t) => ({
+      type: "function",
+      name: t.name,
+      description: t.description ?? "",
+      parameters: t.schema ?? { type: "object", properties: {} },
+    }));
+  }
+  const resp = await fetch(base + "/responses", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    signal,
+  });
+  if (resp.status >= 300) throw new Error(`model ${resp.status}: ${(await resp.text()).slice(0, 2048)}`);
+  const json = (await resp.json()) as { output?: Record<string, unknown>[] };
+  const items = json.output ?? [];
+  if (!items.length) throw new Error("model returned no output");
+  let toolI = 0;
+  for (const item of items) {
+    const type = String(item.type ?? "");
+    if (type === "function_call") {
+      out.pushToolDelta(toolI, String(item.call_id ?? item.id ?? ""), String(item.name ?? ""), String(item.arguments ?? ""));
+      toolI++;
+      continue;
+    }
+    if (type === "message") applyMessageContent(item.content, out);
+  }
+}
+
+function applyMessageContent(content: unknown, out: Assembler): void {
+  if (typeof content === "string") {
+    out.pushText(content);
+    return;
+  }
+  if (!Array.isArray(content)) return;
+  for (const c of content) {
+    if (!c || typeof c !== "object") continue;
+    const text = (c as { text?: unknown }).text;
+    if (typeof text === "string") out.pushText(text);
+  }
 }
