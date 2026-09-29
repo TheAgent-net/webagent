@@ -6,6 +6,8 @@ move those live branches. It binds port **8789**. Nginx routes by `server_name`.
 
 Live: `https://smallest.agentnet.it.com/`
 
+Model: **gpt-5.6-luna** (pinned in `webagent smallest` and in the systemd unit). A copied Composio `.env` must not switch it to `gpt-4o-mini`.
+
 ## DNS
 
 Cloudflare proxied A record (same as Corgi):
