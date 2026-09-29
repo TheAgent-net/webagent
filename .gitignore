@@ -21,3 +21,4 @@ graphify-out/cost.json
 graphify-out/cache/
 graphify-out/.graphify_root
 graphify-out/*.sig
+site/smallest/metrics/
