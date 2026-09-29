@@ -2,6 +2,7 @@ import { buildPack } from "../site/pack.ts";
 import type { CrawlState } from "../site/crawl.ts";
 import { STARTER_QUESTIONS } from "./catalog.ts";
 import { crawlSmallest } from "./crawl.ts";
+import { indexDocs } from "./retrieve.ts";
 import type { BuildSmallestOpts, SmallestPack } from "./types.ts";
 
 export async function buildSmallest(opts: BuildSmallestOpts = {}): Promise<SmallestPack> {
@@ -23,6 +24,7 @@ export async function buildSmallest(opts: BuildSmallestOpts = {}): Promise<Small
     "Paths (name only after they match): hosted Atoms, or own stack (Pipecat/LiveKit) using Waves APIs.",
   ];
   site.facts = facts;
+  const chunks = indexDocs(crawled.pages);
   return {
     origin: crawled.origin,
     docsOrigin: crawled.docsOrigin,
@@ -30,6 +32,7 @@ export async function buildSmallest(opts: BuildSmallestOpts = {}): Promise<Small
     pages: crawled.pages,
     marketing: crawled.marketing,
     docs: crawled.docs,
+    chunks,
     facts,
     starterQuestions: STARTER_QUESTIONS,
   };

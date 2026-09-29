@@ -6,6 +6,7 @@ import {
   attachSmallest,
   buildSmallest,
   captureIntentTool,
+  docsLookupTool,
   inferIntent,
   nextQuestion,
   enoughIntent,
@@ -13,6 +14,7 @@ import {
   parseLlmsTxt,
   recommendSettings,
   recommendSettingsTool,
+  searchDocs,
   smallestCopyPrompt,
   smallestHost,
   smallestInstruction,
@@ -25,6 +27,7 @@ const LLMS = `# Smallest AI Docs
 - [Speech settings](https://docs.smallest.ai/voice-agents/platform/create-agent/agent-settings/speech-settings.md): Tune how your agent speaks.
 - [Use Case Finder](https://docs.smallest.ai/voice-agents/developer-guide/get-started/use-case-finder.md): Find the canonical doc.
 - [Pipecat](https://docs.smallest.ai/models/integrations/agent-framework/pipecat.md): Build pipelines with Lightning and Pulse.
+- [Lightning TTS](https://docs.smallest.ai/models/documentation/text-to-speech-lightning/overview.md): Current Waves TTS.
 `;
 
 const SPEECH_MD = `# Speech Settings
@@ -68,6 +71,11 @@ function mockSmallestFetch(): FetchLike {
         headers: { "content-type": "text/markdown" },
       });
     }
+    if (url.includes("text-to-speech-lightning") || url.includes("lightning")) {
+      return new Response("# Lightning v3.1\nCurrent TTS. lightning_v3.1 and lightning_v3.1_pro. Do not use Lightning v2.", {
+        headers: { "content-type": "text/markdown" },
+      });
+    }
     if (url.includes("smallest.ai/robots.txt")) return new Response("User-agent: *\n");
     if (url.includes("smallest.ai/sitemap.xml")) return new Response("no", { status: 404 });
     if (url.includes("smallest.ai")) {
@@ -85,7 +93,7 @@ function mockSmallestFetch(): FetchLike {
 describe("docs crawl helpers", () => {
   test("parseLlmsTxt collects markdown pages", () => {
     const links = parseLlmsTxt(LLMS);
-    expect(links.length).toBe(4);
+    expect(links.length).toBe(5);
     expect(links.some((l) => l.mdUrl.endsWith("speech-settings.md"))).toBe(true);
     expect(links.every((l) => l.url.startsWith("https://docs.smallest.ai/"))).toBe(true);
   });
@@ -250,6 +258,26 @@ describe("tools", () => {
     expect(out.next_question).toBeTruthy();
     expect(out.report).toBeUndefined();
   });
+
+  test("docs_lookup ranks the matching docs section", async () => {
+    const pack = await buildSmallest({ maxPages: 20, fetch: mockSmallestFetch() });
+    expect(pack.chunks?.length).toBeGreaterThan(2);
+    const pipe = searchDocs(pack, "I already have Pipecat and need it to speak");
+    expect(pipe[0]?.url).toMatch(/pipecat/i);
+    const speech = searchDocs(pack, "allow interruptions speech speed");
+    expect(speech[0]?.url).toMatch(/speech-settings/i);
+    const tts = searchDocs(pack, "text to speech lightning");
+    expect(tts[0]?.url).toMatch(/lightning|text-to-speech/i);
+
+    const tool = docsLookupTool(pack);
+    const out = (await tool.call({ query: "pipecat lightning pulse" })) as {
+      hits: { url: string; snippet: string }[];
+      hint: string;
+    };
+    expect(out.hits.length).toBeGreaterThan(0);
+    expect(out.hits[0]!.url).toMatch(/pipecat|lightning/i);
+    expect(out.hint).toMatch(/Cite at most one URL/i);
+  });
 });
 
 describe("build + host", () => {
@@ -266,6 +294,7 @@ describe("build + host", () => {
     expect(names).toContain("site_lookup");
     expect(names).toContain("capture_intent");
     expect(names).toContain("recommend_settings");
+    expect(names).toContain("docs_lookup");
     const sys = run.getContext().find((m) => m.role === "system")!.content;
     expect(sys).toContain("ONE question");
     expect(sys).toContain("recommend_settings");
@@ -362,6 +391,7 @@ describe("copy prompt and instruction", () => {
     expect(text).toContain("how you can help");
     expect(text).toContain("Do not name Lightning");
     expect(text).toMatch(/Do not shove|never recite/i);
+    expect(text).toContain("docs_lookup");
     expect(text).toMatch(/stay curious|ONLY if capture_intent\.enough/i);
     expect(text).not.toContain("Lightning v2 (current");
   });

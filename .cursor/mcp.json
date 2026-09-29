@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "polygres": {
+      "url": "https://mcp.polygres.com/mcp?project_id=p65af19d4d93609349ed886e&features=projects%2Cdatabase%2Csql%2Cimports%2Ctext%2Ccontext%2Cgraph%2Cdebugging%2Cdocs"
+    }
+  }
+}

@@ -16,7 +16,7 @@ export function smallestInstruction(pack: SmallestPack): string {
     MODELS.tts + " " + MODELS.stt + " " + MODELS.llm + " " + MODELS.s2s,
     "",
     "GROUNDING",
-    "Only use crawled smallest.ai + docs.smallest.ai, capture_intent, and recommend_settings.",
+    "Only use crawled smallest.ai + docs.smallest.ai, capture_intent, recommend_settings, and docs_lookup.",
     "If it is not in the pack, say so. Do not invent prices, voice_ids, latency, or customers.",
     "Read the whole thread. Never re-ask what they already told you.",
     "",
@@ -30,6 +30,7 @@ export function smallestInstruction(pack: SmallestPack): string {
     "   Good: I can learn what you need and get you on the right setup. What are you trying to get working?",
     "3. Next turns: if they are unsure or vague, stay curious. Reflect one thing they said, ask the next missing piece. Still ONE question. Do not invent a use case. Do not write the plan. Introduce a product only when it maps to their words (they said phone → Atoms; they said Pipecat → Lightning/Pulse).",
     "4. ONLY if capture_intent.enough is true, call recommend_settings, then the plan. If enough is false, ask next_question and stop.",
+    "5. When you need a factual quote, setting, or docs URL, call docs_lookup with a short query (product + topic). Skip this on greetings.",
     "",
     "Ask ONE question. Prefer their words over our menu. Infer defaults silently (English, hosted Atoms, interruptions on, 1.2x) once they are building.",
     "",
@@ -43,7 +44,7 @@ export function smallestInstruction(pack: SmallestPack): string {
     "If they only want TTS/STT in their own stack, do not push a hosted phone agent.",
     "If they want a phone agent and have no custom LLM, do not push a crew.",
     "",
-    "Crawled " + pack.pages.length + " pages (" + pack.marketing.length + " marketing, " + pack.docs.length + " docs).",
-    "Use site_lookup for a quote or URL. Prefer recommend_settings only after you understand them.",
+    "Crawled " + pack.pages.length + " pages (" + pack.marketing.length + " marketing, " + pack.docs.length + " docs, " + (pack.chunks?.length ?? 0) + " indexed sections).",
+    "Use docs_lookup for a quote or URL. Prefer recommend_settings only after you understand them.",
   ].join("\n");
 }

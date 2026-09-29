@@ -38,6 +38,28 @@ export interface SettingsPlan {
   summary: string;
 }
 
+export type DocKind = "model" | "platform" | "integration" | "guide" | "marketing";
+
+export interface DocChunk {
+  id: string;
+  url: string;
+  title: string;
+  section: string;
+  kind: DocKind;
+  headings: string[];
+  text: string;
+  priority: number;
+}
+
+export interface DocHit {
+  title: string;
+  url: string;
+  section: string;
+  kind: DocKind;
+  snippet: string;
+  score: number;
+}
+
 export interface SmallestPack {
   origin: string;
   docsOrigin: string;
@@ -45,6 +67,7 @@ export interface SmallestPack {
   pages: PageShot[];
   marketing: PageShot[];
   docs: PageShot[];
+  chunks?: DocChunk[];
   facts: string[];
   starterQuestions: string[];
 }

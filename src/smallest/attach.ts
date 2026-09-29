@@ -2,25 +2,29 @@ import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
-import { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, emptyIntent, stillExploring } from "./intent.ts";
+import { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
 import { smallestInstruction } from "./prompt.ts";
+import { expandQuery, searchDocs } from "./retrieve.ts";
 import { recommendSettings } from "./settings.ts";
-import type { Channel, Direction, Intent, Scale, SmallestPack } from "./types.ts";
+import type { Channel, Direction, DocKind, Intent, Scale, SmallestPack } from "./types.ts";
 
 export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: string }): Run {
   const run = attachPack(h, pack.site, { model: opts?.model, instruction: smallestInstruction(pack) });
   const capture = captureIntentTool();
   const rec = recommendSettingsTool();
+  const docs = docsLookupTool(pack);
   h.addTool(capture);
   h.addTool(rec);
+  h.addTool(docs);
   run.useTool(capture);
   run.useTool(rec);
+  run.useTool(docs);
   run.inject({
     vars: [
       "Explore the visitor first. Do not dump products, models, or a company brief.",
       "First turn: two short sentences on how you can help, then one open question about them.",
       "Name a Smallest path only after it matches what they said.",
-      "Docs at " + pack.docsOrigin + ". " + pack.docs.length + " doc pages in the pack — look them up after you know what they need.",
+      "Docs at " + pack.docsOrigin + ". " + (pack.chunks?.length ?? pack.docs.length) + " indexed sections — call docs_lookup for a quote or URL.",
     ].join("\n"),
   });
   return run;
@@ -105,6 +109,43 @@ export function recommendSettingsTool(): Tool {
       return { ...plan, enough: true, report: planText(plan) };
     },
   };
+}
+
+export function docsLookupTool(pack: SmallestPack): Tool {
+  return {
+    name: "docs_lookup",
+    description:
+      "Search crawled smallest.ai + docs.smallest.ai and return the best matching sections with URLs. Use for a quote, setting, or implementation detail. Not on greetings.",
+    schema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        focus: { type: "string", description: "model | platform | integration | guide | any" },
+      },
+      required: ["query"],
+    },
+    async call(args) {
+      const query = String(args.query ?? "").trim();
+      const focus = asFocus(args.focus);
+      const hits = searchDocs(pack, query, { focus, limit: 4 });
+      return {
+        query,
+        expanded: expandQuery(query),
+        hits,
+        source: "indexed_pack",
+        hint: hits.length
+          ? "Cite at most one URL. Quote only what is in the snippets. If the hit is weak, say so."
+          : "No matching page in the pack. Do not invent a URL or setting.",
+      };
+    },
+  };
+}
+
+function asFocus(v: unknown): DocKind | "any" | undefined {
+  if (typeof v !== "string") return undefined;
+  const t = v.toLowerCase().trim();
+  if (t === "model" || t === "platform" || t === "integration" || t === "guide" || t === "any") return t;
+  return undefined;
 }
 
 function fromArgs(args: Record<string, unknown>): Partial<Intent> {

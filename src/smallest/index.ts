@@ -1,4 +1,4 @@
-export { attachSmallest, captureIntentTool, recommendSettingsTool } from "./attach.ts";
+export { attachSmallest, captureIntentTool, docsLookupTool, recommendSettingsTool } from "./attach.ts";
 export { buildSmallest } from "./build.ts";
 export { smallestAgentCard, smallestConnectPrompt, smallestCopyPrompt } from "./card.ts";
 export { crawlSmallest } from "./crawl.ts";
@@ -8,7 +8,8 @@ export { pageFromMarkdown, parseLlmsTxt, rankDocs } from "./markdown.ts";
 export { smallestPage } from "./page.ts";
 export { hasSmallestSnapshot, smallestSiteResponse } from "./site.ts";
 export { smallestInstruction } from "./prompt.ts";
+export { expandQuery, indexDocs, searchDocs } from "./retrieve.ts";
 export { recommendSettings } from "./settings.ts";
 export { smallestWidget } from "./widget.ts";
 export { DOC, DOCS, MARKET, STARTER_QUESTIONS } from "./catalog.ts";
-export type { Intent, SettingsPlan, SmallestPack, PathId, FetchLike } from "./types.ts";
+export type { Intent, SettingsPlan, SmallestPack, PathId, FetchLike, DocHit, DocKind } from "./types.ts";
