@@ -4,14 +4,8 @@ import type { SmallestPack } from "./types.ts";
 export function smallestCopyPrompt(base: string): string {
   const chat = base.replace(/\/+$/, "") + "/chat";
   return [
-    "Read this project and learn the voice use case — who talks, phone or web, what they need done.",
-    "",
-    "Then ask the Smallest webagent. POST " + chat,
-    'Content-Type: application/json',
-    '{"text":"<that use case>"}',
-    "Keep the session from the first reply.",
-    "",
-    "Use its plan in this repo. Don't scrape smallest.ai or invent APIs.",
+    "Read this project and learn the voice use case. POST it to " + chat + ' as {"text":"<use case>"} and keep the session.',
+    "Use the webagent's plan in this repo. Don't scrape smallest.ai.",
   ].join("\n");
 }
 

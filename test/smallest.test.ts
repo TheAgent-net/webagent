@@ -414,9 +414,9 @@ describe("copy prompt and instruction", () => {
     const text = smallestCopyPrompt("https://a.test");
     expect(text).toContain("voice use case");
     expect(text).toContain("https://a.test/chat");
-    expect(text).toContain("Keep the session");
+    expect(text).toContain("keep the session");
     expect(text).toContain("this repo");
-    expect(text.split("\n").length).toBeLessThan(12);
+    expect(text.split("\n")).toHaveLength(2);
     expect(text).not.toMatch(/and figure out\.?$/);
   });
 
