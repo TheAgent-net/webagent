@@ -6,13 +6,19 @@ import {
   attachSmallest,
   buildSmallest,
   captureIntentTool,
+  docsLookupTool,
+  hashedEmbed,
   inferIntent,
+  indexDocs,
+  kindOf,
   nextQuestion,
   enoughIntent,
   pageFromMarkdown,
   parseLlmsTxt,
   recommendSettings,
   recommendSettingsTool,
+  searchDocs,
+  searchDocsHybrid,
   smallestCopyPrompt,
   smallestHost,
   smallestInstruction,
@@ -25,6 +31,7 @@ const LLMS = `# Smallest AI Docs
 - [Speech settings](https://docs.smallest.ai/voice-agents/platform/create-agent/agent-settings/speech-settings.md): Tune how your agent speaks.
 - [Use Case Finder](https://docs.smallest.ai/voice-agents/developer-guide/get-started/use-case-finder.md): Find the canonical doc.
 - [Pipecat](https://docs.smallest.ai/models/integrations/agent-framework/pipecat.md): Build pipelines with Lightning and Pulse.
+- [Lightning TTS](https://docs.smallest.ai/models/documentation/text-to-speech-lightning/overview.md): Current Waves TTS.
 `;
 
 const SPEECH_MD = `# Speech Settings
@@ -68,6 +75,11 @@ function mockSmallestFetch(): FetchLike {
         headers: { "content-type": "text/markdown" },
       });
     }
+    if (url.includes("text-to-speech-lightning") || url.includes("lightning")) {
+      return new Response("# Lightning v3.1\nCurrent TTS. lightning_v3.1 and lightning_v3.1_pro. Do not use Lightning v2.", {
+        headers: { "content-type": "text/markdown" },
+      });
+    }
     if (url.includes("smallest.ai/robots.txt")) return new Response("User-agent: *\n");
     if (url.includes("smallest.ai/sitemap.xml")) return new Response("no", { status: 404 });
     if (url.includes("smallest.ai")) {
@@ -82,10 +94,19 @@ function mockSmallestFetch(): FetchLike {
   };
 }
 
+function mockBuild(extra?: { embed?: typeof hashedEmbed | false; maxPages?: number }) {
+  return buildSmallest({
+    maxPages: extra?.maxPages ?? 20,
+    fetch: mockSmallestFetch(),
+    embed: extra?.embed ?? false,
+    cachePath: "",
+  });
+}
+
 describe("docs crawl helpers", () => {
   test("parseLlmsTxt collects markdown pages", () => {
     const links = parseLlmsTxt(LLMS);
-    expect(links.length).toBe(4);
+    expect(links.length).toBe(5);
     expect(links.some((l) => l.mdUrl.endsWith("speech-settings.md"))).toBe(true);
     expect(links.every((l) => l.url.startsWith("https://docs.smallest.ai/"))).toBe(true);
   });
@@ -112,7 +133,8 @@ describe("intent", () => {
   test("asks one follow-up when channel is missing", () => {
     const a = inferIntent("we need a collections agent");
     expect(a.useCase).toBe("collections");
-    expect(nextQuestion(a)).toMatch(/phone|widget|Pipecat/i);
+    expect(nextQuestion(a)).toMatch(/phone|website/i);
+    expect(nextQuestion(a)).not.toMatch(/Pipecat/i);
   });
 
   test("greeting is not Hindi and asks what they are trying to get working", () => {
@@ -129,11 +151,18 @@ describe("intent", () => {
     expect(nextQuestion(a)).toMatch(/what should this do|trying to get working|who/i);
   });
 
-  test("pipecat + Hindi outbound is enough", () => {
+  test("naming Pipecat does not lock own stack", () => {
     const a = inferIntent("Lightning TTS inside Pipecat for Hindi outbound sales");
-    expect(a.channel).toBe("own_stack");
+    expect(a.channel).not.toBe("own_stack");
+    expect(a.channel).toBe("phone");
     expect(a.languages).toContain("hi");
     expect(a.useCase).toBe("outbound_sales");
+    expect(recommendSettings({ ...a, tools: a.tools }).path).toBe("atoms_standard");
+  });
+
+  test("keep-my-pipeline language locks own stack", () => {
+    const a = inferIntent("keep it in my Pipecat pipeline — wire Lightning in");
+    expect(a.channel).toBe("own_stack");
   });
 });
 
@@ -170,18 +199,34 @@ describe("settings", () => {
     expect(plan.extras.some((s) => /campaign/i.test(s.name))).toBe(true);
   });
 
-  test("Pipecat does not push a hosted phone agent", () => {
+  test("mentioning Pipecat still recommends Atoms first", () => {
+    const plan = recommendSettings({
+      useCase: "support",
+      channel: "phone",
+      direction: "inbound",
+      languages: ["en"],
+      tools: [],
+      notes: "I already have Pipecat and need it to speak",
+    });
+    expect(plan.path).toBe("atoms_standard");
+    expect(plan.pathWhy).toMatch(/Atoms/i);
+    expect(plan.implementation.join(" ")).toMatch(/Create Agent/i);
+    expect(plan.extras.some((s) => /keep your current stack/i.test(s.name))).toBe(true);
+  });
+
+  test("locked own stack is the exception path", () => {
     const plan = recommendSettings({
       useCase: "tts",
       channel: "own_stack",
       direction: "none",
       languages: ["en"],
       tools: [],
-      notes: "pipecat lightning",
+      notes: "keep it in my Pipecat pipeline lightning",
     });
     expect(plan.path).toBe("own_stack");
+    expect(plan.pathWhy).toMatch(/exception|keep/i);
+    expect(plan.implementation.join(" ")).toMatch(/Atoms/i);
     expect(plan.implementation.join(" ")).toMatch(/pipecat/i);
-    expect(plan.implementation.join(" ")).not.toMatch(/Create Agent/);
   });
 
   test("custom LLM selects crew", () => {
@@ -220,6 +265,12 @@ describe("tools", () => {
     };
     expect(first.enough).toBe(false);
     expect(first.next_question).toBeTruthy();
+    const named = (await tool.call({ said: "I already have Pipecat. I just need it to speak." })) as {
+      hint: string;
+      enough: boolean;
+    };
+    expect(named.enough).toBe(false);
+    expect(named.hint).toMatch(/Do not start there|Atoms/i);
     const second = (await tool.call({
       said: "inbound phone line, English, noisy call center",
       use_case: "collections",
@@ -250,11 +301,35 @@ describe("tools", () => {
     expect(out.next_question).toBeTruthy();
     expect(out.report).toBeUndefined();
   });
+
+  test("docs_lookup ranks the matching docs section", async () => {
+    const pack = await mockBuild();
+    expect(pack.retrieval?.mode).toBe("lexical");
+    expect(pack.chunks?.length).toBeGreaterThan(2);
+    const speak = searchDocs(pack, "I already have Pipecat and need it to speak");
+    expect(speak[0]?.url).not.toMatch(/pipecat/i);
+    expect(speak[0]?.url).toMatch(/voice-agents|quick-start|speech-settings|create-agent|platform|lightning|coding-agent/i);
+    const keep = searchDocs(pack, "keep it in my Pipecat pipeline — pipecat-ai plugin");
+    expect(keep[0]?.url).toMatch(/pipecat/i);
+    const speech = searchDocs(pack, "allow interruptions speech speed");
+    expect(speech[0]?.url).toMatch(/speech-settings/i);
+    const tts = searchDocs(pack, "text to speech lightning");
+    expect(tts[0]?.url).toMatch(/lightning|text-to-speech/i);
+
+    const tool = docsLookupTool(pack);
+    const out = (await tool.call({ query: "how do I create a Smallest voice agent" })) as {
+      hits: { url: string; snippet: string }[];
+      hint: string;
+    };
+    expect(out.hits.length).toBeGreaterThan(0);
+    expect(out.hits[0]!.url).not.toMatch(/pipecat/i);
+    expect(out.hint).toMatch(/Atoms\/platform|integration URL/i);
+  });
 });
 
 describe("build + host", () => {
   test("crawls marketing + docs and attaches advisor tools", async () => {
-    const pack = await buildSmallest({ maxPages: 20, fetch: mockSmallestFetch() });
+    const pack = await mockBuild();
     expect(pack.docs.length).toBeGreaterThanOrEqual(2);
     expect(pack.pages.some((p) => /Speech/i.test(p.title) || /1\.2x/.test(p.text))).toBe(true);
     expect(pack.starterQuestions[0]).toMatch(/not sure where to start|trying to get working|call us/i);
@@ -266,6 +341,7 @@ describe("build + host", () => {
     expect(names).toContain("site_lookup");
     expect(names).toContain("capture_intent");
     expect(names).toContain("recommend_settings");
+    expect(names).toContain("docs_lookup");
     const sys = run.getContext().find((m) => m.role === "system")!.content;
     expect(sys).toContain("ONE question");
     expect(sys).toContain("recommend_settings");
@@ -275,12 +351,12 @@ describe("build + host", () => {
       .filter((m) => m.role === "pin")
       .map((m) => m.content)
       .join("\n");
-    expect(pins).toMatch(/Explore the visitor first/i);
-    expect(pins).toMatch(/Do not dump products/i);
+    expect(pins).toMatch(/Smallest assistant|Atoms/i);
+    expect(pins).toMatch(/second path|Pipecat/i);
   });
 
   test("human GET / is branded HTML; machine GET / is the card; chat keeps a session", async () => {
-    const pack = await buildSmallest({ maxPages: 12, fetch: mockSmallestFetch() });
+    const pack = await mockBuild({ maxPages: 12 });
     const h = new Harness();
     const run = attachSmallest(h, pack, { model: "echo" });
     const room = new Room(h, { run, model: "echo" });
@@ -362,7 +438,79 @@ describe("copy prompt and instruction", () => {
     expect(text).toContain("how you can help");
     expect(text).toContain("Do not name Lightning");
     expect(text).toMatch(/Do not shove|never recite/i);
+    expect(text).toContain("docs_lookup");
+    expect(text).toMatch(/FIRST PATH|Atoms/i);
+    expect(text).toMatch(/SECOND PATH|must keep/i);
+    expect(text).toMatch(/hybrid BM25 \+ embeddings/i);
     expect(text).toMatch(/stay curious|ONLY if capture_intent\.enough/i);
     expect(text).not.toContain("Lightning v2 (current");
+  });
+});
+
+describe("retrieval", () => {
+  test("chunks split by heading and tag kinds", () => {
+    const chunks = indexDocs([
+      {
+        url: "https://docs.smallest.ai/voice-agents/platform/create-agent/agent-settings/speech-settings",
+        status: 200,
+        title: "Speech Settings",
+        description: "Tune speech",
+        headings: ["Speech Settings", "Allow Interruptions"],
+        text:
+          "Tune how your agent speaks and listens. Speech Settings Allow Interruptions is on by default so callers can cut in. Voicemail Detection stays off unless this is an outbound campaign. Speech speed is 1.2x for natural pacing. " +
+          "x".repeat(200),
+        links: [],
+        forms: [],
+        gated: false,
+      },
+      {
+        url: "https://docs.smallest.ai/models/integrations/agent-framework/pipecat",
+        status: 200,
+        title: "Pipecat",
+        description: "Waves in Pipecat",
+        headings: ["Pipecat"],
+        text: "Install pipecat-ai[smallest]. SmallestTTSService and SmallestSTTService wire Lightning and Pulse into an existing pipeline.",
+        links: [],
+        forms: [],
+        gated: false,
+      },
+    ]);
+    expect(chunks.length).toBeGreaterThanOrEqual(2);
+    expect(kindOf("https://docs.smallest.ai/voice-agents/platform/get-started/quick-start")).toBe("platform");
+    expect(chunks.find((c) => c.url.includes("pipecat"))?.kind).toBe("integration");
+    expect(chunks.find((c) => c.url.includes("speech-settings"))?.kind).toBe("platform");
+  });
+
+  test("offline build stays lexical", async () => {
+    const pack = await mockBuild();
+    expect(pack.retrieval?.mode).toBe("lexical");
+    expect(pack.retrieval?.embedded).toBe(0);
+    expect(pack.chunks?.every((c) => !c.vector?.length)).toBe(true);
+  });
+
+  test("hybrid hashed embeddings still prefer Atoms and match paraphrases", async () => {
+    const pack = await mockBuild({ embed: hashedEmbed });
+    expect(pack.retrieval?.mode).toBe("hybrid");
+    expect(pack.retrieval?.embedded).toBe(pack.chunks?.length);
+    expect(pack.chunks?.every((c) => (c.vector?.length ?? 0) > 0)).toBe(true);
+
+    const speak = await searchDocsHybrid(pack, "I already have Pipecat and need it to speak", hashedEmbed);
+    expect(speak[0]?.url).not.toMatch(/pipecat/i);
+
+    const keep = await searchDocsHybrid(pack, "keep it in my Pipecat pipeline — pipecat-ai plugin", hashedEmbed);
+    expect(keep[0]?.url).toMatch(/pipecat/i);
+
+    const hosted = await searchDocsHybrid(pack, "how do I stand up a hosted voice agent on the dashboard", hashedEmbed);
+    expect(hosted[0]?.url).not.toMatch(/pipecat/i);
+    expect(hosted[0]?.url).toMatch(/voice-agents|quick-start|create-agent|platform|speech-settings/i);
+
+    const tool = docsLookupTool(pack);
+    const out = (await tool.call({ query: "how do I create a Smallest voice agent" })) as {
+      source: string;
+      hits: { url: string }[];
+    };
+    expect(out.source).toBe("hybrid");
+    expect(out.hits.length).toBeGreaterThan(0);
+    expect(out.hits[0]!.url).not.toMatch(/pipecat/i);
   });
 });

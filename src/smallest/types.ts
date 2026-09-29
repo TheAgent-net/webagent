@@ -1,3 +1,4 @@
+import type { EmbedFn } from "./embed.ts";
 import type { PageShot, SitePack } from "../site/types.ts";
 
 export type Channel = "phone" | "web" | "mobile" | "own_stack" | "models";
@@ -38,6 +39,36 @@ export interface SettingsPlan {
   summary: string;
 }
 
+export type DocKind = "model" | "platform" | "integration" | "guide" | "marketing";
+
+export interface DocChunk {
+  id: string;
+  url: string;
+  title: string;
+  section: string;
+  kind: DocKind;
+  headings: string[];
+  text: string;
+  priority: number;
+  hash?: string;
+  vector?: number[];
+}
+
+export interface DocHit {
+  title: string;
+  url: string;
+  section: string;
+  kind: DocKind;
+  snippet: string;
+  score: number;
+}
+
+export interface RetrievalInfo {
+  mode: "hybrid" | "lexical";
+  model?: string;
+  embedded: number;
+}
+
 export interface SmallestPack {
   origin: string;
   docsOrigin: string;
@@ -45,6 +76,9 @@ export interface SmallestPack {
   pages: PageShot[];
   marketing: PageShot[];
   docs: PageShot[];
+  chunks?: DocChunk[];
+  retrieval?: RetrievalInfo;
+  embedQuery?: EmbedFn;
   facts: string[];
   starterQuestions: string[];
 }
@@ -54,4 +88,6 @@ export type FetchLike = (input: string | URL | Request, init?: RequestInit) => P
 export interface BuildSmallestOpts {
   maxPages?: number;
   fetch?: FetchLike;
+  embed?: EmbedFn | false;
+  cachePath?: string;
 }

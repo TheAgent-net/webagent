@@ -32,6 +32,7 @@ export {
   inferIntent,
   recommendSettings,
   captureIntentTool,
+  docsLookupTool,
   recommendSettingsTool,
 } from "./smallest/index.ts";
 export type { SmallestPack, Intent, SettingsPlan } from "./smallest/index.ts";

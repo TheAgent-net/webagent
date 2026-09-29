@@ -2,25 +2,31 @@ import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
-import { enoughIntent, inferIntent, isGreeting, mergeIntent, nextQuestion, emptyIntent, stillExploring } from "./intent.ts";
+import { enoughIntent, inferIntent, isGreeting, lockedOwnStack, mentionedIntegration, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
+import { defaultQueryEmbed, type EmbedFn } from "./embed.ts";
 import { smallestInstruction } from "./prompt.ts";
+import { expandQuery, searchDocs, searchDocsHybrid } from "./retrieve.ts";
 import { recommendSettings } from "./settings.ts";
-import type { Channel, Direction, Intent, Scale, SmallestPack } from "./types.ts";
+import type { Channel, Direction, DocKind, Intent, Scale, SmallestPack } from "./types.ts";
 
 export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: string }): Run {
   const run = attachPack(h, pack.site, { model: opts?.model, instruction: smallestInstruction(pack) });
   const capture = captureIntentTool();
   const rec = recommendSettingsTool();
+  const docs = docsLookupTool(pack);
   h.addTool(capture);
   h.addTool(rec);
+  h.addTool(docs);
   run.useTool(capture);
   run.useTool(rec);
+  run.useTool(docs);
   run.inject({
     vars: [
-      "Explore the visitor first. Do not dump products, models, or a company brief.",
+      "You are the Smallest assistant. Lead with Smallest's own agent stack (Atoms).",
+      "Explore the visitor first. Do not dump products or a company brief.",
       "First turn: two short sentences on how you can help, then one open question about them.",
-      "Name a Smallest path only after it matches what they said.",
-      "Docs at " + pack.docsOrigin + ". " + pack.docs.length + " doc pages in the pack — look them up after you know what they need.",
+      "If they mention Pipecat or LiveKit, do not start there. Atoms first. That stack is only if they must keep it.",
+      "Docs at " + pack.docsOrigin + ". Retrieval: " + (pack.retrieval?.mode ?? "lexical") + ", " + (pack.chunks?.length ?? 0) + " chunks. docs_lookup Atoms/platform first.",
     ].join("\n"),
   });
   return run;
@@ -58,10 +64,14 @@ export function captureIntentTool(): Tool {
         enough,
         next_question: next,
         hint: enough
-          ? "Call recommend_settings now with these fields. Do not ask another question."
+          ? mentionedIntegration(intent.notes) && !lockedOwnStack(intent.notes)
+            ? "Enough. Call recommend_settings. Path must be Atoms first. Treat Pipecat/LiveKit as a footnote only if they must keep that pipeline."
+            : "Call recommend_settings now with these fields. Do not ask another question."
           : isGreeting(String(args.said ?? "")) || isGreeting(intent.notes)
             ? "Greeting. Two short sentences on how you can help, then ask next_question. Do not name products."
-            : "Ask only next_question. Reflect one thing they said. Do not dump a catalog.",
+            : mentionedIntegration(intent.notes) && !lockedOwnStack(intent.notes)
+              ? "They named another stack. Do not start there. Offer Smallest's own agent (Atoms) as the first way, then ask only next_question."
+              : "Ask only next_question. Reflect one thing they said. Do not dump a catalog.",
       };
     },
   };
@@ -105,6 +115,53 @@ export function recommendSettingsTool(): Tool {
       return { ...plan, enough: true, report: planText(plan) };
     },
   };
+}
+
+export function docsLookupTool(pack: SmallestPack): Tool {
+  return {
+    name: "docs_lookup",
+    description:
+      "Hybrid search over crawled smallest.ai + docs.smallest.ai (BM25 + embeddings when available). Returns the best sections with URLs. Use for a quote, setting, or implementation detail. Not on greetings.",
+    schema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        focus: { type: "string", description: "model | platform | integration | guide | any" },
+      },
+      required: ["query"],
+    },
+    async call(args) {
+      const query = String(args.query ?? "").trim();
+      const focus = asFocus(args.focus);
+      const hybrid = (pack.chunks ?? []).some((c) => c.vector?.length);
+      const hits = hybrid
+        ? await searchDocsHybrid(pack, query, packEmbedder(pack), { focus, limit: 4 })
+        : searchDocs(pack, query, { focus, limit: 4 });
+      return {
+        query,
+        expanded: expandQuery(query),
+        hits,
+        source: hybrid ? "hybrid" : "lexical",
+        model: pack.retrieval?.model,
+        hint: hits.length
+          ? "Prefer an Atoms/platform URL. Cite an integration URL only if they must keep that stack. Quote only the snippets."
+          : "No matching page in the pack. Do not invent a URL or setting.",
+      };
+    },
+  };
+}
+
+function packEmbedder(pack: SmallestPack): EmbedFn | undefined {
+  if (pack.embedQuery) return pack.embedQuery;
+  if (pack.retrieval?.mode !== "hybrid") return undefined;
+  return defaultQueryEmbed();
+}
+
+function asFocus(v: unknown): DocKind | "any" | undefined {
+  if (typeof v !== "string") return undefined;
+  const t = v.toLowerCase().trim();
+  if (t === "model" || t === "platform" || t === "integration" || t === "guide" || t === "any") return t;
+  return undefined;
 }
 
 function fromArgs(args: Record<string, unknown>): Partial<Intent> {
@@ -151,7 +208,8 @@ function str(v: unknown): string | undefined {
 function asChannel(v?: string): Channel | undefined {
   if (!v) return undefined;
   const t = v.toLowerCase();
-  if (t.includes("own") || t.includes("pipecat") || t.includes("livekit")) return "own_stack";
+  if (t.includes("own") && (t.includes("stack") || t.includes("pipeline"))) return "own_stack";
+  if (/\b(keep|stay|must).{0,24}(pipecat|livekit)\b/.test(t)) return "own_stack";
   if (t.includes("model")) return "models";
   if (t.includes("mobile") || t.includes("ios") || t.includes("android")) return "mobile";
   if (t.includes("web") || t.includes("widget")) return "web";
