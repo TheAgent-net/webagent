@@ -79,7 +79,10 @@ export function nextQuestion(intent: Intent): string | null {
   if (!miss.length) return null;
   const field = miss[0]!;
   if (field === "useCase") {
-    return "What should the agent do — support, outbound sales, bookings, collections, or something else?";
+    if (isGreeting(intent.notes) || !intent.notes.trim()) {
+      return "What brought you to Smallest — understand the products, start a hosted Atoms agent, or drop Lightning/Pulse into your own stack?";
+    }
+    return "Are you here to learn the platform, launch a hosted Atoms agent, or plug Lightning/Pulse into a stack you already have?";
   }
   if (field === "channel") {
     return `For ${intent.useCase || "this"}, do you want a phone number, a website/widget, a mobile app, or Smallest models inside your own stack (Pipecat/LiveKit)?`;
@@ -137,7 +140,7 @@ function scaleFrom(t: string): Scale | undefined {
 
 function langsFrom(t: string): string[] {
   const map: [RegExp, string][] = [
-    [/\bhindi\b|\bhi\b/, "hi"],
+    [/\bhindi\b|\bhi-in\b|\bindic\b/, "hi"],
     [/\bspanish\b|\bespañol\b|\bes\b/, "es"],
     [/\bfrench\b|\bfr\b/, "fr"],
     [/\bgerman\b|\bde\b/, "de"],
@@ -164,6 +167,10 @@ function toolsFrom(t: string): string[] {
   if (/dtmf|keypad|press [0-9]/.test(t)) out.push("dtmf");
   if (/webhook/.test(t)) out.push("webhooks");
   return uniq(out);
+}
+
+function isGreeting(notes: string): boolean {
+  return /^(hi|hey|hello|yo|thanks|thank you|sup|hola)\b[.!?]*$/i.test(notes.trim());
 }
 
 function uniq(xs: string[]): string[] {

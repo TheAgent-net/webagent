@@ -115,6 +115,14 @@ describe("intent", () => {
     expect(nextQuestion(a)).toMatch(/phone|widget|Pipecat/i);
   });
 
+  test("greeting is not Hindi and asks how they want to start with Smallest", () => {
+    const a = inferIntent("hi");
+    expect(a.languages).not.toContain("hi");
+    expect(a.useCase).toBeUndefined();
+    expect(nextQuestion(a)).toMatch(/Atoms|Lightning|products/i);
+    expect(nextQuestion(a)).not.toMatch(/bookings|collections/i);
+  });
+
   test("pipecat + Hindi outbound is enough", () => {
     const a = inferIntent("Lightning TTS inside Pipecat for Hindi outbound sales");
     expect(a.channel).toBe("own_stack");
@@ -218,7 +226,7 @@ describe("build + host", () => {
     const pack = await buildSmallest({ maxPages: 20, fetch: mockSmallestFetch() });
     expect(pack.docs.length).toBeGreaterThanOrEqual(2);
     expect(pack.pages.some((p) => /Speech/i.test(p.title) || /1\.2x/.test(p.text))).toBe(true);
-    expect(pack.starterQuestions[0]).toMatch(/inbound support/i);
+    expect(pack.starterQuestions[0]).toMatch(/Smallest|sell|Atoms/i);
 
     const h = new Harness();
     const run = attachSmallest(h, pack, { model: "echo" });
@@ -311,7 +319,8 @@ describe("copy prompt and instruction", () => {
     expect(text).toContain("recommend_settings");
     expect(text).toContain("Never re-ask");
     expect(text).toContain("Lightning v3.1");
-    expect(text).toContain("Greet in one line");
+    expect(text).toContain("onboarding");
+    expect(text).toContain("Atoms vs Waves");
     expect(text).not.toContain("Lightning v2 (current");
   });
 });

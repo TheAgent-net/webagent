@@ -40,10 +40,10 @@ export const DOC = {
 };
 
 export const STARTER_QUESTIONS = [
-  "I want an inbound support phone agent",
+  "What does Smallest actually sell?",
+  "I want to launch a hosted Atoms voice agent",
+  "I already have Pipecat — add Lightning TTS",
   "Help me pick the right agent settings",
-  "I need Lightning TTS inside Pipecat",
-  "Outbound sales campaign in Hindi and English",
 ];
 
 export const PRIORITY_DOCS = [

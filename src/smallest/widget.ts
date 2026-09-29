@@ -229,13 +229,13 @@ function widgetMarkup(publicUrl: string, runId: string, pack: SmallestPack): str
   </div>
   <div id="wa-log">
     <div class="wa-welcome" id="wa-welcome">
-      <h4>What are you building?</h4>
-      <p>One or two questions. Then the path and the exact settings.</p>
+      <h4>Meet Smallest</h4>
+      <p>Realtime voice: Lightning TTS, Pulse STT, Electron, hosted Atoms. Ask what they sell, or how you should start.</p>
       <div id="wa-chips">${chips}</div>
     </div>
   </div>
   <form class="wa-form" id="wa-form">
-    <input id="wa-text" type="text" placeholder="Inbound support, Pipecat TTS, Hindi outbound…" autocomplete="off"/>
+    <input id="wa-text" type="text" placeholder="What is Smallest? Or: Atoms agent, Pipecat + Lightning…" autocomplete="off"/>
     <button class="wa-send" type="submit">Send</button>
   </form>
   <span class="wa-run-id">${esc(runId)}</span>
