@@ -45,7 +45,10 @@ if grep -q "^WEBAGENT_PUBLIC_URL=" "$ROOT/.env.smallest"; then
 else
   echo "WEBAGENT_PUBLIC_URL=$PUBLIC_URL" >> "$ROOT/.env.smallest"
 fi
-if ! grep -q "^OPENAI_MODEL=" "$ROOT/.env.smallest"; then
+# Always pin Luna. Copied Composio .env often has OPENAI_MODEL=gpt-4o-mini.
+if grep -q "^OPENAI_MODEL=" "$ROOT/.env.smallest"; then
+  sed -i "s|^OPENAI_MODEL=.*|OPENAI_MODEL=gpt-5.6-luna|" "$ROOT/.env.smallest"
+else
   echo "OPENAI_MODEL=gpt-5.6-luna" >> "$ROOT/.env.smallest"
 fi
 
@@ -60,6 +63,7 @@ User=$(id -un)
 WorkingDirectory=$ROOT
 Environment=PATH=$(dirname "$BUN_BIN"):/usr/local/bin:/usr/bin
 EnvironmentFile=-$ROOT/.env.smallest
+Environment=OPENAI_MODEL=gpt-5.6-luna
 ExecStart=$BUN_BIN src/cli.ts smallest :$PORT
 Restart=on-failure
 RestartSec=3

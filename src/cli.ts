@@ -5,6 +5,8 @@ import { listen } from "./host/listen.ts";
 
 const args = process.argv.slice(2);
 const h = defaultHarness();
+/** Smallest webagent always uses Luna. Ignore shared OPENAI_MODEL (Composio may set gpt-4o-mini). */
+const SMALLEST_MODEL = "gpt-5.6-luna";
 
 if (!args[0] || args[0] === "help") {
   console.error("usage:");
@@ -121,13 +123,13 @@ switch (args[0]) {
         openaiModel({
           id: "openai",
           baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
-          model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+          model: SMALLEST_MODEL,
           apiKeyEnv: "OPENAI_API_KEY",
         }),
       );
     }
     const modelId = hasKey ? "openai" : "echo";
-    const modelName = hasKey ? (process.env.OPENAI_MODEL || "gpt-5.6-luna") : "echo";
+    const modelName = hasKey ? SMALLEST_MODEL : "echo";
     const run = attachSmallest(h, pack, { model: modelId });
     const room = new Room(h, { run, model: modelId });
     const sessions = new Sessions(h, room);
