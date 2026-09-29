@@ -2,7 +2,7 @@ import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
-import { enoughIntent, inferIntent, isGreeting, lockedOwnStack, mentionedIntegration, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
+import { enoughIntent, inferIntent, isGreeting, isInfoQuestion, lockedOwnStack, mentionedIntegration, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
 import { defaultQueryEmbed, type EmbedFn } from "./embed.ts";
 import { smallestInstruction } from "./prompt.ts";
 import { expandQuery, searchDocs, searchDocsHybrid } from "./retrieve.ts";
@@ -23,8 +23,9 @@ export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: 
   run.inject({
     vars: [
       "You are the Smallest assistant. Lead with Smallest's own agent stack (Atoms).",
-      "Explore the visitor first. Do not dump products or a company brief.",
-      "First turn: two short sentences on how you can help, then one open question about them.",
+      "If they asked about Smallest, answer it. Do not start a use-case interview on a product question.",
+      "Explore the visitor first when they want a setup. Do not dump products or a company brief.",
+      "Greeting only: two short sentences on how you can help, then one open question about them.",
       "If they mention Pipecat or LiveKit, do not start there. Atoms first. That stack is only if they must keep it.",
       "Docs at " + pack.docsOrigin + ". Retrieval: " + (pack.retrieval?.mode ?? "lexical") + ", " + (pack.chunks?.length ?? 0) + " chunks. docs_lookup Atoms/platform first.",
     ].join("\n"),
@@ -53,21 +54,32 @@ export function captureIntentTool(): Tool {
       required: ["said"],
     },
     async call(args) {
-      const inferred = inferIntent(String(args.said ?? ""));
+      const said = String(args.said ?? "");
+      const inferred = inferIntent(said);
       const patch = fromArgs(args);
       if (stillExploring(inferred.notes) && !inferred.useCase) delete patch.useCase;
       const intent = mergeIntent(inferred, patch);
+      if (isInfoQuestion(said) || isInfoQuestion(intent.notes)) {
+        return {
+          intent,
+          enough: false,
+          mode: "answer",
+          next_question: null,
+          hint: "They asked about Smallest. Call docs_lookup and answer. Do not interview. Do not ask next_question.",
+        };
+      }
       const next = nextQuestion(intent);
       const enough = enoughIntent(intent);
       return {
         intent,
         enough,
+        mode: enough ? "plan" : "discover",
         next_question: next,
         hint: enough
           ? mentionedIntegration(intent.notes) && !lockedOwnStack(intent.notes)
             ? "Enough. Call recommend_settings. Path must be Atoms first. Treat Pipecat/LiveKit as a footnote only if they must keep that pipeline."
             : "Call recommend_settings now with these fields. Do not ask another question."
-          : isGreeting(String(args.said ?? "")) || isGreeting(intent.notes)
+          : isGreeting(said) || isGreeting(intent.notes)
             ? "Greeting. Two short sentences on how you can help, then ask next_question. Do not name products."
             : mentionedIntegration(intent.notes) && !lockedOwnStack(intent.notes)
               ? "They named another stack. Do not start there. Offer Smallest's own agent (Atoms) as the first way, then ask only next_question."

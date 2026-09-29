@@ -201,6 +201,27 @@ export function isGreeting(notes: string): boolean {
   );
 }
 
+/** They want an explanation, not a setup interview. */
+export function isInfoQuestion(notes: string): boolean {
+  const t = notes.trim();
+  if (!t || isGreeting(t)) return false;
+  const lower = t.toLowerCase();
+  if (/\b(i (want|need)|we (want|need)|set up|setup|build me|our (inbound|outbound|support|agent))\b/.test(lower)) {
+    return false;
+  }
+  if (
+    /\b(what is|what's|whats|what are|tell me about|explain|how does|how do (you|i|they)|how is|describe|difference between|compared to)\b/.test(
+      lower,
+    )
+  ) {
+    return true;
+  }
+  return (
+    /\b(docs|documentation|pricing|features|overview)\b/.test(lower) &&
+    /\b(smallest|atoms|waves|lightning|pulse|electron|hydra)\b/.test(lower)
+  );
+}
+
 function uniq(xs: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
