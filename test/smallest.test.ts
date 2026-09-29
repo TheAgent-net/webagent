@@ -120,7 +120,8 @@ describe("intent", () => {
   test("asks one follow-up when channel is missing", () => {
     const a = inferIntent("we need a collections agent");
     expect(a.useCase).toBe("collections");
-    expect(nextQuestion(a)).toMatch(/phone|widget|Pipecat/i);
+    expect(nextQuestion(a)).toMatch(/phone|website/i);
+    expect(nextQuestion(a)).not.toMatch(/Pipecat/i);
   });
 
   test("greeting is not Hindi and asks what they are trying to get working", () => {
@@ -137,11 +138,18 @@ describe("intent", () => {
     expect(nextQuestion(a)).toMatch(/what should this do|trying to get working|who/i);
   });
 
-  test("pipecat + Hindi outbound is enough", () => {
+  test("naming Pipecat does not lock own stack", () => {
     const a = inferIntent("Lightning TTS inside Pipecat for Hindi outbound sales");
-    expect(a.channel).toBe("own_stack");
+    expect(a.channel).not.toBe("own_stack");
+    expect(a.channel).toBe("phone");
     expect(a.languages).toContain("hi");
     expect(a.useCase).toBe("outbound_sales");
+    expect(recommendSettings({ ...a, tools: a.tools }).path).toBe("atoms_standard");
+  });
+
+  test("keep-my-pipeline language locks own stack", () => {
+    const a = inferIntent("keep it in my Pipecat pipeline — wire Lightning in");
+    expect(a.channel).toBe("own_stack");
   });
 });
 
@@ -178,18 +186,34 @@ describe("settings", () => {
     expect(plan.extras.some((s) => /campaign/i.test(s.name))).toBe(true);
   });
 
-  test("Pipecat does not push a hosted phone agent", () => {
+  test("mentioning Pipecat still recommends Atoms first", () => {
+    const plan = recommendSettings({
+      useCase: "support",
+      channel: "phone",
+      direction: "inbound",
+      languages: ["en"],
+      tools: [],
+      notes: "I already have Pipecat and need it to speak",
+    });
+    expect(plan.path).toBe("atoms_standard");
+    expect(plan.pathWhy).toMatch(/Atoms/i);
+    expect(plan.implementation.join(" ")).toMatch(/Create Agent/i);
+    expect(plan.extras.some((s) => /keep your current stack/i.test(s.name))).toBe(true);
+  });
+
+  test("locked own stack is the exception path", () => {
     const plan = recommendSettings({
       useCase: "tts",
       channel: "own_stack",
       direction: "none",
       languages: ["en"],
       tools: [],
-      notes: "pipecat lightning",
+      notes: "keep it in my Pipecat pipeline lightning",
     });
     expect(plan.path).toBe("own_stack");
+    expect(plan.pathWhy).toMatch(/exception|keep/i);
+    expect(plan.implementation.join(" ")).toMatch(/Atoms/i);
     expect(plan.implementation.join(" ")).toMatch(/pipecat/i);
-    expect(plan.implementation.join(" ")).not.toMatch(/Create Agent/);
   });
 
   test("custom LLM selects crew", () => {
@@ -262,21 +286,24 @@ describe("tools", () => {
   test("docs_lookup ranks the matching docs section", async () => {
     const pack = await buildSmallest({ maxPages: 20, fetch: mockSmallestFetch() });
     expect(pack.chunks?.length).toBeGreaterThan(2);
-    const pipe = searchDocs(pack, "I already have Pipecat and need it to speak");
-    expect(pipe[0]?.url).toMatch(/pipecat/i);
+    const speak = searchDocs(pack, "I already have Pipecat and need it to speak");
+    expect(speak[0]?.url).not.toMatch(/pipecat/i);
+    expect(speak[0]?.url).toMatch(/voice-agents|quick-start|speech-settings|create-agent|platform|lightning|coding-agent/i);
+    const keep = searchDocs(pack, "keep it in my Pipecat pipeline — pipecat-ai plugin");
+    expect(keep[0]?.url).toMatch(/pipecat/i);
     const speech = searchDocs(pack, "allow interruptions speech speed");
     expect(speech[0]?.url).toMatch(/speech-settings/i);
     const tts = searchDocs(pack, "text to speech lightning");
     expect(tts[0]?.url).toMatch(/lightning|text-to-speech/i);
 
     const tool = docsLookupTool(pack);
-    const out = (await tool.call({ query: "pipecat lightning pulse" })) as {
+    const out = (await tool.call({ query: "how do I create a Smallest voice agent" })) as {
       hits: { url: string; snippet: string }[];
       hint: string;
     };
     expect(out.hits.length).toBeGreaterThan(0);
-    expect(out.hits[0]!.url).toMatch(/pipecat|lightning/i);
-    expect(out.hint).toMatch(/Cite at most one URL/i);
+    expect(out.hits[0]!.url).not.toMatch(/pipecat/i);
+    expect(out.hint).toMatch(/Atoms\/platform|integration URL/i);
   });
 });
 
@@ -304,8 +331,8 @@ describe("build + host", () => {
       .filter((m) => m.role === "pin")
       .map((m) => m.content)
       .join("\n");
-    expect(pins).toMatch(/Explore the visitor first/i);
-    expect(pins).toMatch(/Do not dump products/i);
+    expect(pins).toMatch(/Smallest assistant|Atoms/i);
+    expect(pins).toMatch(/second path|Pipecat/i);
   });
 
   test("human GET / is branded HTML; machine GET / is the card; chat keeps a session", async () => {
@@ -392,6 +419,8 @@ describe("copy prompt and instruction", () => {
     expect(text).toContain("Do not name Lightning");
     expect(text).toMatch(/Do not shove|never recite/i);
     expect(text).toContain("docs_lookup");
+    expect(text).toMatch(/FIRST PATH|Atoms/i);
+    expect(text).toMatch(/SECOND PATH|must keep/i);
     expect(text).toMatch(/stay curious|ONLY if capture_intent\.enough/i);
     expect(text).not.toContain("Lightning v2 (current");
   });

@@ -21,10 +21,11 @@ export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: 
   run.useTool(docs);
   run.inject({
     vars: [
-      "Explore the visitor first. Do not dump products, models, or a company brief.",
+      "You are the Smallest assistant. Lead with Smallest's own agent stack (Atoms).",
+      "Explore the visitor first. Do not dump products or a company brief.",
       "First turn: two short sentences on how you can help, then one open question about them.",
-      "Name a Smallest path only after it matches what they said.",
-      "Docs at " + pack.docsOrigin + ". " + (pack.chunks?.length ?? pack.docs.length) + " indexed sections — call docs_lookup for a quote or URL.",
+      "Pipecat/LiveKit are a second path only if they must keep that pipeline.",
+      "Docs at " + pack.docsOrigin + ". " + (pack.chunks?.length ?? pack.docs.length) + " indexed sections — docs_lookup Atoms/platform first.",
     ].join("\n"),
   });
   return run;
@@ -134,7 +135,7 @@ export function docsLookupTool(pack: SmallestPack): Tool {
         hits,
         source: "indexed_pack",
         hint: hits.length
-          ? "Cite at most one URL. Quote only what is in the snippets. If the hit is weak, say so."
+          ? "Prefer an Atoms/platform URL. Cite an integration URL only if they must keep that stack. Quote only the snippets."
           : "No matching page in the pack. Do not invent a URL or setting.",
       };
     },
@@ -192,7 +193,8 @@ function str(v: unknown): string | undefined {
 function asChannel(v?: string): Channel | undefined {
   if (!v) return undefined;
   const t = v.toLowerCase();
-  if (t.includes("own") || t.includes("pipecat") || t.includes("livekit")) return "own_stack";
+  if (t.includes("own") && (t.includes("stack") || t.includes("pipeline"))) return "own_stack";
+  if (/\b(keep|stay|must).{0,24}(pipecat|livekit)\b/.test(t)) return "own_stack";
   if (t.includes("model")) return "models";
   if (t.includes("mobile") || t.includes("ios") || t.includes("android")) return "mobile";
   if (t.includes("web") || t.includes("widget")) return "web";

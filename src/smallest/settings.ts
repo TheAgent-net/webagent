@@ -1,4 +1,5 @@
 import { DOC, DASH, PRICING } from "./catalog.ts";
+import { lockedOwnStack, mentionedIntegration } from "./intent.ts";
 import type { Intent, PathId, SettingPick, SettingsPlan } from "./types.ts";
 
 const DOC_BUILD = { title: "Build your agent", url: DOC.buildAgent };
@@ -34,6 +35,14 @@ export function recommendSettings(intent: Intent): SettingsPlan {
       useCase === "transcription" ? "Call Pulse: POST /waves/v1/stt/?model=pulse (or Pulse Pro for batch English)." : "Call Lightning v3.1: POST /waves/v1/lightning-v3.1/get_speech with a real voice_id from get_voices.",
       "For streaming agents use /waves/v1/tts/live (SSE/WSS) and wss://api.smallest.ai/waves/v1/stt/live?model=pulse.",
     ]);
+  }
+
+  if (mentionedIntegration(intent.notes) && path !== "own_stack" && path !== "models_only") {
+    extras.push({
+      name: "If you must keep your current stack",
+      value: "Second path only — Lightning + Pulse in Pipecat or LiveKit. Start on Atoms unless you cannot move.",
+      why: "Naming Pipecat/LiveKit is not a reason to skip Smallest's own agent stack.",
+    });
   }
 
   if (path === "own_stack") {
@@ -178,8 +187,11 @@ function finish(
 }
 
 function pickPath(intent: Intent): PathId {
-  if (intent.channel === "own_stack" || intent.useCase === "self_host") return "own_stack";
-  if (intent.channel === "models" || intent.useCase === "transcription" || intent.useCase === "tts" || intent.useCase === "voice_clone") {
+  if (intent.channel === "own_stack" || intent.useCase === "self_host" || lockedOwnStack(intent.notes)) return "own_stack";
+  if (intent.channel === "models" || intent.useCase === "transcription" || intent.useCase === "voice_clone") {
+    return "models_only";
+  }
+  if (intent.useCase === "tts" && (intent.channel === "models" || /models? only|api only|no agent/.test(intent.notes.toLowerCase()))) {
     return "models_only";
   }
   if (intent.customLlm || /crew|multi.?agent|custom per-turn/.test(intent.notes.toLowerCase())) return "atoms_crew";
@@ -251,17 +263,24 @@ function pathLabel(path: PathId): string {
 }
 
 function pathWhy(path: PathId, intent: Intent): string {
-  if (path === "atoms_crew") return "Custom LLM or per-turn logic. Standard agents go live faster — crew only when you need it.";
-  if (path === "own_stack") return "You already have (or want) Pipecat/LiveKit/standalone. Wire Lightning + Pulse; do not reinvent the WebSocket.";
-  if (path === "models_only") return "You asked for TTS/STT/LLM, not a hosted agent.";
+  if (path === "atoms_crew") return "Custom LLM or per-turn logic on Atoms. Standard Atoms agents go live faster — crew only when you need it.";
+  if (path === "own_stack") {
+    return "You asked to keep your orchestrator. Atoms is still the default Smallest path; this is the exception — Lightning + Pulse in that stack.";
+  }
+  if (path === "models_only") return "You asked for a models API, not a conversation agent.";
+  if (mentionedIntegration(intent.notes)) {
+    return "Smallest's own agent stack (Atoms) first. You mentioned another orchestrator — use it only if you must keep that pipeline.";
+  }
   return intent.channel === "web"
-    ? "No custom LLM. Fastest path: dashboard template + widget."
-    : "No custom LLM. Fastest path: dashboard or SDK create_agent, then a real test call.";
+    ? "Atoms first: dashboard template + widget. Fastest way to a working Smallest agent."
+    : "Atoms first: dashboard or SDK create_agent, then a real test call. Best-practice speech settings live here.";
 }
 
 function ownStackSteps(orch: string): string[] {
+  const preface = "Confirm you must keep this stack. Otherwise create the agent on Atoms — phone, widget, and speech settings are already there.";
   if (orch === "livekit") {
     return [
+      preface,
       'pip install "livekit-agents[smallestai]"',
       'AgentSession(stt=smallestai.STT(), tts=smallestai.TTS(model="lightning_v3.1"), llm=...)',
       "Pull real voice_ids via get_voices. Guide: " + DOC.livekit,
@@ -269,13 +288,15 @@ function ownStackSteps(orch: string): string[] {
   }
   if (orch === "pipecat") {
     return [
+      preface,
       'pip install "pipecat-ai[smallest]"  # SmallestTTSService + SmallestSTTService',
       "Do not hand-roll the Waves WebSocket.",
       "Guide: " + DOC.pipecat,
     ];
   }
   return [
-    "Pick the orchestrator: Pipecat or LiveKit (official plugins) or standalone smallestai Waves SDK.",
+    preface,
+    "If you stay: Pipecat or LiveKit official plugins, or standalone Waves SDK.",
     'Pipecat: pip install "pipecat-ai[smallest]". LiveKit: pip install "livekit-agents[smallestai]".',
     "TTS lightning_v3.1, STT pulse, LLM Electron or yours. Confirm voice_ids against live docs.",
   ];

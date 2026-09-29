@@ -21,7 +21,7 @@ export async function buildSmallest(opts: BuildSmallestOpts = {}): Promise<Small
     ...site.facts,
     `Docs origin ${crawled.docsOrigin}. ${crawled.docs.length} doc pages, ${crawled.marketing.length} marketing pages.`,
     "Current models (name only after they match): Lightning v3.1 TTS, Pulse STT, Electron LLM, Hydra S2S (beta). Lightning v2 is deprecated.",
-    "Paths (name only after they match): hosted Atoms, or own stack (Pipecat/LiveKit) using Waves APIs.",
+    "First path is always Atoms (Smallest's own agent stack). Pipecat/LiveKit only if they must keep that pipeline.",
   ];
   site.facts = facts;
   const chunks = indexDocs(crawled.pages);

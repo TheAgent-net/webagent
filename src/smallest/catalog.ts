@@ -42,8 +42,8 @@ export const DOC = {
 export const STARTER_QUESTIONS = [
   "I'm new and not sure where to start",
   "People should be able to call us and talk to an AI",
-  "I already have an app — I just need it to speak",
-  "Walk me through the right setup for my case",
+  "I already have an app — can Smallest add voice?",
+  "Walk me through the right Smallest setup for my case",
 ];
 
 export const PRIORITY_DOCS = [

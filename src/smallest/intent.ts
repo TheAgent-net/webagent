@@ -91,7 +91,7 @@ export function nextQuestion(intent: Intent): string | null {
     return "What should this do for you — and who is on the other end of the conversation?";
   }
   if (field === "channel") {
-    return "Where should that live — a phone line, a website, or inside something you already built?";
+    return "Should people reach this on a phone line or a website?";
   }
   if (field === "direction") {
     return "Should customers call in, should the agent dial out, or both?";
@@ -121,12 +121,30 @@ function useCaseFrom(t: string): string | undefined {
 }
 
 function channelFrom(t: string): Channel | undefined {
-  if (/pipecat|livekit|agora|ten framework|own stack|own pipeline/.test(t)) return "own_stack";
+  if (lockedOwnStack(t)) return "own_stack";
   if (/react native|ios|swift|android|kotlin|flutter|mobile app/.test(t)) return "mobile";
   if (/widget|web sdk|embed|website|browser/.test(t) && !/phone|inbound|outbound/.test(t)) return "web";
-  if (/just (tts|stt|api)|models? only|transcri(be|ption) api/.test(t)) return "models";
+  if (/just (tts|stt|api)|models? only|transcri(be|ption) api/.test(t) && !/agent|phone|call/.test(t)) return "models";
   if (/phone|telephony|number|inbound|outbound|sip|twilio|campaign/.test(t)) return "phone";
   return undefined;
+}
+
+/** They named an orchestrator. That is a note, not a path lock. */
+export function mentionedIntegration(notes: string): boolean {
+  return /\b(pipecat|livekit|agora|ten framework)\b/i.test(notes);
+}
+
+/** They refused hosted Atoms / insisted on keeping their pipeline. */
+export function lockedOwnStack(notes: string): boolean {
+  const t = notes.toLowerCase();
+  return (
+    /\bown (stack|pipeline)\b/.test(t) ||
+    /\b(keep|stay|must keep|leaving it|leave it)\b.{0,40}\b(pipecat|livekit|our stack|my stack|pipeline)\b/.test(t) ||
+    /\b(pipecat|livekit|pipeline)\b.{0,40}\b(keep|stay|must keep|will not (move|switch))\b/.test(t) ||
+    /\bwire (lightning|pulse|smallest).{0,24}(into|in) (my |our )?(pipecat|livekit)\b/.test(t) ||
+    /\b(will not|don't|do not|wont) (use|switch to|move to) (atoms|hosted)\b/.test(t) ||
+    /\balready (built|running) (it )?(on|in) (pipecat|livekit)\b/.test(t)
+  );
 }
 
 function directionFrom(t: string): Direction | undefined {

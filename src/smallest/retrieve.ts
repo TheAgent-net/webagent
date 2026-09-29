@@ -7,8 +7,7 @@ const ALIAS: [RegExp, string[]][] = [
   [/\b(stt|speech[- ]?to[- ]?text|transcri|dictat|caption|pulse)\b/, ["pulse", "stt"]],
   [/\b(llm|language model|electron|brain)\b/, ["electron", "llm"]],
   [/\b(hydra|speech[- ]?to[- ]?speech|s2s|full[- ]?duplex)\b/, ["hydra", "s2s"]],
-  [/\b(pipecat|livekit|own stack|waves|orchestrat)\b/, ["pipecat", "livekit", "waves"]],
-  [/\b(atoms|hosted|dashboard|phone|telephony|inbound|outbound|campaign)\b/, ["atoms", "platform", "phone"]],
+  [/\b(atoms|hosted|dashboard|phone|telephony|inbound|outbound|campaign|voice agent|create an agent)\b/, ["atoms", "platform", "agent"]],
   [/\b(interrupt|voicemail|speech speed|denois|turn detection|speech settings)\b/, ["speech", "interruptions"]],
   [/\b(widget|web sdk|embed)\b/, ["widget", "web"]],
   [/\b(knowledge|faq|pdf|kb)\b/, ["knowledge", "base"]],
@@ -48,7 +47,9 @@ export function searchDocs(pack: SmallestPack, query: string, opts?: { focus?: D
   const scored: DocHit[] = [];
   for (const c of chunks) {
     if (focus && c.kind !== focus && !(focus === "guide" && (c.kind === "platform" || c.kind === "guide"))) continue;
-    const score = scoreChunk(c, parts, df, chunks.length);
+    const integration = wantsIntegration(q);
+    if (c.kind === "integration" && !integration) continue;
+    const score = scoreChunk(c, parts, df, chunks.length, integration);
     if (score <= 0) continue;
     scored.push({
       title: c.title,
@@ -83,7 +84,16 @@ function queryParts(query: string): { core: string[]; extra: string[] } {
   for (const [re, aliases] of ALIAS) {
     if (re.test(lower)) extra.push(...aliases);
   }
+  if (!wantsIntegration(query)) extra.push("atoms", "platform", "agent");
   return { core, extra: extra.filter((t) => t.length > 1 && !STOP.has(t)) };
+}
+
+function wantsIntegration(query: string): boolean {
+  const t = query.toLowerCase();
+  return (
+    /\b(keep|stay|must keep|wire|plugin|pipecat-ai|livekit-agents)\b/.test(t) &&
+    /\b(pipecat|livekit|own stack|pipeline)\b/.test(t)
+  ) || /\b(pipecat-ai|livekit-agents|smallestttsservice|smalleststtservice)\b/.test(t);
 }
 
 function scoreChunk(
@@ -91,13 +101,17 @@ function scoreChunk(
   parts: { core: string[]; extra: string[] },
   df: Map<string, number>,
   n: number,
+  integration: boolean,
 ): number {
   const title = c.title.toLowerCase();
   const heads = c.headings.join(" ").toLowerCase();
   const url = c.url.toLowerCase();
   const body = c.text.toLowerCase();
   let score = c.priority;
-  if (c.kind !== "marketing") score += 1.5;
+  if (c.kind === "platform" || c.kind === "guide") score += 3;
+  else if (c.kind === "marketing") score += 0;
+  else score += 1.2;
+  if (c.kind === "integration") score += integration ? 6 : -5;
   score += weigh(parts.core, df, n, title, heads, url, body, 1);
   score += weigh(parts.extra, df, n, title, heads, url, body, 0.28);
   return score;
@@ -156,9 +170,13 @@ function kindOf(url: string): DocKind {
 function priorityOf(url: string, kind: DocKind): number {
   const p = pathOf(url);
   const i = PRIORITY_DOCS.findIndex((d) => p.includes(d));
-  if (i >= 0) return 4 - i * 0.05;
-  if (kind === "marketing") return 0;
-  return 1;
+  let base = 1;
+  if (kind === "platform") base = 4.5;
+  else if (kind === "guide") base = 3;
+  else if (kind === "integration") base = 0.2;
+  else if (kind === "marketing") base = 0;
+  if (i >= 0 && kind !== "integration") return base + 2 - i * 0.04;
+  return base;
 }
 
 function snippetAround(text: string, terms: string[]): string {
