@@ -13,6 +13,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent serve [addr]        public HTTPS host (default :8787)");
   console.error("  webagent ingest <url>        crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]  website or GitHub → crawl, forms, live webagent");
+  console.error("  webagent smallest [addr]     crawl smallest.ai + docs → settings advisor");
   console.error("  webagent pair <url>          two agents: site seller + buyer (Cursor SDK)");
   console.error("  webagent apps [addr]         Composio Graph RAG host (local corpus)");
   process.exit(args[0] ? 0 : 2);
@@ -95,6 +96,48 @@ switch (args[0]) {
       fetch: companyHost(h, room, pack, publicUrlStr, sessions),
     });
     console.error(`company agent ${publicUrlStr}`);
+    console.error(`  human   ${publicUrlStr}/`);
+    console.error(`  machine ${publicUrlStr}/agent.json  run ${room.run.id}`);
+    console.error(`  chat    POST ${publicUrlStr}/chat`);
+    console.error(`  local   http://127.0.0.1:${server.port}/`);
+    await new Promise(() => {});
+    break;
+  }
+  case "smallest": {
+    const addr = args[1] || ":8787";
+    const port = Number(addr.replace(/^.*:/, "")) || 8787;
+    const { buildSmallest, attachSmallest, smallestHost } = await import("./smallest/index.ts");
+    const { openaiModel } = await import("./models.ts");
+    const { Room } = await import("./host/room.ts");
+    const { Sessions } = await import("./host/sessions.ts");
+
+    console.error("crawling smallest.ai + docs.smallest.ai ...");
+    const pack = await buildSmallest({ maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220 });
+    console.error(`  ${pack.pages.length} pages (${pack.marketing.length} marketing, ${pack.docs.length} docs)`);
+
+    const hasKey = !!process.env.OPENAI_API_KEY;
+    if (hasKey) {
+      h.addModel(
+        openaiModel({
+          id: "openai",
+          baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+          model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+          apiKeyEnv: "OPENAI_API_KEY",
+        }),
+      );
+    }
+    const modelId = hasKey ? "openai" : "echo";
+    const run = attachSmallest(h, pack, { model: modelId });
+    const room = new Room(h, { run, model: modelId });
+    const sessions = new Sessions(h, room);
+    const publicUrlStr = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + port;
+    const server = Bun.serve({
+      port,
+      hostname: "0.0.0.0",
+      idleTimeout: 120,
+      fetch: smallestHost(h, room, pack, publicUrlStr, sessions),
+    });
+    console.error(`smallest agent ${publicUrlStr}`);
     console.error(`  human   ${publicUrlStr}/`);
     console.error(`  machine ${publicUrlStr}/agent.json  run ${room.run.id}`);
     console.error(`  chat    POST ${publicUrlStr}/chat`);

@@ -25,3 +25,13 @@ export {
   isGithubInput,
 } from "./company/index.ts";
 export type { CompanyPack, CompanyProfile, FormWalk } from "./company/index.ts";
+export {
+  buildSmallest,
+  attachSmallest,
+  smallestHost,
+  inferIntent,
+  recommendSettings,
+  captureIntentTool,
+  recommendSettingsTool,
+} from "./smallest/index.ts";
+export type { SmallestPack, Intent, SettingsPlan } from "./smallest/index.ts";
