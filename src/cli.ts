@@ -5,8 +5,8 @@ import { listen } from "./host/listen.ts";
 
 const args = process.argv.slice(2);
 const h = defaultHarness();
-/** Smallest webagent always uses Luna. Ignore shared OPENAI_MODEL (Composio may set gpt-4o-mini). */
-const SMALLEST_MODEL = "gpt-5.6-luna";
+/** Smallest webagent always uses GPT-6 Astra. Ignore shared OPENAI_MODEL (Composio may set gpt-4o-mini). */
+const SMALLEST_MODEL = "gpt-6-astra";
 
 if (!args[0] || args[0] === "help") {
   console.error("usage:");

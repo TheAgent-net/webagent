@@ -8,7 +8,7 @@ User=ec2-user
 WorkingDirectory=/opt/webagent-smallest
 Environment=PATH=/home/ec2-user/.bun/bin:/usr/local/bin:/usr/bin
 EnvironmentFile=-/opt/webagent-smallest/.env.smallest
-Environment=OPENAI_MODEL=gpt-5.6-luna
+Environment=OPENAI_MODEL=gpt-6-astra
 ExecStart=/home/ec2-user/.bun/bin/bun src/cli.ts smallest :8789
 Restart=on-failure
 RestartSec=3

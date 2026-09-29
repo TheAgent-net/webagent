@@ -104,6 +104,8 @@ export function openaiModel(opts: { id: string; baseUrl: string; model: string; 
       const body: Record<string, unknown> = { model: opts.model, messages: toOpenAI(req.messages) };
       if (/gpt-5/i.test(opts.model)) {
         body.reasoning_effort = process.env.OPENAI_REASONING_EFFORT || "none";
+      } else if (/gpt-6/i.test(opts.model)) {
+        body.reasoning_effort = process.env.OPENAI_REASONING_EFFORT || "low";
       }
       if (req.tools.length) {
         body.tools = req.tools.map((t) => ({
