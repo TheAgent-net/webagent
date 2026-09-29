@@ -3,8 +3,9 @@ import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
 import { enoughIntent, inferIntent, isGreeting, lockedOwnStack, mentionedIntegration, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
+import { defaultQueryEmbed, type EmbedFn } from "./embed.ts";
 import { smallestInstruction } from "./prompt.ts";
-import { expandQuery, searchDocs } from "./retrieve.ts";
+import { expandQuery, searchDocs, searchDocsHybrid } from "./retrieve.ts";
 import { recommendSettings } from "./settings.ts";
 import type { Channel, Direction, DocKind, Intent, Scale, SmallestPack } from "./types.ts";
 
@@ -25,7 +26,7 @@ export function attachSmallest(h: Harness, pack: SmallestPack, opts?: { model?: 
       "Explore the visitor first. Do not dump products or a company brief.",
       "First turn: two short sentences on how you can help, then one open question about them.",
       "If they mention Pipecat or LiveKit, do not start there. Atoms first. That stack is only if they must keep it.",
-      "Docs at " + pack.docsOrigin + ". " + (pack.chunks?.length ?? pack.docs.length) + " indexed sections — docs_lookup Atoms/platform first.",
+      "Docs at " + pack.docsOrigin + ". Retrieval: " + (pack.retrieval?.mode ?? "lexical") + ", " + (pack.chunks?.length ?? 0) + " chunks. docs_lookup Atoms/platform first.",
     ].join("\n"),
   });
   return run;
@@ -120,7 +121,7 @@ export function docsLookupTool(pack: SmallestPack): Tool {
   return {
     name: "docs_lookup",
     description:
-      "Search crawled smallest.ai + docs.smallest.ai and return the best matching sections with URLs. Use for a quote, setting, or implementation detail. Not on greetings.",
+      "Hybrid search over crawled smallest.ai + docs.smallest.ai (BM25 + embeddings when available). Returns the best sections with URLs. Use for a quote, setting, or implementation detail. Not on greetings.",
     schema: {
       type: "object",
       properties: {
@@ -132,18 +133,28 @@ export function docsLookupTool(pack: SmallestPack): Tool {
     async call(args) {
       const query = String(args.query ?? "").trim();
       const focus = asFocus(args.focus);
-      const hits = searchDocs(pack, query, { focus, limit: 4 });
+      const hybrid = (pack.chunks ?? []).some((c) => c.vector?.length);
+      const hits = hybrid
+        ? await searchDocsHybrid(pack, query, packEmbedder(pack), { focus, limit: 4 })
+        : searchDocs(pack, query, { focus, limit: 4 });
       return {
         query,
         expanded: expandQuery(query),
         hits,
-        source: "indexed_pack",
+        source: hybrid ? "hybrid" : "lexical",
+        model: pack.retrieval?.model,
         hint: hits.length
           ? "Prefer an Atoms/platform URL. Cite an integration URL only if they must keep that stack. Quote only the snippets."
           : "No matching page in the pack. Do not invent a URL or setting.",
       };
     },
   };
+}
+
+function packEmbedder(pack: SmallestPack): EmbedFn | undefined {
+  if (pack.embedQuery) return pack.embedQuery;
+  if (pack.retrieval?.mode !== "hybrid") return undefined;
+  return defaultQueryEmbed();
 }
 
 function asFocus(v: unknown): DocKind | "any" | undefined {

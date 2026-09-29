@@ -7,7 +7,10 @@ import {
   buildSmallest,
   captureIntentTool,
   docsLookupTool,
+  hashedEmbed,
   inferIntent,
+  indexDocs,
+  kindOf,
   nextQuestion,
   enoughIntent,
   pageFromMarkdown,
@@ -15,6 +18,7 @@ import {
   recommendSettings,
   recommendSettingsTool,
   searchDocs,
+  searchDocsHybrid,
   smallestCopyPrompt,
   smallestHost,
   smallestInstruction,
@@ -88,6 +92,15 @@ function mockSmallestFetch(): FetchLike {
     }
     return new Response("no", { status: 404 });
   };
+}
+
+function mockBuild(extra?: { embed?: typeof hashedEmbed | false; maxPages?: number }) {
+  return buildSmallest({
+    maxPages: extra?.maxPages ?? 20,
+    fetch: mockSmallestFetch(),
+    embed: extra?.embed ?? false,
+    cachePath: "",
+  });
 }
 
 describe("docs crawl helpers", () => {
@@ -290,7 +303,8 @@ describe("tools", () => {
   });
 
   test("docs_lookup ranks the matching docs section", async () => {
-    const pack = await buildSmallest({ maxPages: 20, fetch: mockSmallestFetch() });
+    const pack = await mockBuild();
+    expect(pack.retrieval?.mode).toBe("lexical");
     expect(pack.chunks?.length).toBeGreaterThan(2);
     const speak = searchDocs(pack, "I already have Pipecat and need it to speak");
     expect(speak[0]?.url).not.toMatch(/pipecat/i);
@@ -315,7 +329,7 @@ describe("tools", () => {
 
 describe("build + host", () => {
   test("crawls marketing + docs and attaches advisor tools", async () => {
-    const pack = await buildSmallest({ maxPages: 20, fetch: mockSmallestFetch() });
+    const pack = await mockBuild();
     expect(pack.docs.length).toBeGreaterThanOrEqual(2);
     expect(pack.pages.some((p) => /Speech/i.test(p.title) || /1\.2x/.test(p.text))).toBe(true);
     expect(pack.starterQuestions[0]).toMatch(/not sure where to start|trying to get working|call us/i);
@@ -342,7 +356,7 @@ describe("build + host", () => {
   });
 
   test("human GET / is branded HTML; machine GET / is the card; chat keeps a session", async () => {
-    const pack = await buildSmallest({ maxPages: 12, fetch: mockSmallestFetch() });
+    const pack = await mockBuild({ maxPages: 12 });
     const h = new Harness();
     const run = attachSmallest(h, pack, { model: "echo" });
     const room = new Room(h, { run, model: "echo" });
@@ -427,7 +441,76 @@ describe("copy prompt and instruction", () => {
     expect(text).toContain("docs_lookup");
     expect(text).toMatch(/FIRST PATH|Atoms/i);
     expect(text).toMatch(/SECOND PATH|must keep/i);
+    expect(text).toMatch(/hybrid BM25 \+ embeddings/i);
     expect(text).toMatch(/stay curious|ONLY if capture_intent\.enough/i);
     expect(text).not.toContain("Lightning v2 (current");
+  });
+});
+
+describe("retrieval", () => {
+  test("chunks split by heading and tag kinds", () => {
+    const chunks = indexDocs([
+      {
+        url: "https://docs.smallest.ai/voice-agents/platform/create-agent/agent-settings/speech-settings",
+        status: 200,
+        title: "Speech Settings",
+        description: "Tune speech",
+        headings: ["Speech Settings", "Allow Interruptions"],
+        text:
+          "Tune how your agent speaks and listens. Speech Settings Allow Interruptions is on by default so callers can cut in. Voicemail Detection stays off unless this is an outbound campaign. Speech speed is 1.2x for natural pacing. " +
+          "x".repeat(200),
+        links: [],
+        forms: [],
+        gated: false,
+      },
+      {
+        url: "https://docs.smallest.ai/models/integrations/agent-framework/pipecat",
+        status: 200,
+        title: "Pipecat",
+        description: "Waves in Pipecat",
+        headings: ["Pipecat"],
+        text: "Install pipecat-ai[smallest]. SmallestTTSService and SmallestSTTService wire Lightning and Pulse into an existing pipeline.",
+        links: [],
+        forms: [],
+        gated: false,
+      },
+    ]);
+    expect(chunks.length).toBeGreaterThanOrEqual(2);
+    expect(kindOf("https://docs.smallest.ai/voice-agents/platform/get-started/quick-start")).toBe("platform");
+    expect(chunks.find((c) => c.url.includes("pipecat"))?.kind).toBe("integration");
+    expect(chunks.find((c) => c.url.includes("speech-settings"))?.kind).toBe("platform");
+  });
+
+  test("offline build stays lexical", async () => {
+    const pack = await mockBuild();
+    expect(pack.retrieval?.mode).toBe("lexical");
+    expect(pack.retrieval?.embedded).toBe(0);
+    expect(pack.chunks?.every((c) => !c.vector?.length)).toBe(true);
+  });
+
+  test("hybrid hashed embeddings still prefer Atoms and match paraphrases", async () => {
+    const pack = await mockBuild({ embed: hashedEmbed });
+    expect(pack.retrieval?.mode).toBe("hybrid");
+    expect(pack.retrieval?.embedded).toBe(pack.chunks?.length);
+    expect(pack.chunks?.every((c) => (c.vector?.length ?? 0) > 0)).toBe(true);
+
+    const speak = await searchDocsHybrid(pack, "I already have Pipecat and need it to speak", hashedEmbed);
+    expect(speak[0]?.url).not.toMatch(/pipecat/i);
+
+    const keep = await searchDocsHybrid(pack, "keep it in my Pipecat pipeline — pipecat-ai plugin", hashedEmbed);
+    expect(keep[0]?.url).toMatch(/pipecat/i);
+
+    const hosted = await searchDocsHybrid(pack, "how do I stand up a hosted voice agent on the dashboard", hashedEmbed);
+    expect(hosted[0]?.url).not.toMatch(/pipecat/i);
+    expect(hosted[0]?.url).toMatch(/voice-agents|quick-start|create-agent|platform|speech-settings/i);
+
+    const tool = docsLookupTool(pack);
+    const out = (await tool.call({ query: "how do I create a Smallest voice agent" })) as {
+      source: string;
+      hits: { url: string }[];
+    };
+    expect(out.source).toBe("hybrid");
+    expect(out.hits.length).toBeGreaterThan(0);
+    expect(out.hits[0]!.url).not.toMatch(/pipecat/i);
   });
 });

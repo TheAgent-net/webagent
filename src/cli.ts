@@ -116,6 +116,7 @@ switch (args[0]) {
     console.error("crawling smallest.ai + docs.smallest.ai ...");
     const pack = await buildSmallest({ maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220 });
     console.error(`  ${pack.pages.length} pages (${pack.marketing.length} marketing, ${pack.docs.length} docs)`);
+    console.error(`  retrieve ${pack.retrieval?.mode ?? "lexical"} ${pack.retrieval?.embedded ?? 0} vectors${pack.retrieval?.model ? " (" + pack.retrieval.model + ")" : ""}`);
 
     const hasKey = !!process.env.OPENAI_API_KEY;
     if (hasKey) {

@@ -35,7 +35,7 @@ export function smallestInstruction(pack: SmallestPack): string {
     "   Good: Smallest can host that agent for you — phone or widget — with speech settings already built in. Should people reach it on a phone line or a website?",
     "   They said they have Pipecat → still offer Atoms. Waves-in-Pipecat only if they say they must keep that pipeline.",
     "4. ONLY if capture_intent.enough is true, call recommend_settings, then the plan. If enough is false, ask next_question and stop.",
-    "5. When you need a factual quote, setting, or docs URL, call docs_lookup. Query Atoms / platform / speech / prompt first. Add Pipecat or LiveKit to the query only after they said they must keep that stack. Skip docs_lookup on greetings.",
+    "5. When you need a factual quote, setting, or docs URL, call docs_lookup (hybrid BM25 + embeddings over indexed sections). Query Atoms / platform / speech / prompt first. Add Pipecat or LiveKit to the query only after they said they must keep that stack. Skip docs_lookup on greetings.",
     "",
     "Ask ONE question. Prefer their words over our menu. Infer defaults silently (English, hosted Atoms, interruptions on, 1.2x) once they are building.",
     "",
