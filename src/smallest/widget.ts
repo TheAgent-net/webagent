@@ -91,34 +91,131 @@ function widgetMarkup(publicUrl: string, runId: string, pack: SmallestPack): str
     .join("");
   return `
 <style>
-  #wa-fab { position:fixed; right:18px; bottom:18px; z-index:99999; border:0; border-radius:999px;
-    background:#7CFFB2; color:#07140C; padding:12px 18px; font:600 14px/1 system-ui; cursor:pointer; }
-  #wa-panel { display:none; position:fixed; right:18px; bottom:72px; z-index:99999; width:min(420px,94vw);
-    height:min(640px,80vh); background:#101218; color:#F4F7F5; border:1px solid #1E2430;
-    border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.4); flex-direction:column; overflow:hidden;
-    font:14px/1.45 system-ui; }
-  #wa-panel.open { display:flex; }
-  .wa-hdr { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:#07080A; color:#7CFFB2; }
-  .wa-a2a { padding:10px 14px; background:#0B0E14; border-bottom:1px solid #1E2430; font-size:12px; color:#B7C0B9; }
-  .wa-a2a-row { display:flex; gap:8px; align-items:center; margin-top:6px; }
-  #wa-url { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#F4F7F5; }
-  #wa-copy-prompt, .wa-chip, .wa-send { border:0; border-radius:10px; background:#7CFFB2; color:#07140C; padding:8px 10px; cursor:pointer; font:600 12px system-ui; }
-  .wa-chip { background:#181C24; color:#F4F7F5; border:1px solid #2A3240; }
-  #wa-log { flex:1; overflow:auto; padding:12px; }
-  .wa-msg { margin:8px 0; padding:8px 10px; border-radius:10px; white-space:pre-wrap; }
-  .wa-msg.human { background:#7CFFB2; color:#07140C; margin-left:24px; }
-  .wa-msg.agent { background:#181C24; border:1px solid #2A3240; margin-right:24px; }
-  .wa-welcome h4 { margin:0 0 6px; color:#7CFFB2; }
-  #wa-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-  .wa-form { display:flex; gap:8px; padding:10px; border-top:1px solid #1E2430; background:#07080A; }
-  #wa-text { flex:1; border:1px solid #2A3240; border-radius:10px; padding:8px 10px; font:inherit; background:#101218; color:#F4F7F5; }
-  .wa-run-id { display:none; }
+  @import url("https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Geist:wght@400;500;600&display=swap");
+  #wa-fab, #wa-panel, #wa-panel * { box-sizing: border-box; }
+  #wa-fab {
+    position: fixed; right: 20px; bottom: 20px; z-index: 99999;
+    border: 0; border-radius: 999px; cursor: pointer;
+    background: #191919; color: #fff;
+    padding: 12px 20px;
+    font-family: Geist, ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px; font-weight: 600; line-height: 1;
+    letter-spacing: -0.01em;
+    box-shadow: 0 8px 24px rgba(1,1,1,.16);
+    transition: transform .15s ease, background .15s ease;
+  }
+  #wa-fab:hover { background: #010101; transform: translateY(-1px); }
+  #wa-panel {
+    display: none; position: fixed; right: 20px; bottom: 72px; z-index: 99999;
+    width: min(400px, calc(100vw - 24px));
+    height: min(640px, calc(100vh - 100px));
+    background: #fff; color: #191919;
+    border: 1px solid #e5e5e5;
+    border-radius: 24px;
+    box-shadow: 0 24px 64px rgba(1,1,1,.12), 0 2px 8px rgba(1,1,1,.04);
+    flex-direction: column; overflow: hidden;
+    font-family: Geist, ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px; line-height: 1.5; letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+  }
+  #wa-panel.open { display: flex; }
+  .wa-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px 14px 18px;
+    background: #fff;
+    border-bottom: 1px solid #ededed;
+  }
+  .wa-brand { display: flex; align-items: center; gap: 10px; }
+  .wa-orb {
+    width: 10px; height: 10px; border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, #ffe27a, #f5c518 55%, #c98912);
+    box-shadow: 0 0 0 3px #fff6c8;
+    flex-shrink: 0;
+  }
+  .wa-wordmark {
+    font-family: Archivo, Geist, sans-serif;
+    font-size: 16px; font-weight: 600; letter-spacing: -0.03em;
+    color: #191919;
+  }
+  #wa-close {
+    width: 32px; height: 32px; border-radius: 999px;
+    border: 1px solid #e5e5e5; background: #fff; color: #191919;
+    font: 500 18px/1 Geist, sans-serif; cursor: pointer;
+    display: grid; place-items: center;
+  }
+  #wa-close:hover { background: #f5f5f5; }
+  .wa-a2a {
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ededed;
+    font-size: 12px; color: #6f6f6f;
+  }
+  .wa-a2a em { font-style: normal; color: #191919; font-weight: 600; }
+  .wa-a2a-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  #wa-url {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #525252; background: #fff; border: 1px solid #e5e5e5;
+    border-radius: 999px; padding: 8px 12px; font-size: 12px;
+  }
+  #wa-copy-prompt, .wa-send {
+    border: 0; border-radius: 999px; cursor: pointer;
+    background: #191919; color: #fff;
+    padding: 8px 14px;
+    font-family: Geist, sans-serif; font-size: 12px; font-weight: 600;
+    white-space: nowrap;
+  }
+  #wa-copy-prompt:hover, .wa-send:hover { background: #010101; }
+  .wa-chip {
+    border: 1px solid #e5e5e5; border-radius: 999px; cursor: pointer;
+    background: #fff; color: #191919;
+    padding: 8px 12px;
+    font-family: Geist, sans-serif; font-size: 12px; font-weight: 500;
+    text-align: left;
+  }
+  .wa-chip:hover { background: #f5f5f5; border-color: #d4d4d4; }
+  #wa-log { flex: 1; overflow: auto; padding: 16px; background: #fff; }
+  .wa-msg {
+    margin: 8px 0; padding: 10px 14px; border-radius: 16px;
+    white-space: pre-wrap; font-size: 14px; line-height: 1.5;
+  }
+  .wa-msg.human {
+    background: #191919; color: #fff;
+    margin-left: 36px; border-bottom-right-radius: 6px;
+  }
+  .wa-msg.agent {
+    background: #f5f5f5; color: #191919;
+    margin-right: 36px; border-bottom-left-radius: 6px;
+  }
+  .wa-welcome { color: #191919; }
+  .wa-welcome h4 {
+    margin: 4px 0 8px;
+    font-family: Archivo, Geist, sans-serif;
+    font-size: 22px; font-weight: 600; letter-spacing: -0.04em; line-height: 1.2;
+  }
+  .wa-welcome p { margin: 0; color: #6f6f6f; font-size: 14px; }
+  #wa-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .wa-form {
+    display: flex; gap: 8px; align-items: center;
+    padding: 12px 14px 14px;
+    border-top: 1px solid #ededed; background: #fff;
+  }
+  #wa-text {
+    flex: 1; border: 1px solid #e5e5e5; border-radius: 999px;
+    padding: 10px 14px; font: inherit; background: #f5f5f5; color: #191919;
+    outline: none;
+  }
+  #wa-text:focus { border-color: #191919; background: #fff; }
+  #wa-text::placeholder { color: #a1a1a1; }
+  .wa-run-id { display: none; }
 </style>
 <button id="wa-fab" type="button">Ask Smallest</button>
 <div id="wa-panel" role="dialog" aria-label="Smallest AI agent">
-  <div class="wa-hdr"><strong>Smallest AI</strong><button id="wa-close" type="button" style="background:none;border:0;color:#7CFFB2;cursor:pointer">×</button></div>
+  <div class="wa-hdr">
+    <div class="wa-brand"><span class="wa-orb" aria-hidden="true"></span><strong class="wa-wordmark">smallest.ai</strong></div>
+    <button id="wa-close" type="button" aria-label="Close">×</button>
+  </div>
   <div class="wa-a2a">
-    <div>Let your agent talk to <em>Smallest</em>:</div>
+    <div>Let your agent talk to <em>Smallest</em></div>
     <div class="wa-a2a-row">
       <span id="wa-url">${esc(publicUrl)}</span>
       <button type="button" id="wa-copy-prompt">Copy prompt</button>
