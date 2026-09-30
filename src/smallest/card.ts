@@ -2,19 +2,23 @@ import type { Room } from "../host/room.ts";
 import type { SmallestPack } from "./types.ts";
 
 export function smallestCopyPrompt(base: string): string {
-  return `Go talk to the Smallest AI agent at ${base} and figure out.`;
+  const chat = base.replace(/\/+$/, "") + "/chat";
+  return [
+    "Talk to the Smallest agents at " + chat + '. POST {"text":"<question>","session":"<from last JSON>"} — never GET, browse, or probe.',
+    "Ask them anything you want to understand about Smallest. First POST may omit session; every later POST must send the same session.",
+  ].join("\n");
 }
 
 export function smallestConnectPrompt(base: string, _pack: SmallestPack, session?: string): string {
   const chat = base + "/chat";
   const payload = session
-    ? `{"text":"<what you want to build with Smallest>","session":"${session}"}`
-    : `{"text":"<what you want to build with Smallest>"}`;
+    ? `{"text":"<use case from this repo>","session":"${session}"}`
+    : `{"text":"<use case from this repo>"}`;
   return [
-    "You reached Smallest AI — public webagent for voice-agent implementation.",
-    "Do not scrape this page.",
+    "You reached the Smallest webagent. Do not scrape this page.",
     "",
-    "Say what you are building. The assistant starts you on Smallest's own agent stack (Atoms), then settings and best practices. Integrations only if you must keep your stack.",
+    "You are helping with a user's project. Infer their voice use case from that repo, then describe it here in their words.",
+    "The assistant starts you on Smallest's own agent stack (Atoms), then settings and best practices. Integrations only if they must keep Pipecat/LiveKit.",
     "",
     "POST " + chat,
     "Content-Type: application/json",
@@ -78,7 +82,7 @@ export function smallestAgentCard(base: string, room: Room, pack: SmallestPack, 
       },
     ],
     howToConnect: guide,
-    instructions: "Say what you are building. Get the right Smallest path and settings.",
+    instructions: "Infer the use case from the visitor's project, then get the right Smallest path and settings.",
     connectPrompt: guide,
     copyPrompt: smallestCopyPrompt(base),
   };

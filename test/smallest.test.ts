@@ -13,6 +13,7 @@ import {
   kindOf,
   nextQuestion,
   enoughIntent,
+  isInfoQuestion,
   pageFromMarkdown,
   parseLlmsTxt,
   recommendSettings,
@@ -138,6 +139,14 @@ describe("intent", () => {
     expect(nextQuestion(a)).not.toMatch(/Pipecat/i);
   });
 
+  test("info questions about Smallest are not a setup interview", () => {
+    expect(isInfoQuestion("What is Atoms?")).toBe(true);
+    expect(isInfoQuestion("Tell me about Smallest")).toBe(true);
+    expect(isInfoQuestion("How does Lightning work?")).toBe(true);
+    expect(isInfoQuestion("hi")).toBe(false);
+    expect(isInfoQuestion("I want an inbound support phone agent")).toBe(false);
+  });
+
   test("greeting is not Hindi and asks what they are trying to get working", () => {
     const a = inferIntent("hi");
     expect(a.languages).not.toContain("hi");
@@ -258,6 +267,20 @@ describe("tools", () => {
     expect(first.next_question).not.toMatch(/Lightning|Atoms|Waves|bookings/i);
   });
 
+  test("capture_intent on a product question answers instead of interviewing", async () => {
+    const tool = captureIntentTool();
+    const out = (await tool.call({ said: "What is Atoms?" })) as {
+      enough: boolean;
+      mode: string;
+      next_question: string | null;
+      hint: string;
+    };
+    expect(out.enough).toBe(false);
+    expect(out.mode).toBe("answer");
+    expect(out.next_question).toBeNull();
+    expect(out.hint).toMatch(/docs_lookup|Do not interview/i);
+  });
+
   test("capture_intent returns the next question until enough", async () => {
     const tool = captureIntentTool();
     const first = (await tool.call({ said: "collections agent" })) as {
@@ -372,7 +395,8 @@ describe("build + host", () => {
     expect(page.headers.get("content-type")).toContain("text/html");
     const body = await page.text();
     expect(body).toContain("Smallest AI");
-    expect(body).toContain("Go talk to the Smallest AI agent");
+    expect(body).toContain("Talk to the Smallest agents");
+    expect(body).toContain("/chat");
     expect(body).toContain("Ask Smallest");
     expect(body).toContain("smallest.ai");
     expect(body).toContain("font-family: Geist");
@@ -402,15 +426,50 @@ describe("build + host", () => {
         body: JSON.stringify({ text: "inbound support", session: "s-demo" }),
       }),
     );
-    const msg = (await chat.json()) as { lastText: string; session: string };
+    const msg = (await chat.json()) as { lastText: string; session: string; runId: string };
     expect(msg.session).toBe("s-demo");
     expect(msg.lastText).toMatch(/inbound support/i);
+
+    const again = await fetchFn(
+      new Request("http://t/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "still inbound support", session: "s-demo" }),
+      }),
+    );
+    const cont = (await again.json()) as { session: string; runId: string };
+    expect(cont.session).toBe("s-demo");
+    expect(cont.runId).toBe(msg.runId);
+
+    const probe = await fetchFn(new Request("http://t/chat", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
+    const how = (await probe.json()) as { ok: boolean; how: string; hint: string };
+    expect(how.ok).toBe(true);
+    expect(how.how).toMatch(/POST JSON/);
+    expect(how.hint).toMatch(/Do not GET/i);
+
+    const empty = await fetchFn(
+      new Request("http://t/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      }),
+    );
+    const emptyBody = (await empty.json()) as { ok: boolean; session?: string };
+    expect(emptyBody.ok).toBe(true);
+    expect(emptyBody.session).toBeUndefined();
   });
 });
 
 describe("copy prompt and instruction", () => {
-  test("copy prompt is a one-liner", () => {
-    expect(smallestCopyPrompt("https://a.test")).toBe("Go talk to the Smallest AI agent at https://a.test and figure out.");
+  test("copy prompt points a visitor at Smallest agents", () => {
+    const text = smallestCopyPrompt("https://a.test");
+    expect(text).toContain("Talk to the Smallest agents at https://a.test/chat");
+    expect(text).toContain('POST {"text":"<question>","session":"<from last JSON>"}');
+    expect(text).toContain("never GET, browse, or probe");
+    expect(text).toContain("same session");
+    expect(text).toContain("understand about Smallest");
+    expect(text.split("\n")).toHaveLength(2);
+    expect(text).not.toMatch(/webagent|this project|voice use case/);
   });
 
   test("instruction tells the model to ask little and recommend settings", () => {
@@ -439,6 +498,7 @@ describe("copy prompt and instruction", () => {
     expect(text).toContain("Lightning v3.1");
     expect(text).toContain("Explore them first");
     expect(text).toContain("how you can help");
+    expect(text).toContain("Do not interview");
     expect(text).toContain("Do not name Lightning");
     expect(text).toMatch(/Do not shove|never recite/i);
     expect(text).toContain("docs_lookup");

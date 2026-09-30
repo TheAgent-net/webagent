@@ -36,8 +36,8 @@ curl -sS https://smallest.agentnet.it.com/agent.json | jq .name
 ```
 
 Human URL: `https://smallest.agentnet.it.com/`
-Machine: `POST https://smallest.agentnet.it.com/chat` with `{"text":"..."}` (reuse `session`).
-Copy prompt: `Go talk to the Smallest AI agent at https://smallest.agentnet.it.com/ and figure out.`
+Machine: `POST https://smallest.agentnet.it.com/chat` with `{"text":"...","session":"..."}`. GET `/chat` only returns how-to JSON — it does not start a run.
+Copy prompt (chat widget): POST `/chat` with the question and `session` from the last JSON. Never GET, browse, or probe. First POST may omit session.
 
 ## Coexistence
 

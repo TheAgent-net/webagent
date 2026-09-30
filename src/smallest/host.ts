@@ -64,6 +64,9 @@ async function route(
     const hit = sessions.open(url.searchParams.get("session"));
     return hit.room.stream();
   }
+  if (url.pathname === "/chat" && req.method === "GET") {
+    return chatHowTo(base);
+  }
   if ((req.method === "GET" || req.method === "HEAD") && url.pathname !== "/") {
     const asset = smallestSiteResponse(url);
     if (asset) return asset;
@@ -77,8 +80,11 @@ async function route(
       from?: "human" | "machine";
       session?: string;
     };
+    const from = body.from === "machine" ? "machine" : chatFrom(req);
+    const text = String(body.text ?? "").trim();
+    if (!text) return chatHowTo(base);
     const hit = sessions.open(body.session);
-    const ex = await hit.room.say(body.from === "machine" ? "machine" : chatFrom(req), body.text ?? "");
+    const ex = await hit.room.say(from, text);
     return Response.json({ ...ex, session: hit.id, runId: hit.room.run.id, company: "Smallest AI" });
   }
   if (url.pathname === "/" && req.method === "GET") {
@@ -102,6 +108,18 @@ async function route(
     }
   }
   return api(req);
+}
+
+function chatHowTo(base: string): Response {
+  const chat = base.replace(/\/+$/, "") + "/chat";
+  return Response.json({
+    ok: true,
+    chat,
+    how: 'POST JSON {"text":"<question>","session":"<from last reply>"}',
+    first: { text: "<question>" },
+    next: { text: "<question>", session: "<session from the first reply>" },
+    hint: "Do not GET this URL and do not open a browser. POST. First reply JSON includes session; send that same session on every following POST.",
+  });
 }
 
 function reservedPath(pathname: string): boolean {

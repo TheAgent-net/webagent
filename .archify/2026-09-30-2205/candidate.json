@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Webagent core vs Smallest product",
+    "output": ".archify/2026-09-30-2205/webagent-core-vs-smallest.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/TheAgent-net/webagent",
+      "provider": "github",
+      "revision": "c328e536fc3125389dcbbc90f241f5b07f296d87"
+    },
+    "views": [
+      {
+        "id": "chat",
+        "label": "Live chat path",
+        "focus": ["clients", "smallest-host", "sessions", "room", "run", "openai"],
+        "note": "POST /chat reuses session; Room.say drives one Run turn."
+      },
+      {
+        "id": "core",
+        "label": "Core webagent",
+        "focus": ["sessions", "room", "run", "site-pack", "openai"],
+        "note": "Harness, Run, oneStep, Sessions, Room, attachPack — product-agnostic."
+      },
+      {
+        "id": "smallest",
+        "label": "Smallest-only",
+        "focus": ["widget", "smallest-host", "build", "retrieve", "tools"],
+        "note": "Crawl, retrieve, advisor tools, branded host and widget."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "clients",
+      "type": "external",
+      "label": "Visitors",
+      "sublabel": "Browser or peer agent",
+      "pos": [40, 360],
+      "size": [150, 64],
+      "sources": [
+        { "path": "src/host/detect.ts", "line": 11, "end_line": 32, "label": "human vs machine" }
+      ]
+    },
+    {
+      "id": "widget",
+      "type": "frontend",
+      "label": "Ask Smallest widget",
+      "sublabel": "Copy prompt + markdown chat",
+      "pos": [250, 150],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/smallest/widget.ts", "line": 5, "end_line": 35, "label": "widget + copy prompt" },
+        { "path": "src/smallest/page.ts", "line": 6, "end_line": 16, "label": "inject into snapshot" }
+      ]
+    },
+    {
+      "id": "smallest-host",
+      "type": "backend",
+      "label": "smallestHost",
+      "sublabel": "GET / · POST /chat",
+      "tag": "replaces host()",
+      "pos": [250, 360],
+      "size": [200, 70],
+      "sources": [
+        { "path": "src/smallest/host.ts", "line": 20, "end_line": 32, "label": "smallestHost fetch" },
+        { "path": "src/smallest/host.ts", "line": 67, "end_line": 88, "label": "GET how-to / POST chat" },
+        { "path": "src/cli.ts", "line": 108, "end_line": 142, "label": "webagent smallest" }
+      ]
+    },
+    {
+      "id": "sessions",
+      "type": "backend",
+      "label": "Sessions",
+      "sublabel": "one Room per session",
+      "pos": [530, 360],
+      "size": [160, 64],
+      "sources": [
+        { "path": "src/host/sessions.ts", "line": 1, "end_line": 35, "label": "open + cloneRoom" }
+      ]
+    },
+    {
+      "id": "room",
+      "type": "backend",
+      "label": "Room",
+      "sublabel": "say() inject + start",
+      "pos": [770, 360],
+      "size": [150, 64],
+      "sources": [
+        { "path": "src/host/room.ts", "line": 26, "end_line": 51, "label": "Room.say" }
+      ]
+    },
+    {
+      "id": "run",
+      "type": "backend",
+      "label": "Run + oneStep",
+      "sublabel": "reason then tools",
+      "pos": [1000, 360],
+      "size": [170, 70],
+      "sources": [
+        { "path": "src/run.ts", "line": 117, "end_line": 129, "label": "Run.start loop" },
+        { "path": "src/loop.ts", "line": 20, "end_line": 55, "label": "oneStep" },
+        { "path": "src/harness.ts", "line": 13, "end_line": 59, "label": "Harness.create" }
+      ]
+    },
+    {
+      "id": "openai",
+      "type": "cloud",
+      "label": "OpenAI",
+      "sublabel": "gpt-6-astra /v1/responses",
+      "pos": [1250, 360],
+      "size": [170, 64],
+      "sources": [
+        { "path": "src/models.ts", "line": 105, "end_line": 107, "label": "gpt-6 uses responses" },
+        { "path": "src/cli.ts", "line": 8, "end_line": 9, "label": "SMALLEST_MODEL pin" }
+      ]
+    },
+    {
+      "id": "site-pack",
+      "type": "backend",
+      "label": "attachPack",
+      "sublabel": "shared SitePack tools",
+      "pos": [1000, 150],
+      "size": [170, 64],
+      "sources": [
+        { "path": "src/site/attach.ts", "line": 11, "end_line": 28, "label": "attachPack" }
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "Smallest tools",
+      "sublabel": "intent · docs · settings",
+      "tag": "product-owned",
+      "pos": [1000, 560],
+      "size": [170, 70],
+      "sources": [
+        { "path": "src/smallest/attach.ts", "line": 12, "end_line": 33, "label": "attachSmallest" },
+        { "path": "src/smallest/attach.ts", "line": 35, "end_line": 88, "label": "capture_intent" },
+        { "path": "src/smallest/intent.ts", "line": 204, "end_line": 223, "label": "isInfoQuestion" }
+      ]
+    },
+    {
+      "id": "docs-web",
+      "type": "external",
+      "label": "smallest.ai",
+      "sublabel": "marketing + docs.smallest.ai",
+      "pos": [40, 560],
+      "size": [150, 64],
+      "sources": [
+        { "path": "src/smallest/build.ts", "line": 10, "end_line": 21, "label": "crawl then pack" }
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "buildSmallest",
+      "sublabel": "crawl + buildPack",
+      "pos": [250, 560],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/smallest/build.ts", "line": 10, "end_line": 50, "label": "buildSmallest" }
+      ]
+    },
+    {
+      "id": "retrieve",
+      "type": "database",
+      "label": "Hybrid retrieve",
+      "sublabel": "BM25 + embeddings cache",
+      "pos": [250, 720],
+      "size": [200, 64],
+      "sources": [
+        { "path": "src/smallest/retrieve.ts", "line": 22, "end_line": 30, "label": "searchDocsHybrid" },
+        { "path": "src/smallest/build.ts", "line": 21, "end_line": 29, "label": "fillVectors cache" }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Smallest product  src/smallest/",
+      "wraps": ["widget", "smallest-host", "build", "retrieve"]
+    },
+    {
+      "kind": "region",
+      "label": "Core webagent  src/host + Run/Harness",
+      "wraps": ["sessions", "room", "run", "site-pack"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "clients-to-host",
+      "from": "clients",
+      "to": "smallest-host",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "host-to-widget",
+      "from": "smallest-host",
+      "to": "widget",
+      "label": "GET / HTML",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "host-to-sessions",
+      "from": "smallest-host",
+      "to": "sessions",
+      "label": "POST /chat"
+    },
+    {
+      "id": "sessions-to-room",
+      "from": "sessions",
+      "to": "room",
+      "label": "open(session)"
+    },
+    {
+      "id": "room-to-run",
+      "from": "room",
+      "to": "run",
+      "label": "say() → start()"
+    },
+    {
+      "id": "run-to-openai",
+      "from": "run",
+      "to": "openai",
+      "label": "reason()"
+    },
+    {
+      "id": "run-to-tools",
+      "from": "run",
+      "to": "tools",
+      "label": "tool calls",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pack-to-run",
+      "from": "site-pack",
+      "to": "run",
+      "label": "boot attach",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "docs-to-build",
+      "from": "docs-web",
+      "to": "build",
+      "label": "crawl"
+    },
+    {
+      "id": "build-to-retrieve",
+      "from": "build",
+      "to": "retrieve",
+      "label": "indexDocs",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Core (product-agnostic)",
+      "items": [
+        "Harness, Run, oneStep, models, tools, scheduler, MCP, intake",
+        "Sessions clones a lobby Run per chat; Room.say injects then start()",
+        "Composio uses host()/listen(); Smallest swaps only the fetch handler"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Smallest-only",
+      "items": [
+        "buildSmallest crawls smallest.ai + docs and indexes chunks",
+        "attachSmallest adds capture_intent, docs_lookup, recommend_settings",
+        "smallestHost, widget, copy prompt, hybrid retrieve, gpt-6-astra pin"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Shared site kit",
+      "items": [
+        "attachPack / SitePack is used by Smallest, company, and apps",
+        "Tools run inside the core loop; their implementations live in src/smallest/"
+      ]
+    }
+  ]
+}
