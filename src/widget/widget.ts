@@ -23,14 +23,34 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
     const panel = document.getElementById("wa-panel");
     if (!fab || !panel) return;
     window.__waBound = true;
+    const root = document.getElementById("wa-root");
+    const backdrop = document.getElementById("wa-backdrop");
+    const input = document.getElementById("wa-text");
     const setOpen = (open) => {
+      if (root) root.classList.toggle("open", open);
       panel.classList.toggle("open", open);
       fab.classList.toggle("open", open);
-      fab.textContent = open ? "Close" : FAB_OPEN;
+      fab.setAttribute("aria-expanded", open ? "true" : "false");
+      if (backdrop) {
+        backdrop.hidden = !open;
+        backdrop.setAttribute("aria-hidden", open ? "false" : "true");
+      }
+      panel.setAttribute("aria-hidden", open ? "false" : "true");
     };
-    fab.onclick = () => setOpen(!panel.classList.contains("open"));
+    fab.onclick = () => {
+      const next = !panel.classList.contains("open");
+      setOpen(next);
+      if (next && input) input.focus();
+    };
     const closeBtn = document.getElementById("wa-close");
     if (closeBtn) closeBtn.onclick = () => setOpen(false);
+    if (backdrop) backdrop.onclick = () => setOpen(false);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && panel.classList.contains("open")) setOpen(false);
+    });
+    if (input) {
+      input.addEventListener("focus", () => setOpen(true));
+    }
     const copyBtn = document.getElementById("wa-copy-prompt");
     if (copyBtn) copyBtn.onclick = async () => {
       try { await navigator.clipboard.writeText(PROMPT); } catch {}
@@ -58,10 +78,10 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       if (ev.t === "reply" && ev.text && ev.text !== lastAgent) { lastAgent = ev.text; add("agent", ev.text); }
     };
     const form = document.getElementById("wa-form");
-    const input = document.getElementById("wa-text");
     const send = async () => {
       const text = input.value.trim();
       if (!text) return;
+      setOpen(true);
       add("human", text);
       input.value = "";
       const res = await fetch(BASE + "/chat", {
@@ -76,6 +96,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
     document.querySelectorAll(".wa-chip").forEach((chip) => {
       chip.onclick = () => { input.value = chip.dataset.q || chip.textContent; send(); };
     });
+    void FAB_OPEN;
   };
   const mount = () => {
     if (!document.getElementById("wa-fab")) {
@@ -111,10 +132,12 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     .slice(0, 4)
     .map((q) => `<button class="wa-chip" type="button" data-q="${esc(q)}">${esc(q)}</button>`)
     .join("");
+  const placeholder = w.placeholder || b.fabLabel;
+  const arrow = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h12M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   return `
 <style>
   ${google}
-  #wa-root, #wa-panel {
+  #wa-root, #wa-panel, #wa-fab {
     --wa-ink: ${c.ink};
     --wa-paper: ${c.paper};
     --wa-muted: ${c.muted};
@@ -122,187 +145,230 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     --wa-wash: ${c.wash};
     --wa-accent: ${c.accent};
   }
-  #wa-fab, #wa-panel, #wa-panel * { box-sizing: border-box; }
-  #wa-fab {
-    position: fixed; right: 20px; bottom: 20px; z-index: 99999;
-    border: 0; border-radius: 999px; cursor: pointer;
-    background: ${c.fab}; color: ${c.fabText};
-    padding: 12px 20px;
-    font-family: ${body};
-    font-size: 14px; font-weight: 600; line-height: 1;
-    letter-spacing: -0.01em;
-    box-shadow: 0 8px 24px rgba(1,1,1,.16);
-    transition: transform .15s ease, background .15s ease;
+  #wa-root, #wa-root *, #wa-fab, #wa-panel, #wa-panel * { box-sizing: border-box; }
+  #wa-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 99998;
+    background: color-mix(in srgb, var(--wa-ink) 18%, transparent);
+    border: 0; padding: 0; margin: 0; cursor: pointer;
   }
-  #wa-fab:hover { transform: translateY(-1px); }
-  #wa-fab.open {
-    background: ${c.paper}; color: ${c.ink}; border: 1px solid ${c.line};
-    box-shadow: 0 8px 24px rgba(1,1,1,.08);
+  #wa-root.open #wa-backdrop { display: block; }
+  #wa-stage {
+    position: fixed; left: 50%; bottom: 32px; z-index: 99999;
+    width: min(560px, calc(100vw - 32px));
+    transform: translateX(-50%);
+    display: flex; flex-direction: column;
+    max-height: min(640px, calc(100vh - 64px));
+    pointer-events: none;
+  }
+  #wa-stage > * { pointer-events: auto; }
+  #wa-root.open #wa-stage {
+    bottom: 28px;
+    max-height: min(640px, calc(100vh - 120px));
+    background: var(--wa-paper);
+    border-radius: 24px;
+    box-shadow: 0 24px 80px rgba(1,1,1,.14), 0 2px 10px rgba(1,1,1,.04);
+    overflow: hidden;
+  }
+  #wa-fab {
+    display: inline-flex; align-items: center; gap: 8px;
+    flex-shrink: 0; border: 0; background: transparent;
+    color: var(--wa-muted); cursor: pointer;
+    font-family: ${body};
+    font-size: 13px; font-weight: 500; line-height: 1;
+    letter-spacing: -0.02em;
+    padding: 10px 4px 10px 6px;
+    min-height: 36px;
+  }
+  #wa-fab .wa-orb {
+    width: 8px; height: 8px; border-radius: 999px;
+    background: var(--wa-accent);
+    box-shadow: 0 0 0 3px var(--wa-wash);
+    flex-shrink: 0;
+  }
+  #wa-fab .wa-fab-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0);
   }
   #wa-panel {
-    display: none; position: fixed; right: 20px; bottom: 72px; z-index: 99999;
-    width: min(400px, calc(100vw - 24px));
-    height: min(640px, calc(100vh - 100px));
-    background: ${c.paper}; color: ${c.ink};
-    border: 1px solid ${c.line};
-    border-radius: 24px;
-    box-shadow: 0 24px 64px rgba(1,1,1,.12), 0 2px 8px rgba(1,1,1,.04);
-    flex-direction: column; overflow: hidden;
+    display: none;
+    flex-direction: column; min-height: 0; flex: 1;
+    background: var(--wa-paper); color: var(--wa-ink);
     font-family: ${body};
-    font-size: 14px; line-height: 1.5; letter-spacing: -0.01em;
+    font-size: 15px; line-height: 1.55; letter-spacing: -0.015em;
     -webkit-font-smoothing: antialiased;
   }
   #wa-panel.open { display: flex; }
   .wa-hdr {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 16px 14px 18px;
-    background: ${c.paper};
-    border-bottom: 1px solid ${c.line};
+    padding: 16px 18px 12px 20px;
+    background: transparent;
   }
-  .wa-brand { display: flex; align-items: center; gap: 10px; }
+  .wa-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .wa-orb {
-    width: 10px; height: 10px; border-radius: 999px;
-    background: ${c.accent};
-    box-shadow: 0 0 0 3px ${c.wash};
+    width: 8px; height: 8px; border-radius: 999px;
+    background: var(--wa-accent);
+    box-shadow: 0 0 0 3px var(--wa-wash);
     flex-shrink: 0;
   }
   .wa-wordmark {
     font-family: ${display};
-    font-size: 16px; font-weight: 600; letter-spacing: -0.03em;
-    color: ${c.ink};
+    font-size: 15px; font-weight: 600; letter-spacing: -0.03em;
+    color: var(--wa-ink);
   }
+  .wa-hdr-actions { display: flex; align-items: center; gap: 4px; }
   #wa-close {
     width: 32px; height: 32px; border-radius: 999px;
-    border: 1px solid ${c.line}; background: ${c.paper}; color: ${c.ink};
-    font: 500 18px/1 ${body}; cursor: pointer;
+    border: 0; background: transparent; color: var(--wa-muted);
+    font: 500 22px/1 ${body}; cursor: pointer;
     display: grid; place-items: center;
   }
-  #wa-close:hover { background: ${c.wash}; }
-  .wa-a2a {
-    padding: 12px 16px;
-    background: ${c.wash};
-    border-bottom: 1px solid ${c.line};
-    font-size: 12px; color: ${c.muted};
-  }
-  .wa-a2a em { font-style: normal; color: ${c.ink}; font-weight: 600; }
-  .wa-a2a-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-  #wa-url {
-    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    color: ${c.muted}; background: ${c.paper}; border: 1px solid ${c.line};
-    border-radius: 999px; padding: 8px 12px; font-size: 12px;
-  }
-  #wa-copy-prompt, .wa-send {
-    border: 0; border-radius: 999px; cursor: pointer;
-    background: ${c.fab}; color: ${c.fabText};
-    padding: 8px 14px;
-    font-family: ${body}; font-size: 12px; font-weight: 600;
-    white-space: nowrap;
-  }
-  .wa-chip {
-    border: 1px solid ${c.line}; border-radius: 999px; cursor: pointer;
-    background: ${c.paper}; color: ${c.ink};
-    padding: 8px 12px;
+  #wa-close:hover { color: var(--wa-ink); background: var(--wa-wash); }
+  #wa-url { display: none; }
+  #wa-copy-prompt {
+    border: 0; background: transparent; cursor: pointer;
+    color: var(--wa-muted);
+    padding: 6px 10px;
     font-family: ${body}; font-size: 12px; font-weight: 500;
-    text-align: left;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    border-radius: 999px;
   }
-  .wa-chip:hover { background: ${c.wash}; }
-  #wa-log { flex: 1; overflow: auto; padding: 16px; background: ${c.paper}; }
+  #wa-copy-prompt:hover { color: var(--wa-ink); background: var(--wa-wash); }
+  .wa-send {
+    appearance: none; -webkit-appearance: none;
+    width: 36px; height: 36px; border: 0; border-radius: 999px; cursor: pointer;
+    background: ${c.fab}; color: ${c.fabText};
+    display: grid; place-items: center; flex-shrink: 0;
+    padding: 0;
+  }
+  .wa-send:hover { transform: translateY(-1px); }
+  .wa-chip {
+    border: 1px solid var(--wa-line); border-radius: 999px; cursor: pointer;
+    background: var(--wa-paper); color: var(--wa-ink);
+    padding: 8px 14px;
+    font-family: ${body}; font-size: 13px; font-weight: 500;
+    letter-spacing: -0.015em;
+    text-align: center;
+  }
+  .wa-chip:hover { background: var(--wa-wash); }
+  #wa-log { flex: 1; overflow: auto; padding: 8px 28px 20px; background: transparent; }
   .wa-msg {
-    margin: 8px 0; padding: 10px 14px; border-radius: 16px;
-    font-size: 14px; line-height: 1.55;
+    margin: 12px 0; padding: 12px 16px; border-radius: 18px;
+    font-size: 15px; line-height: 1.55; max-width: 86%;
   }
   .wa-msg.human {
-    background: ${c.ink}; color: ${c.paper};
-    margin-left: 36px; border-bottom-right-radius: 6px;
+    background: var(--wa-ink); color: var(--wa-paper);
+    margin-left: auto; border-bottom-right-radius: 6px;
     white-space: pre-wrap;
   }
   .wa-msg.agent {
-    background: ${c.wash}; color: ${c.ink};
-    margin-right: 36px; border-bottom-left-radius: 6px;
+    background: var(--wa-wash); color: var(--wa-ink);
+    margin-right: auto; border-bottom-left-radius: 6px;
     white-space: normal;
   }
   .wa-msg.agent p { margin: 0 0 .65em; }
   .wa-msg.agent p:last-child { margin-bottom: 0; }
-  .wa-msg.agent strong { font-weight: 600; color: ${c.ink}; }
+  .wa-msg.agent strong { font-weight: 600; color: var(--wa-ink); }
   .wa-msg.agent em { font-style: italic; }
   .wa-md-h {
     font-family: ${display};
-    font-size: 15px; font-weight: 600; letter-spacing: -0.03em;
-    margin: .7em 0 .3em; line-height: 1.3; color: ${c.ink};
+    font-size: 16px; font-weight: 600; letter-spacing: -0.03em;
+    margin: .7em 0 .3em; line-height: 1.3; color: var(--wa-ink);
   }
   .wa-md-h:first-child { margin-top: 0; }
   .wa-md-ul, .wa-md-ol { margin: .2em 0 .7em; padding-left: 1.2em; }
   .wa-md-ul { list-style: disc; }
   .wa-md-ol { list-style: decimal; }
   .wa-md-ul li, .wa-md-ol li { margin: .2em 0; }
-  .wa-md-link { color: ${c.ink}; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+  .wa-md-link { color: var(--wa-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
   .wa-inline-code {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: .84em; background: ${c.line}; color: ${c.ink};
+    font-size: .84em; background: var(--wa-line); color: var(--wa-ink);
     padding: .1em .35em; border-radius: 4px;
   }
   .wa-code-wrap {
-    margin: .5em 0; border-radius: 10px; background: ${c.ink}; color: ${c.paper};
+    margin: .5em 0; border-radius: 10px; background: var(--wa-ink); color: var(--wa-paper);
     overflow: hidden;
   }
   .wa-code-lang {
     font-family: ui-monospace, Menlo, monospace;
     font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
-    color: ${c.muted}; padding: 6px 10px; border-bottom: 1px solid ${c.line};
+    color: var(--wa-muted); padding: 6px 10px; border-bottom: 1px solid var(--wa-line);
   }
   .wa-code {
     margin: 0; padding: 10px 12px; overflow-x: auto;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 12px; line-height: 1.5; color: ${c.paper};
+    font-size: 12px; line-height: 1.5; color: var(--wa-paper);
   }
   .wa-code code { font: inherit; color: inherit; }
-  .wa-welcome { color: ${c.ink}; }
-  .wa-welcome h4 {
-    margin: 4px 0 8px;
-    font-family: ${display};
-    font-size: 22px; font-weight: 600; letter-spacing: -0.04em; line-height: 1.2;
+  .wa-welcome {
+    color: var(--wa-ink);
+    text-align: center;
+    padding: 36px 12px 20px;
   }
-  .wa-welcome p { margin: 0; color: ${c.muted}; font-size: 14px; }
-  #wa-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .wa-welcome h4 {
+    margin: 0 0 10px;
+    font-family: ${display};
+    font-size: 28px; font-weight: 600; letter-spacing: -0.045em; line-height: 1.15;
+  }
+  .wa-welcome p { margin: 0 auto; max-width: 28em; color: var(--wa-muted); font-size: 15px; line-height: 1.5; }
+  #wa-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; justify-content: center; }
   .wa-form {
     display: flex; gap: 8px; align-items: center;
+    padding: 8px 8px 8px 14px;
+    background: var(--wa-paper);
+    border: 1px solid var(--wa-line);
+    border-radius: 999px;
+    box-shadow: 0 10px 40px rgba(1,1,1,.10), 0 1px 3px rgba(1,1,1,.04);
+  }
+  #wa-root.open .wa-form {
+    box-shadow: none;
+    border-radius: 0;
+    border: 0;
+    border-top: 1px solid var(--wa-line);
     padding: 12px 14px 14px;
-    border-top: 1px solid ${c.line}; background: ${c.paper};
   }
   #wa-text {
-    flex: 1; border: 1px solid ${c.line}; border-radius: 999px;
-    padding: 10px 14px; font: inherit; background: ${c.wash}; color: ${c.ink};
+    flex: 1; border: 0; border-radius: 0; min-width: 0;
+    padding: 10px 4px; font: inherit; background: transparent; color: var(--wa-ink);
     outline: none;
+    font-size: 15px; letter-spacing: -0.02em;
   }
-  #wa-text:focus { border-color: ${c.ink}; background: ${c.paper}; }
-  #wa-text::placeholder { color: ${c.muted}; }
+  #wa-text::placeholder { color: var(--wa-muted); }
   .wa-run-id { display: none; }
+  @media (max-width: 640px) {
+    #wa-stage { bottom: 20px; }
+    .wa-welcome { padding: 24px 4px 12px; }
+    .wa-welcome h4 { font-size: 22px; }
+    #wa-log { padding: 8px 16px 16px; }
+  }
 </style>
-<button id="wa-fab" type="button">${esc(b.fabLabel)}</button>
-<div id="wa-panel" role="dialog" aria-label="${esc(b.name)} agent">
-  <div class="wa-hdr">
-    <div class="wa-brand"><span class="wa-orb" aria-hidden="true"></span><strong class="wa-wordmark">${esc(b.wordmark || b.name)}</strong></div>
-    <button id="wa-close" type="button" aria-label="Close">×</button>
-  </div>
-  <div class="wa-a2a">
-    <div>${esc(w.copyHeadline)}</div>
-    <div class="wa-a2a-row">
+<div id="wa-root">
+  <button id="wa-backdrop" type="button" hidden aria-hidden="true" aria-label="Close"></button>
+  <div id="wa-stage">
+    <div id="wa-panel" role="dialog" aria-label="${esc(b.name)} agent" aria-hidden="true">
+      <div class="wa-hdr">
+        <div class="wa-brand"><span class="wa-orb" aria-hidden="true"></span><strong class="wa-wordmark">${esc(b.wordmark || b.name)}</strong></div>
+        <div class="wa-hdr-actions">
+          <button type="button" id="wa-copy-prompt">Copy prompt</button>
+          <button id="wa-close" type="button" aria-label="Close">×</button>
+        </div>
+      </div>
       <span id="wa-url">${esc(publicUrl)}</span>
-      <button type="button" id="wa-copy-prompt">Copy prompt</button>
+      <div id="wa-log">
+        <div class="wa-welcome" id="wa-welcome">
+          <h4>${esc(w.welcomeTitle)}</h4>
+          <p>${esc(w.welcomeBody)}</p>
+          <div id="wa-chips">${chips}</div>
+        </div>
+      </div>
     </div>
+    <form class="wa-form" id="wa-form">
+      <button id="wa-fab" type="button" aria-expanded="false" aria-label="${esc(b.fabLabel)}"><span class="wa-orb" aria-hidden="true"></span><span class="wa-fab-label">${esc(b.fabLabel)}</span></button>
+      <input id="wa-text" type="text" placeholder="${esc(placeholder)}" autocomplete="off"/>
+      <button class="wa-send" type="submit" aria-label="Send">${arrow}</button>
+    </form>
+    <span class="wa-run-id">${esc(runId)}</span>
   </div>
-  <div id="wa-log">
-    <div class="wa-welcome" id="wa-welcome">
-      <h4>${esc(w.welcomeTitle)}</h4>
-      <p>${esc(w.welcomeBody)}</p>
-      <div id="wa-chips">${chips}</div>
-    </div>
-  </div>
-  <form class="wa-form" id="wa-form">
-    <input id="wa-text" type="text" placeholder="${esc(w.placeholder)}" autocomplete="off"/>
-    <button class="wa-send" type="submit">Send</button>
-  </form>
-  <span class="wa-run-id">${esc(runId)}</span>
 </div>`;
 }
 
