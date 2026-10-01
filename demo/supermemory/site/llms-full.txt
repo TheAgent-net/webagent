@@ -1,0 +1,105 @@
+# supermemory
+
+> Agents need memory. supermemory is building the default engine for memory and continual learning for agents, available through an API, plugins, and MCP.
+
+supermemory builds the learning systems that make continuously improving AI possible. The path to useful AI is to scale in-context continuous learning that works with any model, any harness, and for all the varieties of use cases. As open-source model adoption grows and the world becomes more multi-model, learning and memory should be separated from the model providers and be highly interoperable, hence in context.
+
+Intelligence is no longer the constraint. Pre-training and post-training will keep pushing models' intelligence, but will not enable them to learn and improve in real time. supermemory builds all the hard infrastructure parts of a scalable memory system, with dense, interconnected, growing learnings and an understanding of time. Our model, learner-1, helps any model continuously improve by extracting and dreaming on the context of any user, task, or tenant, and putting it on our vector-graph database. This is then brought to the model by injecting tokens into its context in real time.
+
+We are a small team based in San Francisco. Today supermemory serves the memory and context for 100k+ organizations, with tens of millions of end users, processing over a trillion tokens every month. It is accessible via an API, with integrations for multiple harnesses.
+
+## Quick Start
+
+- [API documentation](/docs)
+- [Complete documentation index](/docs/llms.txt)
+- [Coding agent setup: CLI, skill, and docs MCP](/docs/agents-and-mcp)
+- [Quickstart: add, wait for processing, and retrieve](/docs/quickstart)
+- [TypeScript and Python SDKs](/docs/integrations/supermemory-sdk)
+- [Console: plugins, documents, memories, API keys, and billing](https://console.supermemory.ai)
+- [Install the local server](/install): curl -fsSL /install | bash
+
+## Core API Endpoints
+
+- Add content for memory extraction: POST https://api.supermemory.ai/v3/documents
+- Read processing status: GET https://api.supermemory.ai/v3/documents/{id}
+- Search documents: POST https://api.supermemory.ai/v3/search
+- Search memories: POST https://api.supermemory.ai/v4/search
+- OpenAPI specification (request schemas and authentication): /openapi.json
+
+API requests require an API key from the console, sent as Authorization: Bearer <SUPERMEMORY_API_KEY>. Keep keys out of browser code and public files.
+Adding content is asynchronous: wait for processing to finish before retrieval. For immediate memory tests, the quickstart documents dreaming: "instant" and its additional operation charge.
+
+The docs MCP at /docs/mcp searches documentation for coding agents. The Memory MCP at https://mcp.supermemory.ai/mcp stores and recalls user memories; see /docs/supermemory-mcp/setup for authentication and setup.
+
+## Integrations
+
+Works with: TypeScript, Python, REST API, Claude Code, Cursor, OpenClaw, OpenCode, Windsurf, Hermes, ChatGPT, Claude, Grok, Vercel AI SDK, LangChain, LangGraph, CrewAI, OpenAI SDK, Mastra, Zapier, n8n, Pipecat, LiveKit
+
+- [All integrations](/docs/integrations/supermemory-sdk)
+- [Agents and MCP](/docs/agents-and-mcp)
+- [Claude Code](/docs/integrations/claude-code)
+- [Cursor](/docs/integrations/cursor)
+- [OpenClaw](/docs/integrations/openclaw)
+- [supermemory MCP](/docs/supermemory-mcp/setup)
+- [Connectors](/docs/connectors/overview): Notion, Google Drive, OneDrive, Gmail, Granola, GitHub, S3, web crawler
+
+## What we do
+
+### Memory that keeps learning
+learner-1 extracts and dreams on the context of every user, task, and tenant, stores it in a vector-graph database, and brings it back to the model by injecting tokens into its context in real time. Knowledge updates, merges, contradicts, and infers instead of piling up.
+
+### Any model, any harness
+Learning and memory live outside the model providers, so they carry across models and harnesses and stay interoperable, in context, and yours. Use supermemory for yourself with the plugins, or build your agents on top of it.
+
+### The hard infrastructure, done
+Dense, interconnected, growing learnings with an understanding of time: user profiles, a memory graph, hybrid retrieval with reranking, extractors for any format (PDFs, web pages, images, audio), and connectors that keep sources in sync. Already serving 100k+ organizations and over a trillion tokens a month.
+
+### Advanced document extraction
+Scale and Enterprise include advanced PDF extraction: page-by-page OCR with descriptions of figures and diagrams alongside the text. The extraction tier is selected automatically from the organization's plan, with standard extraction as a fallback if needed. Free, Pro and Max keep standard PDF extraction, including OCR for scans. This plan distinction applies to PDFs, not every supported file type. [Document support](/docs/concepts/content-types#advanced-document-extraction).
+
+## Research
+
+- [Research](/research): notes and technical reports from the team
+- MemoryBench (our open eval platform): https://git.new/membench
+- [Blog](/blog) and [RSS](/blog/rss.xml)
+
+## Pricing
+
+Usage-based. Every plan includes monthly credits; pay only for what you use beyond that. Same per-unit rates on every plan, billed in SM tokens; supported updates using the same customId in the same organization bill only the net-new token delta. New document identities and full replacements can incur fresh ingestion charges; search and other operations are metered separately. Enterprise plans have committed-spend pricing, dedicated infrastructure, air-gapped self-hosting, SOC 2 / HIPAA / GDPR, and a dedicated account manager.
+
+- [Product](/product): what the memory engine does: memories, the graph that infers, updates and forgets, profiles, recall, connectors, SDKs and plugins, hosting (cloud, dedicated, or a local binary)
+
+- [Pricing](/pricing)
+- [Pricing (Markdown)](/pricing.md)
+- [Talk to sales](https://cal.com/supermemory/meet?overlayCalendar=true)
+
+## Personal supermemory
+
+Manage plugins, documents, memories, API keys, and billing at https://console.supermemory.ai. For plugin setup and supported integrations, see /docs/agents-and-mcp.
+
+## Company
+
+- Website: 
+- GitHub: https://github.com/supermemoryai
+- X/Twitter: https://x.com/supermemory
+- Security: https://supermemory.link/security
+- Contact: https://cal.com/supermemory/meet?overlayCalendar=true
+
+## Pages
+
+- [Home](/)
+- [Blog](/blog)
+- [Changelog](/changelog)
+- [Pricing](/pricing)
+- [Privacy Policy](/privacy)
+- [Terms of Service](/terms)
+- [Responsible Disclosure](/responsible-disclosure)
+- [API Docs](https://docs.supermemory.ai)
+- [Developer Console](https://console.supermemory.ai)
+
+## Agent discovery
+
+- API catalog: /.well-known/api-catalog
+- MCP server card: /.well-known/mcp/server-card.json
+- Agent skills: /.well-known/agent-skills/index.json
+- OAuth protected resource: /.well-known/oauth-protected-resource

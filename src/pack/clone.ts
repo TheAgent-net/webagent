@@ -2,10 +2,10 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, s
 import { dirname, extname, join } from "node:path";
 
 export const TRACKER =
-  /google-analytics|googletagmanager|gtag\/|facebook\.net|hotjar|segment\.io|sentry\.io|intercom|doubleclick|adsystem|clarity\.ms|cloudflareinsights|hs-scripts|lfeeder|factors\.ai|redditstatic\.com\/ads|dubcdn\.com\/analytics|snap\.licdn|ads-twitter|posthog\.com|promptwatch/i;
+  /google-analytics|googletagmanager|gtag\/|facebook\.net|hotjar|segment\.io|sentry\.io|intercom|doubleclick|adsystem|clarity\.ms|cloudflareinsights|hs-scripts|lfeeder|factors\.ai|redditstatic\.com\/ads|dubcdn\.com\/analytics|snap\.licdn|ads-twitter|posthog\.com|promptwatch|snitcher\.com|pixel-config\.reddit|cdn-cgi\/challenge|cdn-cgi\/speculation|\/orange\/array|\/orange\/static|\/orange\/flags/i;
 
 const TEXT_EXT = new Set([".html", ".css", ".js", ".mjs", ".cjs", ".json", ".svg", ".xml", ".txt", ".webmanifest", ".map"]);
-const ASSET_EXT = /\.(css|js|mjs|cjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|map|txt|xml|webmanifest|md|html|htm)$/i;
+const ASSET_EXT = /\.(css|js|mjs|cjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|map|txt|xml|webmanifest|md|html|htm|mp4|webm|mp3|pdf|wasm)$/i;
 const MIN_HTML = 8 * 1024;
 const MIN_FILES = 5;
 const MAX_ASSET = 8 * 1024 * 1024;
@@ -88,6 +88,7 @@ export function localAssetPath(urlStr: string, origin: string, extraOrigins: str
   }
   if (u.protocol !== "http:" && u.protocol !== "https:") return null;
   if (TRACKER.test(u.href)) return null;
+  if (/\.(mp4|webm|mov)(?:$|\?)/i.test(u.pathname)) return null;
   if (u.pathname.startsWith("/edit")) return null;
   let path: string;
   try {
@@ -210,6 +211,15 @@ export async function ensureDemoClone(opts: EnsureCloneOpts): Promise<CloneResul
   }
 }
 
+export async function resolveLanded(origin: string): Promise<string> {
+  try {
+    const res = await fetch(origin.replace(/\/+$/, "") + "/", { redirect: "follow" });
+    return res.url || origin;
+  } catch {
+    return origin;
+  }
+}
+
 export async function cloneOrigin(opts: CloneOpts): Promise<CloneResult> {
   const chrome = opts.chrome || findChrome();
   if (!chrome) {
@@ -217,6 +227,7 @@ export async function cloneOrigin(opts: CloneOpts): Promise<CloneResult> {
   }
   const puppeteer = await import("puppeteer-core");
   const start = opts.origin.replace(/\/+$/, "") + "/";
+  let landed = await resolveLanded(opts.origin);
   mkdirSync(opts.out, { recursive: true });
 
   const browser = await puppeteer.default.launch({
@@ -226,7 +237,6 @@ export async function cloneOrigin(opts: CloneOpts): Promise<CloneResult> {
   });
 
   const saved = new Map<string, string>();
-  let landed = start;
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
@@ -246,7 +256,7 @@ export async function cloneOrigin(opts: CloneOpts): Promise<CloneResult> {
     });
 
     await page.goto(start, { waitUntil: "networkidle2", timeout: 120_000 });
-    landed = page.url();
+    landed = page.url() || landed;
     await page.waitForSelector("h1, [data-framer-name], main, [data-astro-cid], body", { timeout: 30_000 }).catch(() => {});
     await page.evaluate(() => (document as { fonts?: { ready?: Promise<unknown> } }).fonts?.ready).catch(() => {});
     await sleep(3000);
@@ -267,6 +277,7 @@ export async function cloneOrigin(opts: CloneOpts): Promise<CloneResult> {
     html = injectWidget(rewriteCaptured(html, opts.origin, extras, capturedHosts));
     writeFileSync(join(opts.out, "index.html"), html);
     await harvestMissing(html, opts.origin, extras, opts.out, saved);
+    hoistOriginExt(opts.out, opts.origin, landed, saved);
     rewriteTree(opts.out, opts.origin, extras, hostsFromSaved(saved));
     const index = join(opts.out, "index.html");
     writeFileSync(index, injectWidget(readFileSync(index, "utf8")));
@@ -336,6 +347,37 @@ function rewriteTree(root: string, origin: string, extras: string[], capturedHos
       const next = rewriteCaptured(raw, origin, extras, capturedHosts);
       if (next !== raw) writeFileSync(abs, next);
     }
+  }
+}
+
+function hoistOriginExt(out: string, origin: string, landed: string, saved: Map<string, string>): void {
+  const hosts = unique([...originHosts(origin), ...originHosts(landed)].map((h) => h.replace(/^www\./, "")));
+  for (const host of hosts) {
+    const ext = join(out, "_ext", host);
+    if (!existsSync(ext) || !statSync(ext).isDirectory()) continue;
+    moveTree(ext, out);
+    rmSync(ext, { recursive: true, force: true });
+    const prefix = "_ext/" + host + "/";
+    for (const [url, dest] of saved) {
+      if (dest.startsWith(prefix)) saved.set(url, dest.slice(prefix.length));
+      else if (dest === "_ext/" + host) saved.set(url, "index.html");
+    }
+  }
+}
+
+function moveTree(src: string, dest: string): void {
+  for (const name of readdirSync(src)) {
+    const from = join(src, name);
+    const to = join(dest, name);
+    const st = statSync(from);
+    if (st.isDirectory()) {
+      mkdirSync(to, { recursive: true });
+      moveTree(from, to);
+      continue;
+    }
+    if (name === "index.html" && existsSync(to) && statSync(to).size > MIN_HTML) continue;
+    mkdirSync(dirname(to), { recursive: true });
+    writeFileSync(to, readFileSync(from));
   }
 }
 

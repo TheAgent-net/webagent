@@ -66,6 +66,7 @@ describe("localAssetPath", () => {
     );
     expect(localAssetPath("https://www.googletagmanager.com/gtm.js", "https://supermemory.com")).toBeNull();
     expect(localAssetPath("https://www.redditstatic.com/ads/pixel.js", "https://supermemory.com")).toBeNull();
+    expect(localAssetPath("https://supermemory.ai/brand/media/field.mp4", "https://supermemory.com", ["https://supermemory.ai"])).toBeNull();
   });
 });
 
@@ -80,11 +81,11 @@ describe("isPixelClone rejects stubs", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  test("current demo/supermemory stub is rejected until cloned", () => {
+  test("demo/supermemory/site is a pixel clone with the widget hook", () => {
     const check = isPixelClone("demo/supermemory/site");
-    if (check.ok) return;
-    expect(check.ok).toBe(false);
-    expect(check.reason).toMatch(/stub|manifest|widget|files/i);
+    expect(check.ok).toBe(true);
+    expect(check.htmlBytes).toBeGreaterThan(8 * 1024);
+    expect(check.files).toBeGreaterThanOrEqual(5);
   });
 
   test("manifest + big html + widget + assets pass", () => {
