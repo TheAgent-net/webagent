@@ -207,7 +207,7 @@ describe("supermemory pack", () => {
     expect(html).toContain("innerHTML = md");
   });
 
-  test("host GET / is a widget shell; GET /chat how-to; session reuse", async () => {
+  test("host GET / is the pixel clone + widget; GET /chat how-to; session reuse", async () => {
     const config = loadPackConfig("packs/supermemory");
     const h = new Harness();
     const room = new Room(h);
@@ -220,10 +220,17 @@ describe("supermemory pack", () => {
       }),
     );
     const body = await page.text();
-    expect(body).toContain("supermemory");
-    expect(body).toContain("Ask supermemory");
-    expect(body).toContain("/widget.js");
-    expect(body).not.toContain("framerusercontent.com");
+    expect(body).toContain("supermemory is building the default engine");
+    expect(body).toContain("https://sm.test/widget.js");
+    expect(body).not.toContain("This is a demo site");
+    expect(body).not.toContain("{{WIDGET_JS}}");
+
+    const css = await fetchFn(new Request("http://t/_astro/index.BoEtO4jN.css"));
+    expect(css.ok).toBe(true);
+    expect(css.headers.get("content-type")).toMatch(/text\/css/);
+
+    const widget = await fetchFn(new Request("http://t/widget.js"));
+    expect(await widget.text()).toContain("Ask supermemory");
 
     const how = await fetchFn(new Request("http://t/chat", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
     const howto = (await how.json()) as { ok: boolean; hint: string };

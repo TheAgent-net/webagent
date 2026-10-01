@@ -1,6 +1,9 @@
+import { join } from "node:path";
 import type { Harness } from "../harness.ts";
 import { intake } from "../intake.ts";
 import type { AgentPackConfig } from "../pack/types.ts";
+import { isPixelClone } from "../pack/clone.ts";
+import { demoFileResponse } from "../pack/demo-site.ts";
 import { chatHowToBody } from "../pack/prompt.ts";
 import { widgetJs } from "../widget/widget.ts";
 import { agentCard, CARD_PATHS, connectPrompt, linkHeader, type AgentCardMeta } from "./card.ts";
@@ -96,6 +99,8 @@ async function route(
   }
   if (url.pathname === "/" && req.method === "GET") {
     if (wantsAgentCard(url) || kind === "machine") return card();
+    const cloned = packClonePage(pack, url, base);
+    if (cloned) return cloned;
     return chatPage(lobby, base, meta, pack);
   }
   if (url.pathname === "/" && req.method === "POST" && kind === "machine") {
@@ -120,7 +125,16 @@ async function route(
       /* fall through */
     }
   }
+  const cloned = packClonePage(pack, url, base);
+  if (cloned) return cloned;
   return api(req);
+}
+
+function packClonePage(pack: AgentPackConfig | undefined, url: URL, widgetOrigin: string): Response | null {
+  if (!pack) return null;
+  const root = join(process.cwd(), "demo", pack.id, "site");
+  if (!isPixelClone(root).ok) return null;
+  return demoFileResponse(root, url, widgetOrigin);
 }
 
 function chatFrom(req: Request, body: { from?: "human" | "machine" }): "human" | "machine" {

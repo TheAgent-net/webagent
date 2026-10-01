@@ -69,15 +69,22 @@ export function serveDemoSite(root: string, port: number, widgetOrigin: string):
       const url = new URL(req.url);
       if (url.pathname === "/_next/image") {
         const src = url.searchParams.get("url");
-        if (src && src.startsWith("/")) return fileAt(rootAbs, new URL("http://local" + src), base);
+        if (src && src.startsWith("/")) {
+          return demoFileResponse(rootAbs, new URL("http://local" + src), base) ?? new Response("not found", { status: 404 });
+        }
       }
-      return fileAt(rootAbs, url, base);
+      return demoFileResponse(rootAbs, url, base) ?? new Response("not found", { status: 404 });
     },
   });
   return { stop: () => server.stop(true), port: server.port };
 }
 
-function fileAt(root: string, url: URL, widgetOrigin: string): Response {
+export function demoFileResponse(root: string, url: URL, widgetOrigin: string): Response | null {
+  const rootAbs = normalize(root);
+  return fileAt(rootAbs, url, widgetOrigin.replace(/\/+$/, ""));
+}
+
+function fileAt(root: string, url: URL, widgetOrigin: string): Response | null {
   for (const rel of candidates(url)) {
     const abs = normalize(join(root, rel));
     if (!abs.startsWith(root)) return new Response("no", { status: 403 });
@@ -96,5 +103,5 @@ function fileAt(root: string, url: URL, widgetOrigin: string): Response {
       },
     });
   }
-  return new Response("not found", { status: 404 });
+  return null;
 }

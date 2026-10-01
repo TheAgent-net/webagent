@@ -12,7 +12,7 @@ export {
   type CloneResult,
 } from "./clone.ts";
 export { brandFromPages, defaultBrand, defaultWidget, extractBrand } from "./brand.ts";
-export { serveDemoSite } from "./demo-site.ts";
+export { demoFileResponse, serveDemoSite } from "./demo-site.ts";
 export { docsLookupTool } from "./docs.ts";
 export { fromUrl, type FromUrlOpts } from "./from-url.ts";
 export { servePack, type ServePackOpts } from "./serve.ts";
