@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="${WEBAGENT_ROOT:-/opt/webagent-smallest}"
-BRANCH="${WEBAGENT_BRANCH:-cursor/smallest-chat-ui-e5be}"
+BRANCH="${WEBAGENT_BRANCH:-cursor/agnostic-core-packs-e5be}"
 REPO="${WEBAGENT_REPO:-https://github.com/TheAgent-net/webagent.git}"
 PORT="${WEBAGENT_SMALLEST_PORT:-8789}"
 ENV_SRC="${WEBAGENT_ENV_SRC:-/opt/webagent/.env}"
@@ -45,16 +45,14 @@ if grep -q "^WEBAGENT_PUBLIC_URL=" "$ROOT/.env.smallest"; then
 else
   echo "WEBAGENT_PUBLIC_URL=$PUBLIC_URL" >> "$ROOT/.env.smallest"
 fi
-# Always pin GPT-6 Astra. Copied Composio .env often has OPENAI_MODEL=gpt-4o-mini.
+# Pack pins the model. Drop a copied Composio OPENAI_MODEL so it cannot override.
 if grep -q "^OPENAI_MODEL=" "$ROOT/.env.smallest"; then
-  sed -i "s|^OPENAI_MODEL=.*|OPENAI_MODEL=gpt-6-astra|" "$ROOT/.env.smallest"
-else
-  echo "OPENAI_MODEL=gpt-6-astra" >> "$ROOT/.env.smallest"
+  sed -i "/^OPENAI_MODEL=/d" "$ROOT/.env.smallest"
 fi
 
 sudo tee /etc/systemd/system/webagent-smallest.service >/dev/null <<EOF
 [Unit]
-Description=Smallest AI settings advisor webagent
+Description=Smallest AI webagent (pack)
 After=network.target
 
 [Service]
@@ -63,8 +61,7 @@ User=$(id -un)
 WorkingDirectory=$ROOT
 Environment=PATH=$(dirname "$BUN_BIN"):/usr/local/bin:/usr/bin
 EnvironmentFile=-$ROOT/.env.smallest
-Environment=OPENAI_MODEL=gpt-6-astra
-ExecStart=$BUN_BIN src/cli.ts smallest :$PORT
+ExecStart=$BUN_BIN src/cli.ts serve --pack packs/smallest :$PORT
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=20

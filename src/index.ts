@@ -14,6 +14,17 @@ export type { Tool } from "./tools.ts";
 export type { HookBag, Verdict } from "./hooks.ts";
 export { attachPack, siteBook, crawlSite, inferFlows, buildPack, loadCorpus, lookupCorpus, hasCorpus } from "./site/index.ts";
 export type { SitePack, SiteFlow, AuthAsk, AuthGrant } from "./site/index.ts";
+export {
+  attachAgent,
+  fromUrl,
+  loadPackConfig,
+  openPack,
+  renderCopyPrompt,
+  servePack,
+} from "./pack/index.ts";
+export type { AgentPackConfig, PackRuntime } from "./pack/index.ts";
+export { searchHits, searchHitsHybrid, indexPages, fillVectors, hashedEmbed } from "./retrieve/index.ts";
+export { packWidget, agentPage, renderChatMarkdown } from "./widget/index.ts";
 export { attachSales, salesInstruction, mapRisks, reportText, runGepa } from "./sales/index.ts";
 export { attachApps, loadAppsPack, buildGraph, queryGraph, askApps, appsInstruction, runAppsGepa } from "./apps/index.ts";
 export {
