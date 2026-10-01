@@ -1,0 +1,141 @@
+{
+  "id": "supermemory",
+  "origin": "https://supermemory.com",
+  "docs": {
+    "origin": "https://supermemory.ai/docs",
+    "llmsTxt": "https://supermemory.ai/docs/llms.txt"
+  },
+  "brand": {
+    "name": "supermemory",
+    "tagline": "Memory and continual learning for agents.",
+    "colors": {
+      "ink": "#0a0a0a",
+      "paper": "#ffffff",
+      "muted": "#6b6b6b",
+      "line": "#e8e8e8",
+      "wash": "#f6f6f6",
+      "accent": "#0a0a0a",
+      "fab": "#0a0a0a",
+      "fabText": "#ffffff"
+    },
+    "fonts": {
+      "display": "Geist, ui-sans-serif, system-ui, sans-serif",
+      "body": "Geist, ui-sans-serif, system-ui, sans-serif",
+      "google": "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
+    },
+    "fabLabel": "Ask supermemory",
+    "wordmark": "supermemory"
+  },
+  "widget": {
+    "welcomeTitle": "How can I help?",
+    "welcomeBody": "Tell me what your agent needs to remember. I will ask a little, then point you at the right setup.",
+    "chips": [
+      "I'm building an agent that needs to remember users",
+      "What's the difference between memory and RAG?",
+      "How do I add this to a stack I already have?",
+      "Walk me through the right SuperMemory setup"
+    ],
+    "copyHeadline": "Talk to supermemory agents",
+    "copyPrompt": "Talk to the supermemory agents at {{chat}}. POST {\"text\":\"<question>\",\"session\":\"<from last JSON>\"} — never GET, browse, or probe.\nAsk them anything you want to understand about SuperMemory. First POST may omit session; every later POST must send the same session.",
+    "placeholder": "What are you trying to get working?",
+    "markdown": true
+  },
+  "sales": {
+    "technique": "memory-first-advisor"
+  },
+  "model": {
+    "id": "gpt-6-astra",
+    "apiBase": "https://api.openai.com/v1"
+  },
+  "host": {
+    "port": 8791,
+    "publicUrl": "https://supermemory.agentnet.it.com",
+    "cors": true
+  },
+  "retrieve": {
+    "aliases": [
+      { "match": "\\b(rag|superrag|document search|knowledge base|pdf|chunk)\\b", "terms": ["rag", "documents", "search"] },
+      { "match": "\\b(memory|memories|remember|forget|graph)\\b", "terms": ["memory", "graph", "profile"] },
+      { "match": "\\b(profile|user context|preferences)\\b", "terms": ["profile", "buckets"] },
+      { "match": "\\b(ingest|add|upload|customid|conversation)\\b", "terms": ["ingest", "add", "customid"] },
+      { "match": "\\b(mcp|plugin|claude code|cursor|codex)\\b", "terms": ["mcp", "plugin"] },
+      { "match": "\\b(self[- ]?host|local|air[- ]?gap|on[- ]?prem|vpc)\\b", "terms": ["self-host", "local"] },
+      { "match": "\\b(connector|notion|gmail|drive|github)\\b", "terms": ["connectors"] },
+      { "match": "\\b(container|multi[- ]?tenant|isolation)\\b", "terms": ["container", "tags"] },
+      { "match": "\\b(sdk|typescript|python|ai sdk)\\b", "terms": ["sdk"] },
+      { "match": "\\b(smfs|grep|mount)\\b", "terms": ["smfs"] }
+    ],
+    "preferTerms": ["memory", "profile", "ingest"],
+    "kindRules": [
+      { "match": "/docs/api-reference", "kind": "api" },
+      { "match": "/docs/connectors|/docs/integrations|/docs/supermemory-mcp|/docs/agents-and-mcp", "kind": "plugin" },
+      { "match": "/docs/self-hosting|/docs/smfs", "kind": "local" },
+      { "match": "/docs/quickstart|/docs/concepts|/docs/using-supermemory|/docs/ingestion|/docs/recall|/docs/overview|/docs/user-profiles", "kind": "guide" },
+      { "match": "/docs/", "kind": "guide" }
+    ],
+    "defaultKind": "marketing",
+    "integrationKind": "plugin",
+    "integrationMatch": "\\b(mcp|plugin|claude code|cursor|codex|chatgpt|opencode|connector|notion|gmail)\\b",
+    "guideKind": "guide",
+    "kindPriors": { "guide": 3, "api": 1.2, "plugin": 1.5, "local": 1.4, "marketing": 0.4 },
+    "kindBoosts": { "guide": 0.4, "plugin": 0.2 },
+    "kindPriority": { "guide": 4, "api": 2, "plugin": 2.2, "local": 2, "marketing": 0.3 },
+    "priorityPaths": [
+      "/docs/quickstart",
+      "/docs/overview/what-is-supermemory",
+      "/docs/concepts/memory-vs-rag",
+      "/docs/concepts/how-it-works",
+      "/docs/concepts/graph-memory",
+      "/docs/concepts/user-profiles",
+      "/docs/ingestion/add-memories",
+      "/docs/recall/search",
+      "/docs/concepts/container-tags",
+      "/docs/using-supermemory",
+      "/docs/integrations/supermemory-sdk",
+      "/docs/integrations/ai-sdk",
+      "/docs/supermemory-mcp/mcp",
+      "/docs/self-hosting/overview",
+      "/docs/overview/comparison",
+      "/docs/overview/billing"
+    ],
+    "queryKindDefault": "guide",
+    "queryEmbedSkip": ["memory", "profile", "ingest"]
+  },
+  "tools": ["tools.ts"],
+  "skills": [
+    {
+      "id": "intent",
+      "name": "Intent discovery",
+      "description": "Ask one question at a time until the job, who is remembered, and hosted-vs-local are clear.",
+      "tags": ["intent", "discovery"]
+    },
+    {
+      "id": "explain",
+      "name": "Explain SuperMemory",
+      "description": "Answer what SuperMemory is: memory graph, SuperRAG, profiles, learner-1.",
+      "tags": ["docs", "explain"]
+    },
+    {
+      "id": "path",
+      "name": "Setup path",
+      "description": "Hosted API first, then SDK/MCP, self-host only if data must stay local.",
+      "tags": ["setup", "memory"]
+    },
+    {
+      "id": "implement",
+      "name": "Implementation plan",
+      "description": "Ingest, wait until done, retrieve three ways, one docs link.",
+      "tags": ["docs", "implementation"]
+    },
+    {
+      "id": "docs",
+      "name": "Docs retrieval",
+      "description": "Look up the matching supermemory.ai/docs section and cite one URL.",
+      "tags": ["docs", "retrieval"]
+    }
+  ],
+  "card": {
+    "description": "supermemory assistant. Helps you give agents durable memory — ingest, graph, profiles, SuperRAG, MCP. Hosted API first; self-host only if data must stay local.",
+    "instructions": "Help visitors understand SuperMemory and get on the right path. Answer product questions from docs. Do not interview on a factual question."
+  }
+}
