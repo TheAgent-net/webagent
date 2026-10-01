@@ -44,7 +44,7 @@
     "technique": "memory-first-advisor"
   },
   "model": {
-    "id": "gpt-6-astra",
+    "id": "gpt-5.6-luna",
     "apiBase": "https://api.openai.com/v1"
   },
   "host": {

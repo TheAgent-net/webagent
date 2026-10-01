@@ -98,7 +98,7 @@ describe("supermemory pack", () => {
     expect(config.docs?.llmsTxt).toContain("supermemory.ai/docs/llms.txt");
     expect(config.brand.name).toBe("supermemory");
     expect(config.brand.fabLabel).toBe("Ask supermemory");
-    expect(config.model?.id).toBe("gpt-6-astra");
+    expect(config.model?.id).toBe("gpt-5.6-luna");
     expect(config.host?.port).toBe(8791);
     expect(config.host?.publicUrl).toContain("supermemory.agentnet.it.com");
     expect(config.retrieve?.preferTerms).toContain("memory");
