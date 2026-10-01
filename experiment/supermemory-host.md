@@ -19,6 +19,12 @@ supermemory.agentnet.it.com  →  54.89.43.219  (proxied)
 
 Cloudflare terminates HTTPS; nginx sees HTTP on port 80.
 
+```bash
+CF_API_TOKEN=... ./deploy/supermemory-dns.sh
+```
+
+Or in the Cloudflare dashboard for `agentnet.it.com`: A, name `supermemory`, IPv4 `54.89.43.219`, Proxy enabled.
+
 ## Quick deploy (on the EC2 host)
 
 ```bash
