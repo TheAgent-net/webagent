@@ -15,7 +15,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent from-url <url>         crawl a site → write a pack");
   console.error("  webagent serve --pack <dir>     host a pack (widget + POST /chat)");
   console.error("  webagent serve [addr]           generic host, no pack");
-  console.error("  webagent demo <name>            pack host + demo site preview");
+  console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
   console.error("  webagent pair <url>             two agents: site seller + buyer (Cursor SDK)");
@@ -125,21 +125,39 @@ switch (args[0]) {
   case "demo": {
     const name = args[1];
     if (!name) {
-      console.error("usage: webagent demo <name> [addr]");
+      console.error("usage: webagent demo <name> [addr] [--refresh] [--site-port N]");
       process.exit(2);
     }
     const addr = positional(args.slice(2)) || ":8787";
     const sitePort = Number(flag(args, "--site-port") || 0) || Number(addr.replace(/^.*:/, "")) + 1;
-    await startPack(h, packDirFor(name), addr);
-    const { existsSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    const site = join(process.cwd(), "demo", name, "site");
-    if (existsSync(join(site, "index.html"))) {
-      const { serveDemoSite } = await import("./pack/demo-site.ts");
-      const origin = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + (Number(addr.replace(/^.*:/, "")) || 8787);
-      serveDemoSite(site, sitePort, origin);
-      console.error(`  demo    http://127.0.0.1:${sitePort}/  (embeds ${origin}/widget.js)`);
+    const refresh = args.includes("--refresh");
+    const dir = packDirFor(name);
+    const { loadPackConfig } = await import("./pack/load.ts");
+    const { ensureDemoClone } = await import("./pack/clone.ts");
+    const { serveDemoSite } = await import("./pack/demo-site.ts");
+    const config = loadPackConfig(dir);
+    if (!config.origin) {
+      console.error("pack.json missing origin — demo cannot pixel-clone the webpage");
+      process.exit(2);
     }
+    const site = join(process.cwd(), "demo", name, "site");
+    const widgetOrigin = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + (Number(addr.replace(/^.*:/, "")) || 8787);
+    console.error("pixel-cloning " + config.origin + " → " + site + (refresh ? " (refresh)" : ""));
+    const packP = startPack(h, dir, addr);
+    try {
+      const cloned = await ensureDemoClone({ origin: config.origin, out: site, refresh });
+      console.error(
+        `  clone   ${cloned.files} files  ${Math.round(cloned.htmlBytes / 1024)}kb html` +
+          (cloned.fresh ? "  fresh" : "  cached") +
+          (cloned.landed && cloned.landed !== config.origin ? "  via " + cloned.landed : ""),
+      );
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+    await packP;
+    serveDemoSite(site, sitePort, widgetOrigin);
+    console.error(`  demo    http://127.0.0.1:${sitePort}/  (pixel clone + ${widgetOrigin}/widget.js)`);
     await new Promise(() => {});
     break;
   }
