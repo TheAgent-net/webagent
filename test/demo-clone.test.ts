@@ -58,6 +58,9 @@ describe("localAssetPath", () => {
     expect(localAssetPath("https://supermemory.ai/fonts/Geist-var.woff2", "https://supermemory.com", ["https://supermemory.ai"])).toBe(
       "fonts/Geist-var.woff2",
     );
+    expect(localAssetPath("https://supermemory.ai/blog", "https://supermemory.com", ["https://supermemory.ai"])).toBe(
+      "blog/index.html",
+    );
     expect(localAssetPath("https://framerusercontent.com/img.png?width=20", "https://smallest.ai")).toBe(
       "_ext/framerusercontent.com/img.png__q_width%3D20",
     );

@@ -5,6 +5,7 @@ export const TRACKER =
   /google-analytics|googletagmanager|gtag\/|facebook\.net|hotjar|segment\.io|sentry\.io|intercom|doubleclick|adsystem|clarity\.ms|cloudflareinsights|hs-scripts|lfeeder|factors\.ai|redditstatic\.com\/ads|dubcdn\.com\/analytics|snap\.licdn|ads-twitter|posthog\.com|promptwatch/i;
 
 const TEXT_EXT = new Set([".html", ".css", ".js", ".mjs", ".cjs", ".json", ".svg", ".xml", ".txt", ".webmanifest", ".map"]);
+const ASSET_EXT = /\.(css|js|mjs|cjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|map|txt|xml|webmanifest|md|html|htm)$/i;
 const MIN_HTML = 8 * 1024;
 const MIN_FILES = 5;
 const MAX_ASSET = 8 * 1024 * 1024;
@@ -96,6 +97,7 @@ export function localAssetPath(urlStr: string, origin: string, extraOrigins: str
   }
   if (path.endsWith("/")) path += "index.html";
   if (!path) path = "/index.html";
+  if (!ASSET_EXT.test(path) && !path.endsWith("/index.html")) path = path.replace(/\/?$/, "/index.html");
   if (u.search) {
     const q = encodeURIComponent(u.search.slice(1));
     const hash = Bun.hash(u.search).toString(16);
@@ -235,14 +237,12 @@ export async function cloneOrigin(opts: CloneOpts): Promise<CloneResult> {
       const url = res.url();
       if (saved.has(url)) return;
       if (res.status() >= 400) return;
-      const dest = localAssetPath(url, opts.origin, [landed]);
+      let dest = localAssetPath(url, opts.origin, [landed]);
       if (!dest) return;
       const buf = await res.buffer().catch(() => null);
       if (!buf || buf.byteLength === 0 || buf.byteLength > MAX_ASSET) return;
+      dest = writeAsset(opts.out, dest, buf);
       saved.set(url, dest);
-      const file = join(opts.out, dest);
-      mkdirSync(dirname(file), { recursive: true });
-      writeFileSync(file, buf);
     });
 
     await page.goto(start, { waitUntil: "networkidle2", timeout: 120_000 });
@@ -305,16 +305,16 @@ async function harvestMissing(
   const urls = extractUrls(html, base);
   for (const url of urls) {
     if (saved.has(url)) continue;
-    const dest = localAssetPath(url, origin, extras);
+    let dest = localAssetPath(url, origin, extras);
     if (!dest) continue;
+    if (dest.startsWith("_ext/") && !ASSET_EXT.test(dest)) continue;
+    if (dest.endsWith("/index.html") && dest !== "index.html") continue;
     const buf = await fetch(url)
       .then((r) => (r.ok ? r.arrayBuffer() : null))
       .catch(() => null);
     if (!buf || buf.byteLength === 0 || buf.byteLength > MAX_ASSET) continue;
+    dest = writeAsset(out, dest, Buffer.from(buf));
     saved.set(url, dest);
-    const file = join(out, dest);
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, Buffer.from(buf));
   }
 }
 
@@ -337,6 +337,25 @@ function rewriteTree(root: string, origin: string, extras: string[], capturedHos
       if (next !== raw) writeFileSync(abs, next);
     }
   }
+}
+
+function writeAsset(out: string, dest: string, buf: Buffer | Uint8Array): string {
+  dest = dest.replace(/^\/+/, "");
+  let file = join(out, dest);
+  if (existsSync(file) && statSync(file).isDirectory()) {
+    dest = dest.replace(/\/?$/, "") + "/index.html";
+    file = join(out, dest);
+  }
+  const parent = dirname(file);
+  if (existsSync(parent) && statSync(parent).isFile()) {
+    const tmp = parent + ".asset";
+    renameSync(parent, tmp);
+    mkdirSync(parent, { recursive: true });
+    renameSync(tmp, join(parent, "index.html"));
+  }
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, buf);
+  return dest;
 }
 
 function hostsFromSaved(saved: Map<string, string>): string[] {
