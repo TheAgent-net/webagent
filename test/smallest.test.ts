@@ -23,7 +23,6 @@ import {
   smallestCopyPrompt,
   smallestHost,
   smallestInstruction,
-  hasSmallestSnapshot,
   renderChatMarkdown,
 } from "../src/smallest/index.ts";
 import type { FetchLike } from "../src/smallest/types.ts";
@@ -402,22 +401,23 @@ describe("build + host", () => {
     expect(body).toContain("font-family: Geist");
     expect(body).toContain("background: #191919");
     expect(body).toContain("background: #f5f5f5");
+    expect(body).toContain("--wa-ink: #191919");
     expect(body).not.toContain("#7CFFB2");
-    expect(body).toMatch(/Voice AI Platform|Lightning|Pulse/);
-    expect(body).toContain("framerusercontent.com");
+    expect(body).not.toContain("framerusercontent.com");
     expect(body).toContain("wa-md-link");
     expect(body).toContain("innerHTML = md");
+    expect(body).toContain("/widget.js");
 
     const cardRes = await fetchFn(new Request("http://t/", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
-    const card = (await cardRes.json()) as { name: string; type: string; skills: { id: string }[] };
+    const card = (await cardRes.json()) as { name: string; type: string; skills: { id: string }[]; copyPrompt: string };
     expect(card.type).toBe("webagent");
     expect(card.name).toBe("Smallest AI");
-    expect(hasSmallestSnapshot()).toBe(true);
     expect(card.skills.some((s) => s.id === "settings")).toBe(true);
+    expect(card.copyPrompt).toContain("Talk to the Smallest agents");
 
-    const icon = await fetchFn(new Request("http://t/_ext/framerusercontent.com/images/8aGg1mfHwnBJJYiECyUmneAyRVA.png"));
-    expect([200, 404]).toContain(icon.status);
-    if (icon.status === 200) expect(icon.headers.get("content-type")).toMatch(/image|octet/);
+    const widget = await fetchFn(new Request("http://t/widget.js"));
+    expect(widget.headers.get("content-type")).toContain("javascript");
+    expect(await widget.text()).toContain("Ask Smallest");
 
     const chat = await fetchFn(
       new Request("http://t/chat", {

@@ -2,6 +2,7 @@ export { attachSmallest, captureIntentTool, docsLookupTool, recommendSettingsToo
 export { buildSmallest } from "./build.ts";
 export { smallestAgentCard, smallestConnectPrompt, smallestCopyPrompt } from "./card.ts";
 export { crawlSmallest } from "./crawl.ts";
+export { smallestAgentConfig, smallestPackDir } from "./config.ts";
 export { smallestHost } from "./host.ts";
 export { enoughIntent, inferIntent, isGreeting, isInfoQuestion, lockedOwnStack, mentionedIntegration, mergeIntent, nextQuestion, stillExploring } from "./intent.ts";
 export { pageFromMarkdown, parseLlmsTxt, rankDocs } from "./markdown.ts";

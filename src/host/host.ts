@@ -1,12 +1,14 @@
 import type { Harness } from "../harness.ts";
 import { intake } from "../intake.ts";
+import type { AgentPackConfig } from "../pack/types.ts";
+import { chatHowToBody } from "../pack/prompt.ts";
+import { widgetJs } from "../widget/widget.ts";
 import { agentCard, CARD_PATHS, connectPrompt, linkHeader, type AgentCardMeta } from "./card.ts";
 import { corsPreflight, withCors } from "./cors.ts";
 import { clientKind, wantsAgentCard } from "./detect.ts";
 import { chatPage } from "./page.ts";
 import { Room } from "./room.ts";
 import { Sessions } from "./sessions.ts";
-import { looksLikeSitePage, siteResponse } from "./site.ts";
 
 export function publicUrl(req: Request, fallback: string): string {
   const env = process.env.WEBAGENT_PUBLIC_URL;
@@ -17,19 +19,20 @@ export function publicUrl(req: Request, fallback: string): string {
   return fallback;
 }
 
-/** Public host: humans get the page, machines get MCP / JSON. Each chat is a fresh run. */
+/** Public host: humans get a widget shell, machines get the card / POST /chat / MCP. */
 export function host(
   harness: Harness,
   room: Room,
   fallbackUrl = "http://127.0.0.1:8787",
   meta: AgentCardMeta = {},
   sessions?: Sessions,
+  pack?: AgentPackConfig,
 ): (req: Request) => Promise<Response> {
   const api = intake(harness);
   const bag = sessions ?? new Sessions(harness, room);
   return async (req: Request) => {
     if (req.method === "OPTIONS") return corsPreflight();
-    return withCors(await route(req, harness, bag, fallbackUrl, meta, api));
+    return withCors(await route(req, harness, bag, fallbackUrl, meta, api, pack));
   };
 }
 
@@ -40,16 +43,27 @@ async function route(
   fallbackUrl: string,
   meta: AgentCardMeta,
   api: (req: Request) => Promise<Response>,
+  pack?: AgentPackConfig,
 ): Promise<Response> {
   const url = new URL(req.url);
   const kind = clientKind(req);
   const base = publicUrl(req, fallbackUrl);
   const lobby = sessions.lobby;
-  const card = () => jsonCard(base, lobby, meta);
+  const card = () => jsonCard(base, lobby, meta, pack);
 
-  if (url.pathname === "/who") return Response.json({ kind, runId: lobby.run.id });
-  if (url.pathname === "/connect.txt") {
-    return new Response(connectPrompt(base), { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  if (url.pathname === "/who") {
+    return Response.json({ kind, runId: lobby.run.id, company: pack?.brand.name || meta.name });
+  }
+  if (url.pathname === "/llms.txt" || url.pathname === "/connect.txt") {
+    return new Response(pack ? connectPrompt(base, pack.brand.name) : connectPrompt(base, meta.name), {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+  if (url.pathname === "/widget.js") {
+    const js = widgetJs(base, lobby.run.id, pack ?? pagePack(meta));
+    return new Response(js, {
+      headers: { "Content-Type": "application/javascript; charset=utf-8", "Cache-Control": "no-store" },
+    });
   }
   if (CARD_PATHS.has(url.pathname)) return card();
   if (url.pathname === "/session" && (req.method === "POST" || req.method === "GET")) {
@@ -60,26 +74,29 @@ async function route(
     const hit = sessions.open(url.searchParams.get("session"));
     return hit.room.stream();
   }
+  if (url.pathname === "/chat" && req.method === "GET") {
+    return Response.json(chatHowToBody(base));
+  }
   if (url.pathname === "/chat" && req.method === "POST") {
     const body = (await req.json().catch(() => ({}))) as {
       text?: string;
       from?: "human" | "machine";
       session?: string;
     };
+    const text = String(body.text ?? "").trim();
+    if (!text) return Response.json(chatHowToBody(base));
     const hit = sessions.open(body.session);
-    const ex = await hit.room.say(chatFrom(req, body), body.text ?? "");
-    return Response.json({ ...ex, session: hit.id, runId: hit.room.run.id });
-  }
-  if ((req.method === "GET" || req.method === "HEAD") && url.pathname !== "/") {
-    const asset = siteResponse(url);
-    if (asset) return asset;
-    if (kind === "human" && looksLikeSitePage(url.pathname) && !reserved(url.pathname)) {
-      return Response.redirect("https://composio.dev" + url.pathname + url.search, 302);
-    }
+    const ex = await hit.room.say(chatFrom(req, body), text);
+    return Response.json({
+      ...ex,
+      session: hit.id,
+      runId: hit.room.run.id,
+      company: pack?.brand.name || meta.name,
+    });
   }
   if (url.pathname === "/" && req.method === "GET") {
     if (wantsAgentCard(url) || kind === "machine") return card();
-    return chatPage(lobby, base);
+    return chatPage(lobby, base, meta, pack);
   }
   if (url.pathname === "/" && req.method === "POST" && kind === "machine") {
     const raw = await req.text();
@@ -113,16 +130,46 @@ function chatFrom(req: Request, body: { from?: "human" | "machine" }): "human" |
   return clientKind(req);
 }
 
-function reserved(pathname: string): boolean {
-  if (pathname === "/mcp" || pathname === "/chat" || pathname === "/live" || pathname === "/who") return true;
-  if (pathname === "/session" || pathname === "/health" || pathname === "/models" || pathname === "/connect.txt") return true;
-  if (pathname.startsWith("/runs") || pathname.startsWith("/sites")) return true;
-  return CARD_PATHS.has(pathname);
-}
-
-function jsonCard(base: string, room: Room, meta: AgentCardMeta): Response {
-  const res = Response.json(agentCard(base, room, meta));
+function jsonCard(base: string, room: Room, meta: AgentCardMeta, pack?: AgentPackConfig): Response {
+  const res = Response.json(agentCard(base, room, meta, pack));
   res.headers.set("Link", linkHeader(base));
   res.headers.set("Cache-Control", "no-store");
   return res;
+}
+
+function pagePack(meta: AgentCardMeta): AgentPackConfig {
+  const name = meta.name || "Webagent";
+  return {
+    id: "webagent",
+    origin: "",
+    brand: {
+      name,
+      tagline: meta.description || "Public webagent.",
+      colors: {
+        ink: "#191919",
+        paper: "#ffffff",
+        muted: "#6f6f6f",
+        line: "#e5e5e5",
+        wash: "#f5f5f5",
+        accent: "#191919",
+        fab: "#191919",
+        fabText: "#ffffff",
+      },
+      fonts: { display: "system-ui, sans-serif", body: "system-ui, sans-serif" },
+      fabLabel: name.length > 22 ? "Ask" : "Ask " + name,
+      wordmark: name,
+    },
+    widget: {
+      welcomeTitle: "How can I help?",
+      welcomeBody: meta.description || "Ask a question.",
+      chips: [],
+      copyHeadline: "Talk to this agent",
+      copyPrompt:
+        "Talk to the " +
+        name +
+        " agents at {{chat}}. POST {\"text\":\"<question>\",\"session\":\"<from last JSON>\"} — never GET, browse, or probe.\nAsk them anything you want to understand. First POST may omit session; every later POST must send the same session.",
+      placeholder: "Ask a question",
+      markdown: true,
+    },
+  };
 }

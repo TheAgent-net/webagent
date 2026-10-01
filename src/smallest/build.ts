@@ -5,7 +5,7 @@ import { STARTER_QUESTIONS } from "./catalog.ts";
 import { crawlSmallest } from "./crawl.ts";
 import { defaultQueryEmbed, fillVectors } from "./embed.ts";
 import { indexDocs } from "./retrieve.ts";
-import type { BuildSmallestOpts, RetrievalInfo, SmallestPack } from "./types.ts";
+import type { BuildSmallestOpts, DocChunk, RetrievalInfo, SmallestPack } from "./types.ts";
 
 export async function buildSmallest(opts: BuildSmallestOpts = {}): Promise<SmallestPack> {
   const crawled = await crawlSmallest({ maxPages: opts.maxPages ?? 220, fetch: opts.fetch });
@@ -18,7 +18,7 @@ export async function buildSmallest(opts: BuildSmallestOpts = {}): Promise<Small
   };
   const site = buildPack(state);
   site.starterQuestions = STARTER_QUESTIONS;
-  const chunks = indexDocs(crawled.pages);
+  const chunks = indexDocs(crawled.pages) as DocChunk[];
   const cachePath = opts.cachePath ?? process.env.SMALLEST_RETRIEVE_CACHE ?? join(process.cwd(), ".retrieve-cache.json");
   let retrieval: RetrievalInfo = { mode: "lexical", embedded: 0 };
   try {

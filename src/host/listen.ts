@@ -1,5 +1,6 @@
 import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
+import type { AgentPackConfig } from "../pack/types.ts";
 import type { AgentCardMeta } from "./card.ts";
 import { host } from "./host.ts";
 import { tapFetch, type Hop } from "./hop.ts";
@@ -17,6 +18,7 @@ export interface ListenOpts {
   run?: Run;
   onHop?: (hop: Hop) => void;
   card?: AgentCardMeta;
+  pack?: AgentPackConfig;
 }
 
 export interface Hosted {
@@ -44,8 +46,8 @@ export function listen(harness: Harness, opts: ListenOpts = {}): Hosted {
     hostname,
     tls,
     fetch: opts.onHop
-      ? tapFetch(host(harness, room, printed, opts.card, sessions), opts.onHop)
-      : host(harness, room, printed, opts.card, sessions),
+      ? tapFetch(host(harness, room, printed, opts.card, sessions, opts.pack), opts.onHop)
+      : host(harness, room, printed, opts.card, sessions, opts.pack),
   });
   const bound = opts.publicUrl?.replace(/\/+$/, "") ||
     process.env.WEBAGENT_PUBLIC_URL?.replace(/\/+$/, "") ||

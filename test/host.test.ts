@@ -44,12 +44,12 @@ describe("host route + shared room", () => {
     expect(page.headers.get("content-type")).toContain("text/html");
     const html = await page.text();
     expect(html).toContain(room.run.id);
-    expect(html).toContain("/mcp");
-    expect(html).toContain("Composio Agent");
-    expect(html).toContain("Let your agent talk to");
-    expect(html).toContain("Everything your agents");
+    expect(html).toContain("/chat");
+    expect(html).toContain("Webagent");
     expect(html).toContain("wa-fab");
-    expect(html).toContain("GET STARTED");
+    expect(html).toContain("/widget.js");
+    expect(html).not.toContain("composio.dev");
+    expect(html).not.toContain("GET STARTED");
 
     const card = await fetchFn(new Request("http://t/", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
     const body = (await card.json()) as {
@@ -63,28 +63,27 @@ describe("host route + shared room", () => {
     expect(body.type).toBe("webagent");
     expect(body.mcp).toBe("https://agent.example/mcp");
     expect(body.runId).toBe(room.run.id);
-    expect(body.name).toContain("Composio");
-    expect(body.howToConnect).toContain("initialize");
-    expect(body.skills.some((s) => s.id === "recommend-app")).toBe(true);
+    expect(body.name).toBe("Webagent");
+    expect(body.howToConnect).toMatch(/POST/);
+    expect(body.howToConnect).toMatch(/session/i);
+    expect(body.skills.some((s) => s.id === "docs")).toBe(true);
     expect(card.headers.get("access-control-allow-origin")).toBe("*");
     expect(card.headers.get("link")).toContain("agent-card.json");
   });
 
-  test("serves captured composio.dev CSS and logo assets", async () => {
+  test("serves branded widget.js and GET /chat how-to", async () => {
     const h = new Harness();
     const room = new Room(h);
     const fetchFn = host(h, room, "https://agent.example");
-    const css = await fetchFn(
-      new Request("http://t/_next/static/css/5f5a377c22b94264.css?dpl=dpl_GUC9Y3CheK2Vra5EdsZWUD2m3To2"),
-    );
-    expect(css.ok).toBe(true);
-    expect(css.headers.get("content-type")).toContain("css");
-    const logo = await fetchFn(new Request("http://t/_ext/logos.composio.dev/api/gmail"));
-    expect(logo.ok).toBe(true);
-    const img = await fetchFn(
-      new Request("http://t/_next/image?url=%2Flogos%2Fcomposio-full-white.svg&w=128&q=75"),
-    );
-    expect(img.ok).toBe(true);
+    const js = await fetchFn(new Request("http://t/widget.js"));
+    expect(js.ok).toBe(true);
+    expect(js.headers.get("content-type")).toContain("javascript");
+    expect(await js.text()).toContain("/chat");
+    const how = await fetchFn(new Request("http://t/chat", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
+    const body = (await how.json()) as { ok: boolean; how: string; hint: string };
+    expect(body.ok).toBe(true);
+    expect(body.how).toMatch(/POST JSON/);
+    expect(body.hint).toMatch(/Do not GET/i);
   });
 
   test("well-known card and OPTIONS preflight", async () => {

@@ -1,23 +1,25 @@
 #!/usr/bin/env bun
+import { existsSync } from "node:fs";
 import { networkInterfaces } from "node:os";
+import { join } from "node:path";
 import { defaultHarness } from "./harness.ts";
 import { listen } from "./host/listen.ts";
 
 const args = process.argv.slice(2);
 const h = defaultHarness();
-/** Smallest webagent always uses GPT-6 Astra. Ignore shared OPENAI_MODEL (Composio may set gpt-4o-mini). */
-const SMALLEST_MODEL = "gpt-6-astra";
 
 if (!args[0] || args[0] === "help") {
   console.error("usage:");
-  console.error("  webagent models              list available models");
-  console.error("  webagent ask <text>          one echo run");
-  console.error("  webagent serve [addr]        public HTTPS host (default :8787)");
-  console.error("  webagent ingest <url>        crawl a site, build flows, attach a run");
-  console.error("  webagent company <src> [addr]  website or GitHub → crawl, forms, live webagent");
-  console.error("  webagent smallest [addr]     crawl smallest.ai + docs → settings advisor");
-  console.error("  webagent pair <url>          two agents: site seller + buyer (Cursor SDK)");
-  console.error("  webagent apps [addr]         Composio Graph RAG host (local corpus)");
+  console.error("  webagent models                 list available models");
+  console.error("  webagent ask <text>             one echo run");
+  console.error("  webagent from-url <url>         crawl a site → write a pack");
+  console.error("  webagent serve --pack <dir>     host a pack (widget + POST /chat)");
+  console.error("  webagent serve [addr]           generic host, no pack");
+  console.error("  webagent demo <name>            pack host + demo site preview");
+  console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
+  console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
+  console.error("  webagent pair <url>             two agents: site seller + buyer (Cursor SDK)");
+  console.error("  webagent apps [addr]            Composio Graph RAG host (local corpus)");
   process.exit(args[0] ? 0 : 2);
 }
 
@@ -105,48 +107,44 @@ switch (args[0]) {
     await new Promise(() => {});
     break;
   }
-  case "smallest": {
-    const addr = args[1] || ":8787";
-    const port = Number(addr.replace(/^.*:/, "")) || 8787;
-    const { buildSmallest, attachSmallest, smallestHost } = await import("./smallest/index.ts");
-    const { openaiModel } = await import("./models.ts");
-    const { Room } = await import("./host/room.ts");
-    const { Sessions } = await import("./host/sessions.ts");
-
-    console.error("crawling smallest.ai + docs.smallest.ai ...");
-    const pack = await buildSmallest({ maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220 });
-    console.error(`  ${pack.pages.length} pages (${pack.marketing.length} marketing, ${pack.docs.length} docs)`);
-    console.error(`  retrieve ${pack.retrieval?.mode ?? "lexical"} ${pack.retrieval?.embedded ?? 0} vectors${pack.retrieval?.model ? " (" + pack.retrieval.model + ")" : ""}`);
-
-    const hasKey = !!process.env.OPENAI_API_KEY;
-    if (hasKey) {
-      h.addModel(
-        openaiModel({
-          id: "openai",
-          baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
-          model: SMALLEST_MODEL,
-          apiKeyEnv: "OPENAI_API_KEY",
-        }),
-      );
+  case "from-url": {
+    const url = args[1];
+    if (!url) {
+      console.error("usage: webagent from-url <url> [--out packs/_generated/<host>]");
+      process.exit(2);
     }
-    const modelId = hasKey ? "openai" : "echo";
-    const modelName = hasKey ? SMALLEST_MODEL : "echo";
-    const run = attachSmallest(h, pack, { model: modelId });
-    const room = new Room(h, { run, model: modelId });
-    const sessions = new Sessions(h, room);
-    const publicUrlStr = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + port;
-    const server = Bun.serve({
-      port,
-      hostname: "0.0.0.0",
-      idleTimeout: 120,
-      fetch: smallestHost(h, room, pack, publicUrlStr, sessions),
-    });
-    console.error(`smallest agent ${publicUrlStr}`);
-    console.error(`  model   ${modelName}${hasKey ? "" : " — OPENAI_API_KEY missing, replies echo"}`);
-    console.error(`  human   ${publicUrlStr}/`);
-    console.error(`  machine ${publicUrlStr}/agent.json  run ${room.run.id}`);
-    console.error(`  chat    POST ${publicUrlStr}/chat`);
-    console.error(`  local   http://127.0.0.1:${server.port}/`);
+    const out = flag(args, "--out");
+    const { fromUrl } = await import("./pack/from-url.ts");
+    console.error("crawling " + url + " ...");
+    const got = await fromUrl(url, { out, maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 80 });
+    console.error("wrote pack " + got.dir);
+    console.error("  " + got.config.brand.name + " — " + got.config.brand.tagline);
+    console.error("serve with: webagent serve --pack " + got.dir);
+    break;
+  }
+  case "demo": {
+    const name = args[1];
+    if (!name) {
+      console.error("usage: webagent demo <name> [addr]");
+      process.exit(2);
+    }
+    const addr = positional(args.slice(2)) || ":8787";
+    const sitePort = Number(flag(args, "--site-port") || 0) || Number(addr.replace(/^.*:/, "")) + 1;
+    await startPack(h, packDirFor(name), addr);
+    const { existsSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const site = join(process.cwd(), "demo", name, "site");
+    if (existsSync(join(site, "index.html"))) {
+      const { serveDemoSite } = await import("./pack/demo-site.ts");
+      const origin = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + (Number(addr.replace(/^.*:/, "")) || 8787);
+      serveDemoSite(site, sitePort, origin);
+      console.error(`  demo    http://127.0.0.1:${sitePort}/  (embeds ${origin}/widget.js)`);
+    }
+    await new Promise(() => {});
+    break;
+  }
+  case "smallest": {
+    await startPack(h, "packs/smallest", positional(args.slice(1)) || ":8789");
     await new Promise(() => {});
     break;
   }
@@ -212,7 +210,13 @@ switch (args[0]) {
     break;
   }
   case "serve": {
-    const addr = args[1] || ":8787";
+    const pack = flag(args, "--pack");
+    const addr = positional(args.slice(1)) || ":8787";
+    if (pack) {
+      await startPack(h, pack, addr);
+      await new Promise(() => {});
+      break;
+    }
     const port = Number(addr.replace(/^.*:/, "")) || 8787;
     const hosted = listen(h, { port });
     console.error(`agent ${hosted.url}`);
@@ -224,6 +228,51 @@ switch (args[0]) {
   default:
     console.error("unknown command");
     process.exit(2);
+}
+
+async function startPack(h: ReturnType<typeof defaultHarness>, dir: string, addr: string): Promise<void> {
+  const port = Number(addr.replace(/^.*:/, "")) || 8787;
+  const { servePack } = await import("./pack/serve.ts");
+  console.error("opening pack " + dir + " ...");
+  const { hosted, runtime, modelName } = await servePack(dir, {
+    harness: h,
+    port,
+    publicUrl: process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + port,
+    maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220,
+  });
+  console.error(`agent ${hosted.url}`);
+  console.error(`  pack    ${runtime.config.id}  ${runtime.pages.length} pages  ${runtime.chunks.length} chunks`);
+  console.error(`  model   ${modelName}${modelName === "echo" ? " — OPENAI_API_KEY missing, replies echo" : ""}`);
+  console.error(`  human   ${hosted.url}/`);
+  console.error(`  widget  ${hosted.url}/widget.js`);
+  console.error(`  machine ${hosted.url}/agent.json  run ${hosted.room.run.id}`);
+  console.error(`  chat    POST ${hosted.url}/chat`);
+}
+
+function packDirFor(name: string): string {
+  const demo = join(process.cwd(), "demo", name, "pack");
+  if (existsSync(demo)) return demo;
+  return join(process.cwd(), "packs", name);
+}
+
+function flag(argv: string[], name: string): string | undefined {
+  const i = argv.indexOf(name);
+  if (i >= 0 && argv[i + 1] && !argv[i + 1]!.startsWith("-")) return argv[i + 1];
+  const pref = name + "=";
+  const hit = argv.find((a) => a.startsWith(pref));
+  return hit ? hit.slice(pref.length) : undefined;
+}
+
+function positional(argv: string[]): string | undefined {
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]!;
+    if (a.startsWith("--")) {
+      if (!a.includes("=") && argv[i + 1] && !argv[i + 1]!.startsWith("-")) i++;
+      continue;
+    }
+    return a;
+  }
+  return undefined;
 }
 
 function lanIp(): string {
