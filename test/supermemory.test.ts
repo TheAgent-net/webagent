@@ -99,6 +99,7 @@ describe("supermemory pack", () => {
     expect(config.brand.name).toBe("supermemory");
     expect(config.brand.fabLabel).toBe("Ask supermemory");
     expect(config.model?.id).toBe("gpt-5.6-luna");
+    expect(config.model?.reasoningEffort).toBe("medium");
     expect(config.host?.port).toBe(8791);
     expect(config.host?.publicUrl).toContain("supermemory.agentnet.it.com");
     expect(config.retrieve?.preferTerms).toContain("memory");

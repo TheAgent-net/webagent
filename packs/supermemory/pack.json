@@ -45,7 +45,8 @@
   },
   "model": {
     "id": "gpt-5.6-luna",
-    "apiBase": "https://api.openai.com/v1"
+    "apiBase": "https://api.openai.com/v1",
+    "reasoningEffort": "medium"
   },
   "host": {
     "port": 8791,
