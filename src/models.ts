@@ -90,7 +90,22 @@ function lastUser(msgs: readonly Message[]): string {
   return "";
 }
 
-export function openaiModel(opts: { id: string; baseUrl: string; model: string; apiKeyEnv: string }): Model {
+/** Luna reasons by default. Other GPT-5 models stay at none unless pack/env sets it. */
+export function reasoningEffortFor(model: string, explicit?: string): string | undefined {
+  const set = (explicit || process.env.OPENAI_REASONING_EFFORT || "").trim();
+  if (set) return set;
+  if (/luna/i.test(model)) return "medium";
+  if (/gpt-5/i.test(model)) return "none";
+  return undefined;
+}
+
+export function openaiModel(opts: {
+  id: string;
+  baseUrl: string;
+  model: string;
+  apiKeyEnv: string;
+  reasoningEffort?: string;
+}): Model {
   const key = process.env[opts.apiKeyEnv] ?? "";
   return {
     id: opts.id,
@@ -108,7 +123,8 @@ export function openaiModel(opts: { id: string; baseUrl: string; model: string; 
       }
       const body: Record<string, unknown> = { model: opts.model, messages: toOpenAI(req.messages) };
       if (/gpt-5/i.test(opts.model)) {
-        body.reasoning_effort = process.env.OPENAI_REASONING_EFFORT || "none";
+        const effort = reasoningEffortFor(opts.model, opts.reasoningEffort);
+        if (effort) body.reasoning_effort = effort;
       }
       if (req.tools.length) {
         body.tools = req.tools.map((t) => ({

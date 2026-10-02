@@ -43,6 +43,7 @@ export interface AgentSales {
 export interface AgentModel {
   id: string;
   apiBase?: string;
+  reasoningEffort?: string;
 }
 
 export interface AgentHostCfg {
