@@ -251,6 +251,8 @@ describe("company host", () => {
     expect(body).toContain("Northwind Labs");
     expect(body).toContain("Go talk to the Northwind Labs agent");
     expect(body).toContain("Ask Northwind Labs");
+    expect(body).toContain("getElementById(\"wa-hint\")");
+    expect(body).toContain("HINTS");
 
     const cardRes = await fetchFn(new Request("http://t/", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
     const card = (await cardRes.json()) as { name: string; type: string };

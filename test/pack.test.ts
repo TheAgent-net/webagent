@@ -6,6 +6,7 @@ import { Sessions } from "../src/host/sessions.ts";
 import { extractBrand, loadPackConfig, renderCopyPrompt } from "../src/pack/index.ts";
 import { DEFAULT_POLICY, indexPages, searchHits, searchHitsHybrid } from "../src/retrieve/index.ts";
 import { hashedEmbed } from "../src/retrieve/embed.ts";
+import { reasoningEffortFor } from "../src/models.ts";
 import { packWidget } from "../src/widget/widget.ts";
 import type { PageShot } from "../src/site/types.ts";
 
@@ -118,6 +119,15 @@ describe("widget from brand", () => {
     expect(html).toContain("getElementById(\"wa-hint\")");
     expect(html).toContain("HINTS");
     expect(html).toContain("width: fit-content");
+  });
+});
+
+describe("luna reasoning", () => {
+  test("Luna defaults to medium; other GPT-5 stay none unless set", () => {
+    expect(reasoningEffortFor("gpt-5.6-luna")).toBe("medium");
+    expect(reasoningEffortFor("gpt-5.6-luna", "high")).toBe("high");
+    expect(reasoningEffortFor("gpt-5.4")).toBe("none");
+    expect(reasoningEffortFor("gpt-6-astra")).toBeUndefined();
   });
 });
 

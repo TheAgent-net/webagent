@@ -24,6 +24,7 @@ export async function servePack(dir: string, opts: ServePackOpts = {}): Promise<
         baseUrl: runtime.config.model?.apiBase || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
         model: pin,
         apiKeyEnv: "OPENAI_API_KEY",
+        reasoningEffort: runtime.config.model?.reasoningEffort,
       }),
     );
   }

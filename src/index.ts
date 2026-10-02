@@ -4,7 +4,7 @@ export { Harness, defaultHarness } from "./harness.ts";
 export { intake } from "./intake.ts";
 export { host, listen, clientKind, Room } from "./host/index.ts";
 export { mcp, MCP_PROTOCOL } from "./mcp.ts";
-export { echoModel, openaiModel, type Model, type ModelInfo } from "./models.ts";
+export { echoModel, openaiModel, reasoningEffortFor, type Model, type ModelInfo } from "./models.ts";
 export { cursorModel, applyReply, type CursorCall, type CursorOpts } from "./cursor.ts";
 export { Run, type CreateOpts, type Explain } from "./run.ts";
 export { Scheduler } from "./scheduler.ts";
