@@ -117,6 +117,7 @@ describe("widget from brand", () => {
     expect(html).toContain("innerHTML = md");
     expect(html).toContain("getElementById(\"wa-hint\")");
     expect(html).toContain("HINTS");
+    expect(html).toContain("width: fit-content");
   });
 });
 
