@@ -115,6 +115,8 @@ describe("widget from brand", () => {
     expect(html).toContain("Ask Smallest");
     expect(html).toContain("Talk to the Smallest agents");
     expect(html).toContain("innerHTML = md");
+    expect(html).toContain("getElementById(\"wa-hint\")");
+    expect(html).toContain("HINTS");
   });
 });
 
