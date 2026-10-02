@@ -357,10 +357,12 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     transition: background .16s ease, transform .16s ease, border-color .16s ease;
   }
   .wa-chip:hover { background: var(--wa-wash); transform: translateY(-1px); border-color: color-mix(in srgb, var(--wa-ink) 14%, var(--wa-line)); }
-  #wa-log { flex: 1; overflow: auto; padding: 4px 28px 18px; background: transparent; min-height: 0; }
+  #wa-log { flex: 1; overflow: auto; padding: 8px 20px 16px; background: transparent; min-height: 0; }
   .wa-msg {
-    margin: 12px 0; padding: 12px 16px; border-radius: 18px;
-    font-size: 15px; line-height: 1.55; max-width: 86%;
+    margin: 10px 0; padding: 10px 14px; border-radius: 18px;
+    font-size: 15px; line-height: 1.5;
+    width: fit-content; max-width: min(86%, 36em);
+    overflow-wrap: anywhere;
   }
   .wa-msg.in { animation: wa-in .34s cubic-bezier(.16,1,.3,1); }
   @keyframes wa-in {
