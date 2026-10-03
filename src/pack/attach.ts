@@ -3,26 +3,23 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
-import { attachPack } from "../site/attach.ts";
 import { docsLookupTool } from "./docs.ts";
 import type { PackRuntime } from "./types.ts";
 
-export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: string }): Run {
-  const run = attachPack(h, runtime.site, { model: opts?.model, instruction: runtime.instruction });
+/**
+ * Bind a pack agent. The run gets one system prompt in a fixed order:
+ * pack instruction, reply shape, visual rule. Tools: docs_lookup plus the pack's own tools.
+ * Pass `instruction` to try a different pack instruction (prompt tuning).
+ */
+export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: string; instruction?: string }): Run {
   const docs = docsLookupTool(runtime);
   h.addTool(docs);
-  run.useTool(docs);
-  run.inject({
-    vars: [
-      "You are the " + runtime.config.brand.name + " assistant.",
-      "Docs at " + (runtime.config.docs?.origin || runtime.config.origin) + ".",
-      "Retrieval: " + (runtime.retrieval?.mode ?? "lexical") + ", " + runtime.chunks.length + " chunks.",
-      "Call docs_lookup for a quote or URL.",
-    ].join("\n"),
-  });
-  run.inject({ vars: REPLY_SHAPE });
-  if (runtime.config.visuals?.length) run.inject({ vars: VISUAL_RULE });
-  return run;
+  return h.create({ model: opts?.model, instruction: composePrompt(runtime, opts?.instruction), tools: [docs] });
+}
+
+/** The full system prompt for a pack run. */
+export function composePrompt(runtime: PackRuntime, instruction = runtime.instruction): string {
+  return [instruction.trim(), REPLY_SHAPE, runtime.config.visuals?.length ? VISUAL_RULE : ""].filter(Boolean).join("\n\n");
 }
 
 export async function attachPackTools(h: Harness, run: Run, runtime: PackRuntime): Promise<void> {
