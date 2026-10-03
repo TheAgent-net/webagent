@@ -38,6 +38,7 @@
     "page": "/",
     "selector": "#content > div > figure",
     "image": "visuals/the-field-a-blue.jpg",
+    "html": "visuals/the-field-a-blue.html",
     "width": 640,
     "height": 267
   },
@@ -52,6 +53,7 @@
     "page": "/",
     "selector": "#memo > figure",
     "image": "visuals/figure-1-raw-data.jpg",
+    "html": "visuals/figure-1-raw-data.html",
     "width": 640,
     "height": 414
   },
@@ -67,6 +69,7 @@
     "page": "/",
     "selector": "#production > div > div:nth-of-type(5) > div:nth-of-type(2) > figure",
     "image": "visuals/per-question-token-cost.jpg",
+    "html": "visuals/per-question-token-cost.html",
     "width": 598,
     "height": 372
   },
@@ -82,6 +85,7 @@
     "page": "/",
     "selector": "#what",
     "image": "visuals/what-we-do.jpg",
+    "html": "visuals/what-we-do.html",
     "width": 640,
     "height": 646
   },
@@ -97,6 +101,7 @@
     "page": "/",
     "selector": "#production",
     "image": "visuals/in-production.jpg",
+    "html": "visuals/in-production.html",
     "width": 640,
     "height": 1477
   },
@@ -118,6 +123,7 @@
     "page": "/",
     "selector": "#security",
     "image": "visuals/supermemory-runs-everywhere-even.jpg",
+    "html": "visuals/supermemory-runs-everywhere-even.html",
     "width": 640,
     "height": 842
   },
@@ -133,6 +139,7 @@
     "page": "/",
     "selector": "#writing",
     "image": "visuals/writing.jpg",
+    "html": "visuals/writing.html",
     "width": 640,
     "height": 270
   },
@@ -149,6 +156,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#memory > figure",
     "image": "visuals/one-message-becomes-four.jpg",
+    "html": "visuals/one-message-becomes-four.html",
     "width": 640,
     "height": 263
   },
@@ -166,6 +174,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#graph > figure",
     "image": "visuals/three-memories-and-the.jpg",
+    "html": "visuals/three-memories-and-the.html",
     "width": 640,
     "height": 167
   },
@@ -182,6 +191,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#memory > table",
     "image": "visuals/what-a-memory-is.jpg",
+    "html": "visuals/what-a-memory-is.html",
     "width": 640,
     "height": 217
   },
@@ -199,6 +209,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#graph > table:nth-of-type(1)",
     "image": "visuals/infers-updates-forgets.jpg",
+    "html": "visuals/infers-updates-forgets.html",
     "width": 640,
     "height": 154
   },
@@ -214,6 +225,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#profiles",
     "image": "visuals/profiles.jpg",
+    "html": "visuals/profiles.html",
     "width": 640,
     "height": 368
   },
@@ -229,6 +241,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#recall",
     "image": "visuals/recall.jpg",
+    "html": "visuals/recall.html",
     "width": 640,
     "height": 511
   },
@@ -245,6 +258,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#sources",
     "image": "visuals/what-feeds-it.jpg",
+    "html": "visuals/what-feeds-it.html",
     "width": 640,
     "height": 775
   },
@@ -261,6 +275,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#everywhere",
     "image": "visuals/where-it-runs.jpg",
+    "html": "visuals/where-it-runs.html",
     "width": 640,
     "height": 970
   },
@@ -277,6 +292,7 @@
     "page": "https://supermemory.ai/product",
     "selector": "#hosting",
     "image": "visuals/where-it-lives.jpg",
+    "html": "visuals/where-it-lives.html",
     "width": 640,
     "height": 957
   },
@@ -291,6 +307,7 @@
     "page": "https://supermemory.ai/pricing/",
     "selector": "#content > div > figure",
     "image": "visuals/the-meadow-with-what.jpg",
+    "html": "visuals/the-meadow-with-what.html",
     "width": 640,
     "height": 400
   },
@@ -306,6 +323,7 @@
     "page": "https://supermemory.ai/pricing/",
     "selector": "#plans",
     "image": "visuals/plans.jpg",
+    "html": "visuals/plans.html",
     "width": 640,
     "height": 932
   },
@@ -325,6 +343,7 @@
     "page": "https://supermemory.ai/pricing/",
     "selector": "#enterprise",
     "image": "visuals/custom-deployments-with-dedicated.jpg",
+    "html": "visuals/custom-deployments-with-dedicated.html",
     "width": 640,
     "height": 744
   },
@@ -341,6 +360,7 @@
     "page": "https://supermemory.ai/pricing/",
     "selector": "#rates",
     "image": "visuals/rate-card.jpg",
+    "html": "visuals/rate-card.html",
     "width": 640,
     "height": 689
   },
@@ -356,6 +376,7 @@
     "page": "https://supermemory.ai/pricing/",
     "selector": "#questions",
     "image": "visuals/questions.jpg",
+    "html": "visuals/questions.html",
     "width": 640,
     "height": 1356
   },
@@ -371,6 +392,7 @@
     "page": "https://supermemory.ai/research/",
     "selector": "#longmemeval > div:nth-of-type(2) > table",
     "image": "visuals/longmemeval-s-recall-20.jpg",
+    "html": "visuals/longmemeval-s-recall-20.html",
     "width": 638,
     "height": 395
   },
@@ -391,6 +413,7 @@
     "page": "https://supermemory.ai/research/",
     "selector": "#benchmarks",
     "image": "visuals/state-of-the-art.jpg",
+    "html": "visuals/state-of-the-art.html",
     "width": 640,
     "height": 342
   },
@@ -406,6 +429,7 @@
     "page": "https://supermemory.ai/research/",
     "selector": "#longmemeval",
     "image": "visuals/longmemeval-s.jpg",
+    "html": "visuals/longmemeval-s.html",
     "width": 640,
     "height": 628
   },
@@ -422,6 +446,7 @@
     "page": "https://supermemory.ai/research/",
     "selector": "#systems",
     "image": "visuals/memory-as-a-filesystem.jpg",
+    "html": "visuals/memory-as-a-filesystem.html",
     "width": 640,
     "height": 251
   },
@@ -440,6 +465,7 @@
     "page": "https://supermemory.ai/changelog",
     "selector": "#content > div > div:nth-of-type(2) > section",
     "image": "visuals/company-brain-is-open.jpg",
+    "html": "visuals/company-brain-is-open.html",
     "width": 640,
     "height": 7455
   },
@@ -636,6 +662,7 @@
     "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
     "selector": "#content > article > div > table:nth-of-type(1)",
     "image": "visuals/i-reverse-engineered-instinct.jpg",
+    "html": "visuals/i-reverse-engineered-instinct.html",
     "width": 640,
     "height": 374
   },
@@ -650,6 +677,7 @@
     "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
     "selector": "#content > article > div > table:nth-of-type(2)",
     "image": "visuals/i-reverse-engineered-instinct-2.jpg",
+    "html": "visuals/i-reverse-engineered-instinct-2.html",
     "width": 640,
     "height": 458
   },
@@ -664,6 +692,7 @@
     "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
     "selector": "#content > article > div > table:nth-of-type(3)",
     "image": "visuals/i-reverse-engineered-instinct-3.jpg",
+    "html": "visuals/i-reverse-engineered-instinct-3.html",
     "width": 640,
     "height": 206
   },
@@ -678,6 +707,7 @@
     "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
     "selector": "#content > article > div > table:nth-of-type(4)",
     "image": "visuals/i-reverse-engineered-instinct-4.jpg",
+    "html": "visuals/i-reverse-engineered-instinct-4.html",
     "width": 640,
     "height": 290
   },
@@ -692,6 +722,7 @@
     "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
     "selector": "#content > article > div > table:nth-of-type(5)",
     "image": "visuals/i-reverse-engineered-instinct-5.jpg",
+    "html": "visuals/i-reverse-engineered-instinct-5.html",
     "width": 640,
     "height": 689
   },
@@ -706,6 +737,7 @@
     "page": "https://supermemory.ai/docs/quickstart",
     "selector": "#content > div:nth-of-type(11) > div > div > div > table",
     "image": "visuals/quickstart-c-user-profile.jpg",
+    "html": "visuals/quickstart-c-user-profile.html",
     "width": 472,
     "height": 160
   },
@@ -748,6 +780,7 @@
     "page": "https://supermemory.ai/docs/concepts/how-it-works",
     "selector": "#content > div:nth-of-type(4) > div > div > div > table",
     "image": "visuals/how-supermemory-works-what.jpg",
+    "html": "visuals/how-supermemory-works-what.html",
     "width": 472,
     "height": 271
   },
@@ -762,6 +795,7 @@
     "page": "https://supermemory.ai/docs/concepts/how-it-works",
     "selector": "#content > div:nth-of-type(6) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/how-supermemory-works-dreaming.jpg",
+    "html": "visuals/how-supermemory-works-dreaming.html",
     "width": 600,
     "height": 503
   },
@@ -776,6 +810,7 @@
     "page": "https://supermemory.ai/docs/concepts/how-it-works",
     "selector": "#content > div:nth-of-type(8) > div > div > div > table",
     "image": "visuals/how-supermemory-works-what-2.jpg",
+    "html": "visuals/how-supermemory-works-what-2.html",
     "width": 472,
     "height": 280
   },
@@ -790,6 +825,7 @@
     "page": "https://supermemory.ai/docs/concepts/graph-memory",
     "selector": "#content > div:nth-of-type(2) > div > div > div > table",
     "image": "visuals/graph-memory-documents-vs.jpg",
+    "html": "visuals/graph-memory-documents-vs.html",
     "width": 472,
     "height": 257
   },
@@ -804,6 +840,7 @@
     "page": "https://supermemory.ai/docs/concepts/graph-memory",
     "selector": "#content > div:nth-of-type(7) > div > div > div > table",
     "image": "visuals/graph-memory-memory-types.jpg",
+    "html": "visuals/graph-memory-memory-types.html",
     "width": 472,
     "height": 180
   },
@@ -818,6 +855,7 @@
     "page": "https://supermemory.ai/docs/concepts/graph-memory",
     "selector": "#content > div:nth-of-type(9) > div > div > div > table",
     "image": "visuals/graph-memory-related-in.jpg",
+    "html": "visuals/graph-memory-related-in.html",
     "width": 472,
     "height": 254
   },
@@ -846,6 +884,7 @@
     "page": "https://supermemory.ai/docs/concepts/user-profiles",
     "selector": "#content > div:nth-of-type(2) > div > div > div > table",
     "image": "visuals/user-profiles-why-profiles.jpg",
+    "html": "visuals/user-profiles-why-profiles.html",
     "width": 472,
     "height": 160
   },
@@ -860,6 +899,7 @@
     "page": "https://supermemory.ai/docs/concepts/container-tags",
     "selector": "#content > div:nth-of-type(7) > div > div > div > table",
     "image": "visuals/container-tags-where-container.jpg",
+    "html": "visuals/container-tags-where-container.html",
     "width": 472,
     "height": 217
   },
@@ -874,6 +914,7 @@
     "page": "https://supermemory.ai/docs/concepts/container-tags",
     "selector": "#content > div:nth-of-type(9) > div > div > div > table",
     "image": "visuals/container-tags-per-container.jpg",
+    "html": "visuals/container-tags-per-container.html",
     "width": 472,
     "height": 163
   },
@@ -888,6 +929,7 @@
     "page": "https://supermemory.ai/docs/concepts/container-tags",
     "selector": "#content > div:nth-of-type(11) > div > div > div > table",
     "image": "visuals/container-tags-choosing-a.jpg",
+    "html": "visuals/container-tags-choosing-a.html",
     "width": 472,
     "height": 259
   },
@@ -902,6 +944,7 @@
     "page": "https://supermemory.ai/docs/ingestion/add-memories",
     "selector": "#content > div:nth-of-type(9) > div > div > div > table",
     "image": "visuals/ingesting-context-to-supermemory.jpg",
+    "html": "visuals/ingesting-context-to-supermemory.html",
     "width": 472,
     "height": 217
   },
@@ -916,6 +959,7 @@
     "page": "https://supermemory.ai/docs/ingestion/add-memories",
     "selector": "#content > div:nth-of-type(11) > div > div > div > table",
     "image": "visuals/ingesting-context-to-supermemory-2.jpg",
+    "html": "visuals/ingesting-context-to-supermemory-2.html",
     "width": 472,
     "height": 886
   },
@@ -930,6 +974,7 @@
     "page": "https://supermemory.ai/docs/ingestion/add-memories",
     "selector": "#content > div:nth-of-type(17) > div > div > div > table",
     "image": "visuals/ingesting-context-to-supermemory-3.jpg",
+    "html": "visuals/ingesting-context-to-supermemory-3.html",
     "width": 472,
     "height": 128
   },
@@ -944,6 +989,7 @@
     "page": "https://supermemory.ai/docs/ingestion/add-memories",
     "selector": "#error-handling-accordion-children > div:nth-of-type(1) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/ingesting-context-to-supermemory-4.jpg",
+    "html": "visuals/ingesting-context-to-supermemory-4.html",
     "width": 462,
     "height": 314
   },
@@ -958,6 +1004,7 @@
     "page": "https://supermemory.ai/docs/recall/search",
     "selector": "#content > div:nth-of-type(6) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/search-parameters.jpg",
+    "html": "visuals/search-parameters.html",
     "width": 600,
     "height": 767
   },
@@ -972,6 +1019,7 @@
     "page": "https://supermemory.ai/docs/integrations/supermemory-sdk",
     "selector": "#panel-typescript-0 > div:nth-of-type(4) > div > div > div > table",
     "image": "visuals/supermemory-sdk-error-handling.jpg",
+    "html": "visuals/supermemory-sdk-error-handling.html",
     "width": 472,
     "height": 328
   },
@@ -986,6 +1034,7 @@
     "page": "https://supermemory.ai/docs/integrations/ai-sdk",
     "selector": "#content > div:nth-of-type(4) > div > div > div > table",
     "image": "visuals/vercel-ai-sdk-quick.jpg",
+    "html": "visuals/vercel-ai-sdk-quick.html",
     "width": 472,
     "height": 163
   },
@@ -1056,6 +1105,7 @@
     "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
     "selector": "#content > div:nth-of-type(2) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/overview-tools.jpg",
+    "html": "visuals/overview-tools.html",
     "width": 600,
     "height": 747
   },
@@ -1070,6 +1120,7 @@
     "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
     "selector": "#content > div:nth-of-type(3) > div > div > div > table",
     "image": "visuals/overview-interactive-widgets.jpg",
+    "html": "visuals/overview-interactive-widgets.html",
     "width": 472,
     "height": 198
   },
@@ -1084,6 +1135,7 @@
     "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
     "selector": "#content > div:nth-of-type(4) > div > div > div > table",
     "image": "visuals/overview-resources-and-context.jpg",
+    "html": "visuals/overview-resources-and-context.html",
     "width": 472,
     "height": 300
   },
@@ -1098,6 +1150,7 @@
     "page": "https://supermemory.ai/docs/self-hosting/overview",
     "selector": "#content > div:nth-of-type(4) > div > div > div > table",
     "image": "visuals/supermemory-local-self-hosted.jpg",
+    "html": "visuals/supermemory-local-self-hosted.html",
     "width": 472,
     "height": 525
   },
@@ -1112,6 +1165,7 @@
     "page": "https://supermemory.ai/docs/overview/billing",
     "selector": "#content > div:nth-of-type(3) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/billing-usage-meters-what.jpg",
+    "html": "visuals/billing-usage-meters-what.html",
     "width": 600,
     "height": 772
   },
@@ -1126,6 +1180,7 @@
     "page": "https://supermemory.ai/docs/overview/billing",
     "selector": "#content > div:nth-of-type(4) > div > div > div > table",
     "image": "visuals/billing-usage-list-rates.jpg",
+    "html": "visuals/billing-usage-list-rates.html",
     "width": 472,
     "height": 253
   },
@@ -1140,6 +1195,7 @@
     "page": "https://supermemory.ai/docs/overview/billing",
     "selector": "#content > div:nth-of-type(5) > div > div > div > table",
     "image": "visuals/billing-usage-search-and.jpg",
+    "html": "visuals/billing-usage-search-and.html",
     "width": 472,
     "height": 144
   },
@@ -1154,6 +1210,7 @@
     "page": "https://supermemory.ai/docs/overview/billing",
     "selector": "#content > div:nth-of-type(7) > div > div > div > table",
     "image": "visuals/billing-usage-requirements.jpg",
+    "html": "visuals/billing-usage-requirements.html",
     "width": 472,
     "height": 221
   },
@@ -1168,6 +1225,7 @@
     "page": "https://supermemory.ai/docs/overview/billing",
     "selector": "#content > div:nth-of-type(9) > div > div > div > table",
     "image": "visuals/billing-usage-credits-and.jpg",
+    "html": "visuals/billing-usage-credits-and.html",
     "width": 472,
     "height": 451
   },
@@ -1182,6 +1240,7 @@
     "page": "https://supermemory.ai/docs/overview/billing",
     "selector": "#content > div:nth-of-type(10) > div > div > div > table",
     "image": "visuals/billing-usage-plan-credit.jpg",
+    "html": "visuals/billing-usage-plan-credit.html",
     "width": 472,
     "height": 236
   },
@@ -1196,6 +1255,7 @@
     "page": "https://supermemory.ai/docs/overview/billing",
     "selector": "#content > div:nth-of-type(11) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/billing-usage-plan-summary.jpg",
+    "html": "visuals/billing-usage-plan-summary.html",
     "width": 600,
     "height": 334
   },
@@ -1210,6 +1270,7 @@
     "page": "https://supermemory.ai/docs/overview/billing",
     "selector": "#content > div:nth-of-type(12) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/billing-usage-feature-availability.jpg",
+    "html": "visuals/billing-usage-feature-availability.html",
     "width": 900,
     "height": 907
   },
@@ -1224,6 +1285,7 @@
     "page": "https://supermemory.ai/docs/connectors/overview",
     "selector": "#content > div:nth-of-type(5) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/connectors-overview-sync-mechanisms.jpg",
+    "html": "visuals/connectors-overview-sync-mechanisms.html",
     "width": 600,
     "height": 368
   },
@@ -1238,6 +1300,7 @@
     "page": "https://supermemory.ai/docs/connectors/overview",
     "selector": "#content > div:nth-of-type(7) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/connectors-overview-delete-connections.jpg",
+    "html": "visuals/connectors-overview-delete-connections.html",
     "width": 600,
     "height": 207
   },
@@ -1252,6 +1315,7 @@
     "page": "https://supermemory.ai/docs/memorybench/overview",
     "selector": "#content > div:nth-of-type(5) > div:nth-of-type(1) > div > div > table",
     "image": "visuals/memorybench-zep.jpg",
+    "html": "visuals/memorybench-zep.html",
     "width": 476,
     "height": 420
   }

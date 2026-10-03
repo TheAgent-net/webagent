@@ -196,21 +196,24 @@ function pagePack(meta: AgentCardMeta): AgentPackConfig {
   };
 }
 
-const PICTURE_TYPES: Record<string, string> = {
+const VISUAL_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".png": "image/png",
   ".webp": "image/webp",
   ".svg": "image/svg+xml",
   ".gif": "image/gif",
+  /* Plain text: the widget reads it. A browser must not render it as a page here. */
+  ".html": "text/plain; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
 };
 
-/** Serve one captured visual picture from the pack folder. */
+/** Serve one captured visual file (picture, element HTML, or fonts) from the pack folder. */
 function visualFile(pack: AgentPackConfig | undefined, path: string): Response | null {
   if (!pack?.dir) return null;
   const root = normalize(join(pack.dir, "visuals"));
   const abs = normalize(join(pack.dir, decodeURIComponent(path)));
   if (!abs.startsWith(root + "/")) return null;
-  const type = PICTURE_TYPES[abs.slice(abs.lastIndexOf(".")).toLowerCase()];
+  const type = VISUAL_TYPES[abs.slice(abs.lastIndexOf(".")).toLowerCase()];
   if (!type || !existsSync(abs) || !statSync(abs).isFile()) return null;
   return new Response(new Uint8Array(readFileSync(abs)), {
     headers: { "Content-Type": type, "Cache-Control": "public, max-age=86400" },

@@ -11,7 +11,10 @@ export interface Visual {
   tags?: string[];
   page: string;
   selector: string;
+  /** Picture: the image file itself, or a screenshot of the block. */
   image: string;
+  /** The block as HTML with inline styles. The widget renders it as the real element. */
+  html?: string;
   width: number;
   height: number;
 }
@@ -56,6 +59,7 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
   const visuals: Visual[] = [];
   const used = new Set<string>();
   try {
+    const fonts = new Set<string>();
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900, deviceScaleFactor: 1 });
     if (opts.relay ?? !!process.env.HTTPS_PROXY) await relayRequests(page);
@@ -78,7 +82,7 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
       for (const block of blocks) {
         if (visuals.length >= maxVisuals) break;
         const id = uniqueId(block.label, used);
-        const image = await savePicture(page, target, block, join(dir, id));
+        const { image, html } = await savePicture(page, target, block, join(dir, id), fonts, root);
         if (!image) {
           used.delete(id);
           continue;
@@ -92,11 +96,13 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
           page: path,
           selector: block.selector,
           image: "visuals/" + image,
+          ...(html ? { html: "visuals/" + html } : {}),
           width: block.width,
           height: block.height,
         });
       }
     }
+    writeFileSync(join(dir, "fonts.css"), [...fonts].join("\n") + "\n");
   } finally {
     await browser.close();
   }
@@ -186,24 +192,32 @@ async function relayRequests(page: Page): Promise<void> {
   });
 }
 
-async function savePicture(page: Page, pageUrl: string, block: Block, stem: string): Promise<string> {
+async function savePicture(
+  page: Page,
+  pageUrl: string,
+  block: Block,
+  stem: string,
+  fonts: Set<string>,
+  base: string,
+): Promise<{ image: string; html?: string }> {
+  const name = stem.split("/").pop()!;
   if (block.kind === "image" && block.src) {
     const url = new URL(block.src, pageUrl).href;
     const got = await page.evaluate(fetchBytes, url).catch(() => null);
     if (got && got.data) {
       const ext = extFor(got.type, url);
       writeFileSync(stem + ext, Buffer.from(got.data, "base64"));
-      return stem.split("/").pop() + ext;
+      return { image: name + ext };
     }
   }
-  if (!block.shown) return "";
+  if (!block.shown) return { image: "" };
   const handle = await page.$(block.selector);
-  if (!handle) return "";
+  if (!handle) return { image: "" };
   await handle.evaluate(hideFloating);
   await handle.evaluate((el) => el.scrollIntoView({ block: "start" }));
   await new Promise((r) => setTimeout(r, 700));
   const box = await handle.boundingBox();
-  if (!box || box.width < 40 || box.height < 40) return "";
+  if (!box || box.width < 40 || box.height < 40) return { image: "" };
   const scroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
   const shot = await page.screenshot({
     type: "jpeg",
@@ -212,7 +226,14 @@ async function savePicture(page: Page, pageUrl: string, block: Block, stem: stri
     clip: { x: box.x + scroll.x, y: box.y + scroll.y, width: box.width, height: Math.min(box.height, SHOT_HEIGHT) },
   });
   writeFileSync(stem + ".jpg", shot);
-  return stem.split("/").pop() + ".jpg";
+  const snap = await handle.evaluate(snapshotElement).catch(() => null);
+  if (!snap?.html) return { image: name + ".jpg" };
+  /* Files on the capture host are the site's own files. Keep them site-relative. */
+  const local = new URL(base).origin;
+  const relative = (text: string) => text.split(local + "/").join("/");
+  for (const f of snap.fonts) fonts.add(relative(f));
+  writeFileSync(stem + ".html", relative(snap.html));
+  return { image: name + ".jpg", html: name + ".html" };
 }
 
 /** Find a Chrome or Chromium binary. Playwright's Chromium counts. */
@@ -279,6 +300,159 @@ function hideFloating(target: Element): void {
     const pos = getComputedStyle(el).position;
     if (pos === "fixed" || pos === "sticky") (el as HTMLElement).style.setProperty("visibility", "hidden", "important");
   }
+}
+
+/**
+ * Copy an element as HTML that renders the same anywhere:
+ * - Each node gets a class with its computed style. Values that match the browser default are dropped.
+ * - ::before and ::after keep their content and style.
+ * - Links, images, and video sources become absolute. A canvas becomes an image of its pixels.
+ * - Scripts, event attributes, and ids are removed. Sticky and fixed nodes become static.
+ */
+function snapshotElement(root: Element): { html: string; fonts: string[] } {
+  const SVG = "http://www.w3.org/2000/svg";
+  /* Variables are already resolved into real values. Logical sides repeat the physical sides. */
+  const skip =
+    /^(--|transition|animation|will-change|view-transition|cursor|caret|pointer-events|user-select|-webkit-user|-webkit-text-(fill|stroke)-color|border-(inline|block)|margin-(inline|block)|padding-(inline|block)|inset-|(min-|max-)?(inline|block)-size|scroll-)/;
+  /* An inherited value that matches the parent comes for free. */
+  const inherits =
+    /^(color|font|line-height|letter-spacing|word-spacing|text-(align|indent|transform|shadow|rendering|wrap)|white-space|visibility|direction|quotes|list-style|-webkit-font-smoothing|tab-size|hyphens|word-break|overflow-wrap|fill|stroke|writing-mode|orientation)/;
+  const frame = document.createElement("iframe");
+  frame.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(frame);
+  const blank = frame.contentDocument!;
+  const svgHost = blank.createElementNS(SVG, "svg");
+  blank.body.appendChild(svgHost);
+  const defaults = new Map<string, CSSStyleDeclaration>();
+  const plainProbe = blank.createElement("div");
+  blank.body.appendChild(plainProbe);
+  const plainStyle = frame.contentWindow!.getComputedStyle(plainProbe);
+  const baseFor = (el: Element): CSSStyleDeclaration => {
+    const svg = el.namespaceURI === SVG;
+    const key = (svg ? "svg:" : "") + el.localName + (el.hasAttribute("href") ? ":href" : "");
+    let cs = defaults.get(key);
+    if (!cs) {
+      const probe = svg ? blank.createElementNS(SVG, el.localName) : blank.createElement(el.localName);
+      /* A link only gets link color and underline when it has an href. */
+      if (el.hasAttribute("href")) probe.setAttribute("href", "#");
+      (svg && el.localName !== "svg" ? svgHost : blank.body).appendChild(probe);
+      cs = frame.contentWindow!.getComputedStyle(probe);
+      defaults.set(key, cs);
+    }
+    return cs;
+  };
+  const styleText = (
+    cs: CSSStyleDeclaration,
+    base: CSSStyleDeclaration | null,
+    parent?: CSSStyleDeclaration,
+    plain?: CSSStyleDeclaration,
+  ): string => {
+    let out = "";
+    for (let i = 0; i < cs.length; i++) {
+      const prop = cs[i]!;
+      if (skip.test(prop)) continue;
+      const value = cs.getPropertyValue(prop);
+      /* Skip an inherited value that matches the parent, unless the browser sets its own (link color, heading weight). */
+      const own = base && plain && base.getPropertyValue(prop) !== plain.getPropertyValue(prop);
+      if (parent && !own && inherits.test(prop)) {
+        if (parent.getPropertyValue(prop) === value) continue;
+      } else if (base && base.getPropertyValue(prop) === value) continue;
+      out += prop + ":" + value + ";";
+    }
+    return out;
+  };
+  const pseudo = (el: Element, which: "::before" | "::after"): string => {
+    const cs = getComputedStyle(el, which);
+    const content = cs.getPropertyValue("content");
+    if (!content || content === "none" || content === "normal") return "";
+    return styleText(cs, null);
+  };
+  const from = [root, ...Array.from(root.querySelectorAll("*"))];
+  const copy = root.cloneNode(true) as Element;
+  const to = [copy, ...Array.from(copy.querySelectorAll("*"))];
+  const classes = new Map<string, string>();
+  const rules: string[] = [];
+  const swaps: [Element, Element][] = [];
+  for (let i = 0; i < from.length && i < to.length; i++) {
+    const src = from[i]!;
+    const dst = to[i]!;
+    const tag = src.localName;
+    if (tag === "script" || tag === "noscript" || tag === "template" || tag === "iframe") {
+      swaps.push([dst, document.createElement("span")]);
+      continue;
+    }
+    const cs = getComputedStyle(src);
+    const parent = i === 0 || !src.parentElement ? undefined : getComputedStyle(src.parentElement);
+    let main = styleText(cs, baseFor(src), parent, src.namespaceURI === SVG ? baseFor(svgHost) : plainStyle);
+    if (cs.position === "sticky" || cs.position === "fixed") main += "position:static;";
+    if (cs.overflowX !== "visible" && src.scrollWidth > src.clientWidth + 4) {
+      main += `overflow:visible;width:${src.scrollWidth}px;max-width:none;`;
+    }
+    if (i === 0) main += "margin:0;";
+    const before = pseudo(src, "::before");
+    const after = pseudo(src, "::after");
+    const key = main + "|" + before + "|" + after;
+    let cls = classes.get(key);
+    if (!cls) {
+      cls = "w" + classes.size.toString(36);
+      classes.set(key, cls);
+      rules.push(`.${cls}{${main}}`);
+      if (before) rules.push(`.${cls}::before{${before}}`);
+      if (after) rules.push(`.${cls}::after{${after}}`);
+    }
+    for (const a of Array.from(dst.attributes)) {
+      const n = a.name.toLowerCase();
+      if (n.startsWith("on") || n === "id" || n === "style" || n === "class" || n === "srcset" || n === "sizes" || n === "loading") {
+        dst.removeAttribute(a.name);
+      }
+    }
+    dst.setAttribute("class", cls);
+    if (tag === "a") {
+      const href = (src as HTMLAnchorElement).href;
+      if (/^https?:/.test(href)) {
+        dst.setAttribute("href", href);
+        dst.setAttribute("target", "_blank");
+        dst.setAttribute("rel", "noopener");
+      } else dst.removeAttribute("href");
+    }
+    if (tag === "img") {
+      const img = src as HTMLImageElement;
+      const url = img.currentSrc || img.src || img.getAttribute("data-src") || "";
+      if (url) dst.setAttribute("src", new URL(url, location.href).href);
+    }
+    if (tag === "video" || tag === "source") {
+      const url = (src as HTMLVideoElement).currentSrc || src.getAttribute("src") || "";
+      if (url) dst.setAttribute("src", new URL(url, location.href).href);
+      if (tag === "video") for (const f of ["autoplay", "muted", "loop", "playsinline"]) dst.setAttribute(f, "");
+    }
+    if (tag === "canvas") {
+      try {
+        const img = document.createElement("img");
+        img.setAttribute("src", (src as HTMLCanvasElement).toDataURL("image/png"));
+        img.setAttribute("class", cls);
+        swaps.push([dst, img]);
+      } catch {
+        /* a tainted canvas stays blank */
+      }
+    }
+  }
+  for (const [old, next] of swaps) old.replaceWith(next);
+  frame.remove();
+  const fonts: string[] = [];
+  for (const sheet of Array.from(document.styleSheets)) {
+    let list: CSSRuleList;
+    try {
+      list = sheet.cssRules;
+    } catch {
+      continue;
+    }
+    const base = sheet.href || location.href;
+    for (const rule of Array.from(list)) {
+      if (rule.constructor.name !== "CSSFontFaceRule") continue;
+      fonts.push(rule.cssText.replace(/url\((['"]?)([^'")]+)\1\)/g, (_m, _q, u) => `url("${new URL(u, base).href}")`));
+    }
+  }
+  return { html: `<style>${rules.join("")}</style>` + copy.outerHTML, fonts };
 }
 
 function listLinks(): string[] {

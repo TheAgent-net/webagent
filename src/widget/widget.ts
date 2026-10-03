@@ -13,7 +13,15 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
   const visuals = Object.fromEntries(
     (config.visuals ?? []).map((v) => [
       v.id,
-      { id: v.id, kind: v.kind, label: v.label, page: v.page, selector: v.selector, image: base + "/" + v.image },
+      {
+        id: v.id,
+        kind: v.kind,
+        label: v.label,
+        page: v.page,
+        selector: v.selector,
+        image: base + "/" + v.image,
+        html: v.html ? base + "/" + v.html : "",
+      },
     ]),
   );
   return `
@@ -29,6 +37,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
   const HINTS = ${JSON.stringify(hints)};
   const PLACEHOLDER = ${JSON.stringify(config.widget.placeholder || "Ask anything…")};
   const VISUALS = ${JSON.stringify(visuals)};
+  const FONTS = ${JSON.stringify((config.visuals ?? []).some((v) => v.html) ? base + "/visuals/fonts.css" : "")};
   const BRAND = ${JSON.stringify(config.brand.wordmark || config.brand.name)};
   const bind = () => {
     if (window.__waBound) return;
@@ -217,11 +226,58 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
         const scale = Math.min(1, frame.clientWidth / width);
         inner.style.transform = "scale(" + scale + ")";
         const tall = inner.offsetHeight * scale;
-        frame.style.height = Math.min(tall, 360) + "px";
-        frame.classList.toggle("cut", tall > 360);
+        const full = frame.classList.contains("full");
+        frame.style.height = (full ? tall : Math.min(tall, 360)) + "px";
+        frame.classList.toggle("cut", !full && tall > 360);
       };
+      frame.wafit = fit;
       requestAnimationFrame(fit);
       setTimeout(fit, 400);
+      return true;
+    };
+    /* Render the saved element in a shadow root, so page CSS and widget CSS do not touch it. */
+    const savedCopy = (v, frame) => {
+      if (!v.html) return false;
+      if (FONTS && !document.getElementById("wa-fonts")) {
+        const link = node("link");
+        link.id = "wa-fonts";
+        link.rel = "stylesheet";
+        link.href = FONTS;
+        document.head.appendChild(link);
+      }
+      const host = node("div", "wa-live-inner");
+      const shadow = host.attachShadow({ mode: "open" });
+      frame.appendChild(host);
+      frame.classList.add("saved");
+      const fit = () => {
+        const el = shadow.lastElementChild;
+        if (!el) return;
+        const width = Math.max(el.scrollWidth, el.offsetWidth);
+        const scale = Math.min(1, frame.clientWidth / width);
+        host.style.width = width + "px";
+        host.style.transform = "scale(" + scale + ")";
+        const tall = host.offsetHeight * scale;
+        const full = frame.classList.contains("full");
+        frame.style.height = (full ? tall : Math.min(tall, 360)) + "px";
+        frame.classList.toggle("cut", !full && tall > 360);
+      };
+      frame.wafit = fit;
+      fetch(v.html)
+        .then((res) => (res.ok ? res.text() : Promise.reject(res.status)))
+        .then((text) => {
+          shadow.innerHTML = text;
+          requestAnimationFrame(fit);
+          setTimeout(fit, 500);
+          shadow.querySelectorAll("img").forEach((img) => img.addEventListener("load", fit));
+        })
+        .catch(() => {
+          host.remove();
+          frame.classList.remove("saved");
+          const img = node("img");
+          img.src = v.image;
+          img.alt = v.label;
+          frame.appendChild(img);
+        });
       return true;
     };
     const visualNode = (v) => {
@@ -229,7 +285,8 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       const frame = node("div", "wa-frame");
       const live = liveFor(v);
       const isLive = !!live && v.kind !== "image" && liveCopy(live, frame);
-      if (!isLive) {
+      const isSaved = !isLive && savedCopy(v, frame);
+      if (!isLive && !isSaved) {
         const img = node("img");
         img.src = v.image;
         img.alt = v.label;
@@ -237,7 +294,10 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
         img.onload = () => { frame.classList.toggle("cut", img.offsetHeight >= 359); keep(); };
         frame.appendChild(img);
       }
-      frame.onclick = () => frame.classList.toggle("full");
+      frame.onclick = () => {
+        frame.classList.toggle("full");
+        if (frame.wafit) frame.wafit();
+      };
       const cap = node("figcaption");
       cap.innerHTML = (isLive ? '<span class="wa-live-tag">Live</span>' : "") + '<span class="wa-vlabel">' + esc(v.label) + "</span>";
       if (live) {
@@ -630,7 +690,7 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     background: linear-gradient(transparent, color-mix(in srgb, var(--wa-paper) 94%, transparent));
     pointer-events: none;
   }
-  .wa-frame.full { cursor: zoom-out; height: auto !important; }
+  .wa-frame.full { cursor: zoom-out; }
   .wa-frame.full img { max-height: none; }
   .wa-frame.full::after { display: none; }
   .wa-live-inner { transform-origin: 0 0; pointer-events: none; }
