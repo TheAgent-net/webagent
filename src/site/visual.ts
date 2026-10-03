@@ -308,6 +308,14 @@ function listBlocks(): Block[] {
     const style = getComputedStyle(el);
     return r.width > 0 && r.height > 0 && style.display !== "none" && style.visibility !== "hidden";
   };
+  /** Text of the last h2 to h4 that comes before `el` in the page. */
+  const headingBefore = (el: Element): string => {
+    let hit = "";
+    for (const h of Array.from(document.querySelectorAll("h2, h3, h4"))) {
+      if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) hit = clean(h.textContent);
+    }
+    return hit;
+  };
   const inside = (el: Element, taken: Element[]) => taken.some((t) => t === el || t.contains(el));
   const blocks: Block[] = [];
   const taken: Element[] = [];
@@ -348,15 +356,18 @@ function listBlocks(): Block[] {
   for (const table of Array.from(document.querySelectorAll("table"))) {
     if (inside(table, taken) || !shown(table)) continue;
     const section = table.closest("section");
+    const title = clean(document.querySelector("h1")?.textContent) || clean(document.title);
+    const near = headingBefore(table);
     const label =
       clean(table.querySelector("caption")?.textContent) ||
       clean(section?.querySelector("h2, h3")?.textContent) ||
+      (near && near !== title ? `${title}: ${near}` : title) ||
       "Table";
     const head = Array.from(table.querySelectorAll("th")).map((th) => clean(th.textContent)).filter(Boolean);
     push(table, { kind: "table", label, text: head.slice(0, 6).join(", "), src: "" });
   }
   for (const section of Array.from(document.querySelectorAll("section, [id] > header"))) {
-    if (!shown(section)) continue;
+    if (!shown(section) || section.getBoundingClientRect().height < 240) continue;
     const head = section.querySelector("h1, h2");
     const label = clean(head?.textContent);
     if (!label) continue;
