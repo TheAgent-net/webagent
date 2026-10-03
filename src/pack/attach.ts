@@ -40,7 +40,8 @@ export async function attachPackTools(h: Harness, run: Run, runtime: PackRuntime
 export const REPLY_SHAPE = [
   "REPLY SHAPE",
   "- Put the direct answer in the first paragraph: one or two short sentences. No preamble. Do not start with a heading.",
-  "- Then add detail only if it helps: at most 3 short bullets, or 3-5 numbered steps for a setup.",
+  "- Then explain it so the visitor understands. A bare fact is not an answer. In 2-4 short bullets, say what it means for them, how it works, and what they do next. Use 3-5 numbered steps for a setup.",
+  "- Answer each question on its own. Use earlier turns only when the new question depends on them.",
   "- Use plain words. One idea per sentence. Bold only the one key term.",
   "- A greeting or a question back to the visitor is one short paragraph.",
   "- Speak about the product, not about your sources. Never say \"the docs say\", \"the docs do not specify\", \"according to the documentation\", or \"I could not find\".",

@@ -178,18 +178,18 @@ export async function pickVisual(runtime: PackRuntime, said: string, reply: stri
   }
 }
 
-/** A small fast chat model for the visual check. Pack model.visualJudge overrides it. */
+/** The pack model checks if a visual fits. Pack model.visualJudge overrides it. */
 function openaiJudge(runtime: PackRuntime): ((prompt: string) => Promise<string>) | undefined {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return undefined;
   const base = (runtime.config.model?.apiBase || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
-  const model = runtime.config.model?.visualJudge || process.env.WEBAGENT_VISUAL_MODEL || "gpt-4o-mini";
+  const model = runtime.config.model?.visualJudge || process.env.WEBAGENT_VISUAL_MODEL || runtime.config.model?.id || "gpt-4o-mini";
   return async (prompt) => {
     const res = await fetch(base + "/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
       body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } }),
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) throw new Error("judge " + res.status);
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
