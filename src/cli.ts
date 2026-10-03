@@ -330,7 +330,12 @@ async function startPack(h: ReturnType<typeof defaultHarness>, dir: string, addr
     maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220,
   });
   console.error(`agent ${hosted.url}`);
-  console.error(`  pack    ${runtime.config.id}  ${runtime.pages.length} pages  ${runtime.chunks.length} chunks`);
+  const visualN = runtime.visualVectors?.size ?? 0;
+  const visualT = runtime.config.visuals?.length ?? 0;
+  console.error(
+    `  pack    ${runtime.config.id}  ${runtime.pages.length} pages  ${runtime.chunks.length} chunks` +
+      (visualT ? `  ${visualN}/${visualT} visuals` : ""),
+  );
   console.error(`  model   ${modelName}${modelName === "echo" ? " — OPENAI_API_KEY missing, replies echo" : ""}`);
   console.error(`  human   ${hosted.url}/`);
   console.error(`  widget  ${hosted.url}/widget.js`);

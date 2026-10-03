@@ -10,8 +10,17 @@ const DOCS = {
   tags: "https://supermemory.ai/docs/concepts/container-tags",
   sdk: "https://supermemory.ai/docs/integrations/supermemory-sdk",
   mcp: "https://supermemory.ai/docs/supermemory-mcp/mcp",
+  cursor: "https://supermemory.ai/docs/integrations/cursor",
+  claudeCode: "https://supermemory.ai/docs/integrations/claude-code",
+  grok: "https://supermemory.ai/docs/integrations/grok-bot",
   local: "https://supermemory.ai/docs/self-hosting/overview",
   billing: "https://supermemory.ai/docs/overview/billing",
+};
+
+const NAMED_PLUGIN: Record<string, { title: string; url: string; install: string }> = {
+  cursor: { title: "Cursor", url: DOCS.cursor, install: "In Cursor run /add-plugin cursor-supermemory." },
+  "claude code": { title: "Claude Code", url: DOCS.claudeCode, install: "Install the SuperMemory plugin for Claude Code from its integration page." },
+  grok: { title: "Grok Bot", url: DOCS.grok, install: "Connect SuperMemory to Grok Bot from its integration page." },
 };
 
 export interface MemoryPlan {
@@ -25,10 +34,16 @@ export interface MemoryPlan {
   footnote?: string;
 }
 
+function namedPlugin(intent: MemoryIntent): { title: string; url: string; install: string } | undefined {
+  const key = (intent.stack || "").toLowerCase();
+  return NAMED_PLUGIN[key];
+}
+
 export function recommendPath(intent: MemoryIntent): MemoryPlan {
   const persist = intent.persist || (intent.useCase === "docs_rag" ? "docs" : "both");
   const local = intent.residency === "must_stay_local";
   const plugin = intent.entry === "plugin" && !local;
+  const named = plugin ? namedPlugin(intent) : undefined;
   const docsOnly = persist === "docs" && !/\b(remember|profile|user)\b/i.test(intent.useCase || "");
 
   let path = "Hosted Memory API";
@@ -81,13 +96,20 @@ export function recommendPath(intent: MemoryIntent): MemoryPlan {
         "Wait until status is done, then profile + search.",
         "Write each turn back to the same customId.",
       ]
-    : plugin
+    : named
       ? [
-          "Open console.supermemory.ai and create a key.",
-          "Install the SuperMemory plugin or MCP for " + (intent.stack || "your assistant") + ".",
-          "Confirm the same space/container is used across chats.",
+          named.install,
+          "Create a key at console.supermemory.ai if the plugin asks for one.",
+          "Use one space/container across chats so memory carries over.",
           "Reuse that memory on the next session — do not rebuild it.",
         ]
+      : plugin
+        ? [
+            "Open console.supermemory.ai and create a key.",
+            "Install the SuperMemory plugin or MCP for " + (intent.stack || "your assistant") + ".",
+            "Confirm the same space/container is used across chats.",
+            "Reuse that memory on the next session — do not rebuild it.",
+          ]
       : [
           "Create a key at console.supermemory.ai.",
           "npm install supermemory (or pip install supermemory).",
@@ -98,8 +120,10 @@ export function recommendPath(intent: MemoryIntent): MemoryPlan {
 
   const docs = local
     ? [{ title: "Self-hosting", url: DOCS.local }]
-    : plugin
-      ? [{ title: "SuperMemory MCP", url: DOCS.mcp }]
+    : named
+      ? [{ title: named.title, url: named.url }]
+      : plugin
+        ? [{ title: "SuperMemory MCP", url: DOCS.mcp }]
       : docsOnly
         ? [{ title: "Memory vs RAG", url: DOCS.memoryVsRag }]
         : [{ title: "Quickstart", url: DOCS.quickstart }];

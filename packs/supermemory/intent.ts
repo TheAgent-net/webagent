@@ -86,7 +86,7 @@ export function isInfoQuestion(text: string): boolean {
     return false;
   }
   if (
-    /\b(what is|what's|whats|what are|tell me about|explain|how does|how do (you|they)|how is|describe|difference between|compared to|vs\.?)\b/.test(
+    /\b(what is|what's|whats|what are|tell me about|explain|how does|how do (you|they|i)|how is|how to|describe|difference between|compared to|vs\.?)\b/.test(
       lower,
     )
   ) {
@@ -178,6 +178,7 @@ function stackFrom(t: string): string | undefined {
     "cursor",
     "codex",
     "chatgpt",
+    "grok",
     "opencode",
     "langchain",
     "langgraph",

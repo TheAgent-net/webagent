@@ -17,7 +17,8 @@ export async function servePack(dir: string, opts: ServePackOpts = {}): Promise<
   const h = opts.harness ?? defaultHarness();
   const runtime = await openPack(dir, opts);
   try {
-    await embedVisuals(runtime, opts.embed);
+    const n = await embedVisuals(runtime, opts.embed);
+    if (n) console.error("indexed " + n + " visual descriptions");
   } catch (err) {
     console.error("visual embeddings skipped:", err instanceof Error ? err.message : err);
   }
