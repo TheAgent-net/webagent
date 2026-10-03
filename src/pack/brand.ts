@@ -55,6 +55,8 @@ export async function extractBrand(html: string, origin: string, page?: PageShot
     brand.colors.accent = theme;
     brand.colors.fab = theme;
   }
+  const logo = iconHref(html, origin);
+  if (logo) brand.logo = logo;
   const siteName = metaContent(html, "og:site_name") || metaContent(html, "application-name");
   if (siteName) {
     brand.name = cleanName(siteName);
@@ -62,6 +64,23 @@ export async function extractBrand(html: string, origin: string, page?: PageShot
     brand.fabLabel = brand.name.length > 22 ? "Ask" : "Ask " + brand.name;
   }
   return brand;
+}
+
+/** Site icon for the widget header. Prefer SVG, then the apple touch icon, then any icon. */
+export function iconHref(html: string, origin: string): string | undefined {
+  const links = [...html.matchAll(/<link\b[^>]*>/gi)].map((m) => m[0]);
+  const attr = (tag: string, name: string) => tag.match(new RegExp(`\\b${name}=["']([^"']+)["']`, "i"))?.[1];
+  const icons = links.filter((l) => /\brel=["'][^"']*icon[^"']*["']/i.test(l) && attr(l, "href"));
+  const pick =
+    icons.find((l) => /svg/i.test(attr(l, "type") || attr(l, "href") || "")) ||
+    icons.find((l) => /apple-touch-icon/i.test(attr(l, "rel") || "")) ||
+    icons[0];
+  if (!pick) return undefined;
+  try {
+    return new URL(attr(pick, "href")!, origin + "/").href;
+  } catch {
+    return undefined;
+  }
 }
 
 function themeColor(html: string): string | undefined {

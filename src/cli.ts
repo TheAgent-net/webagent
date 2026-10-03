@@ -14,6 +14,8 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent ask <text>             one echo run");
   console.error("  webagent from-url <url>         crawl a site → write a pack");
   console.error("  webagent serve --pack <dir>     host a pack (widget + POST /chat)");
+  console.error("  webagent capture --pack <dir>   save site visuals for the widget (Chromium)");
+  console.error("  webagent tune --pack <dir>      GEPA: tune the pack instruction on evals.json");
   console.error("  webagent serve [addr]           generic host, no pack");
   console.error("  webagent demo <name>            pack host + demo site preview");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
@@ -207,6 +209,75 @@ switch (args[0]) {
     console.error(`  machine ${hosted.url}/mcp  run ${hosted.room.run.id}`);
     console.error(`  local   http://127.0.0.1:${port}/`);
     await new Promise(() => {});
+    break;
+  }
+  case "tune": {
+    const pack = flag(args, "--pack");
+    if (!pack) {
+      console.error("usage: webagent tune --pack <dir> [--budget 8] [--model <judge and reflect model>]");
+      process.exit(2);
+    }
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("tune runs the real agent and a judge model: set OPENAI_API_KEY");
+      process.exit(2);
+    }
+    const { resolvePackDir } = await import("./pack/load.ts");
+    if (!existsSync(join(resolvePackDir(pack), "evals.json"))) {
+      console.error("no evals.json in the pack: add visitor cases first (see packs/supermemory/evals.json)");
+      process.exit(2);
+    }
+    const { openPack } = await import("./pack/build.ts");
+    const { loadCases, tunePrompt, tuneReport } = await import("./pack/tune.ts");
+    const { embedVisuals } = await import("./pack/docs.ts");
+    const { writeFileSync } = await import("node:fs");
+    const runtime = await openPack(pack, { maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220 });
+    await embedVisuals(runtime).catch(() => 0);
+    const cases = loadCases(runtime.dir);
+    console.error(`tuning ${runtime.config.id} on ${cases.length} cases ...`);
+    const { best, pool } = await tunePrompt(runtime, cases, {
+      budget: Number(flag(args, "--budget")) || 8,
+      model: flag(args, "--model"),
+      log: (line) => console.error("  " + line),
+    });
+    writeFileSync(join(runtime.dir, "instruction.tuned.md"), best.text.trim() + "\n");
+    writeFileSync(join(runtime.dir, "tune-report.md"), tuneReport(pool, best) + "\n");
+    console.error(`best ${best.id} mean ${best.mean.toFixed(3)} (seed ${pool[0]!.mean.toFixed(3)})`);
+    console.error(`wrote ${join(runtime.dir, "instruction.tuned.md")} and tune-report.md. Review it, then copy it over instruction.md.`);
+    break;
+  }
+  case "capture": {
+    const pack = flag(args, "--pack");
+    if (!pack) {
+      console.error("usage: webagent capture --pack <dir> [--url <site>] [--pages /,/pricing,https://other.site/page] [--max 8] [--max-visuals 40]");
+      process.exit(2);
+    }
+    const { loadPackConfig } = await import("./pack/load.ts");
+    const { captureVisuals } = await import("./site/visual.ts");
+    const config = loadPackConfig(pack);
+    const clone = join(process.cwd(), "demo", config.id, "site");
+    let url = flag(args, "--url");
+    let stop = () => {};
+    if (!url && existsSync(join(clone, "index.html"))) {
+      const { serveDemoSite } = await import("./pack/demo-site.ts");
+      const site = serveDemoSite(clone, 0, "http://127.0.0.1");
+      url = "http://127.0.0.1:" + site.port;
+      stop = site.stop;
+    }
+    url ||= config.origin;
+    const pages = flag(args, "--pages")?.split(",").map((p) => p.trim()).filter(Boolean);
+    console.error("capturing visuals from " + url + " ...");
+    try {
+      const visuals = await captureVisuals(url, {
+        out: config.dir!,
+        pages,
+        maxPages: Number(flag(args, "--max")) || 8,
+        maxVisuals: Number(flag(args, "--max-visuals")) || 40,
+      });
+      for (const v of visuals) console.error(`  ${v.kind.padEnd(8)} ${v.id.padEnd(36)} ${v.page}`);
+      console.error(`wrote ${visuals.length} visuals to ${join(config.dir!, "visuals.json")}`);
+    } finally {
+      stop();
+    }
     break;
   }
   case "serve": {

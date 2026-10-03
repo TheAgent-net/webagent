@@ -14,10 +14,14 @@ export interface RoomEvent {
   runId?: string;
 }
 
+/** Last step on a reply before anyone sees it (for example, attach a visual). */
+export type Finish = (said: string, reply: string) => Promise<string>;
+
 export interface RoomOpts {
   model?: string;
   run?: Run;
   instruction?: string;
+  finish?: Finish;
 }
 
 const ROOM_INSTRUCTION =
@@ -25,10 +29,12 @@ const ROOM_INSTRUCTION =
 
 export class Room {
   readonly run: Run;
+  readonly finish?: Finish;
   private readonly live = new Set<(ev: RoomEvent) => void>();
 
   constructor(private readonly harness: Harness, modelOrOpts: string | RoomOpts = "echo") {
     const opts: RoomOpts = typeof modelOrOpts === "string" ? { model: modelOrOpts } : modelOrOpts;
+    this.finish = opts.finish;
     this.run =
       opts.run ??
       harness.create({
@@ -47,8 +53,10 @@ export class Room {
     this.run.inject({ text: `[${from}] ${msg}` });
     this.emit({ t: "say", from, text: msg });
     const ex = await this.harness.scheduler.run(() => this.run.start());
-    this.emit({ t: "reply", text: ex.lastText });
-    return { ...ex, from };
+    let reply = ex.lastText;
+    if (this.finish && reply) reply = await this.finish(msg, reply).catch(() => reply);
+    this.emit({ t: "reply", text: reply });
+    return { ...ex, lastText: reply, from };
   }
 
   subscribe(fn: (ev: RoomEvent) => void): () => void {

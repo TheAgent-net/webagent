@@ -1,5 +1,6 @@
 import type { EmbedFn, DocChunk, RetrievalInfo, RetrievePolicy, RetrievePolicyJson } from "../retrieve/types.ts";
 import type { PageShot, SitePack } from "../site/types.ts";
+import type { Visual } from "../site/visual.ts";
 import type { Tool } from "../tools.ts";
 
 export interface AgentBrand {
@@ -14,6 +15,8 @@ export interface AgentBrand {
     accent: string;
     fab: string;
     fabText: string;
+    /** Panel glass color. Default: paper at 88%. */
+    glass?: string;
   };
   fonts: {
     display: string;
@@ -28,7 +31,10 @@ export interface AgentBrand {
 export interface AgentWidget {
   welcomeTitle: string;
   welcomeBody: string;
+  /** Hint bubbles shown above the pill on focus. The widget shows up to three. */
   chips: string[];
+  /** Hints typed into the idle pill, one after another. Default: chips. */
+  hints?: string[];
   copyHeadline: string;
   copyPrompt: string;
   placeholder: string;
@@ -43,6 +49,9 @@ export interface AgentSales {
 export interface AgentModel {
   id: string;
   apiBase?: string;
+  reasoningEffort?: string;
+  /** Chat model that checks if a visual fits an answer. Default: the pack model. */
+  visualJudge?: string;
 }
 
 export interface AgentHostCfg {
@@ -81,6 +90,10 @@ export interface AgentPackConfig {
   tools?: string[];
   skills?: AgentSkill[];
   card?: AgentCardCfg;
+  /** Visual blocks from `visuals.json`. The loader sets this. */
+  visuals?: Visual[];
+  /** Pack folder on disk. The loader sets this. */
+  dir?: string;
 }
 
 export interface PackRuntime {
@@ -93,6 +106,8 @@ export interface PackRuntime {
   chunks: DocChunk[];
   retrieval?: RetrievalInfo;
   embedQuery?: EmbedFn;
+  /** Embedding of each visual's description, by visual id. Empty without an embedder. */
+  visualVectors?: Map<string, number[]>;
 }
 
 export interface PackToolAttach {

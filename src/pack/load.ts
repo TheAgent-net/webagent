@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { compilePolicy, DEFAULT_POLICY } from "../retrieve/policy.ts";
 import type { RetrievePolicy } from "../retrieve/types.ts";
+import type { Visual } from "../site/visual.ts";
 import type { AgentPackConfig } from "./types.ts";
 
 export function resolvePackDir(input: string): string {
@@ -17,6 +18,9 @@ export function loadPackConfig(dir: string): AgentPackConfig {
   const root = resolvePackDir(dir);
   const raw = JSON.parse(readFileSync(join(root, "pack.json"), "utf8")) as AgentPackConfig;
   if (!raw.id || !raw.origin || !raw.brand) throw new Error("pack.json missing id, origin, or brand");
+  raw.dir = root;
+  const visuals = join(root, "visuals.json");
+  if (existsSync(visuals)) raw.visuals = JSON.parse(readFileSync(visuals, "utf8")) as Visual[];
   return raw;
 }
 
