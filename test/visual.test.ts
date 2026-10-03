@@ -128,3 +128,34 @@ describe("starter hints", () => {
     expect(html).toContain('data-q=\\"C?\\"');
   });
 });
+
+describe("visual relevance", () => {
+  /* A tiny embedder: one dimension per topic word, so meaning maps to a fixed axis. */
+  const axes = ["price", "token", "graph", "deploy"];
+  const fake = async (texts: string[]) =>
+    texts.map((t) => {
+      const low = t.toLowerCase();
+      const v = axes.map((a) => (low.includes(a) ? 1 : 0));
+      if (/cost|plan|usd|\$/.test(low)) v[0] += 1;
+      return v.some(Boolean) ? v : [0, 0, 0, 0.01];
+    });
+
+  test("visuals rank by meaning and carry what they show", async () => {
+    const { embedVisuals, relevantVisuals } = await import("../src/pack/docs.ts");
+    const config = loadPackConfig(packWithVisuals());
+    const plans: Visual = { ...chart, id: "plans", label: "Plans", text: "Pro 19 USD per month", tags: ["section"], html: undefined };
+    config.visuals = [chart, plans];
+    const runtime = { config, dir: config.dir!, instruction: "", policy: packPolicy(config), site: {} as never, pages: [], chunks: [] };
+    expect(await embedVisuals(runtime as never, fake)).toBe(2);
+    const priced = await relevantVisuals(runtime as never, "what does it cost each month", [], fake);
+    expect(priced[0]?.id).toBe("plans");
+    expect(priced[0]?.shows).toContain("Pro 19 USD");
+    expect(priced[0]?.relevance).toBeGreaterThan(0.3);
+    expect(await relevantVisuals(runtime as never, "hello there", [], fake)).toEqual([]);
+  });
+
+  test("the rule puts relevance before shared words", () => {
+    expect(VISUAL_RULE).toContain("A shared word or topic is not enough");
+    expect(VISUAL_RULE).toContain("If you are not sure it helps, attach nothing");
+  });
+});

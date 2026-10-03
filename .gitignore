@@ -24,3 +24,4 @@ graphify-out/*.sig
 .retrieve-cache.json
 .retrieve-cache-supermemory.json
 site/smallest/.retrieve-cache.json
+.retrieve-cache-*.json
