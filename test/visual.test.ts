@@ -22,6 +22,7 @@ const chart: Visual = {
   page: "/",
   selector: "#production > figure",
   image: "visuals/token-cost.jpg",
+  html: "visuals/token-cost.html",
   width: 600,
   height: 370,
 };
@@ -32,6 +33,7 @@ function packWithVisuals(): string {
   writeFileSync(join(dir, "visuals.json"), JSON.stringify([chart]));
   mkdirSync(join(dir, "visuals"));
   writeFileSync(join(dir, "visuals", "token-cost.jpg"), "jpg-bytes");
+  writeFileSync(join(dir, "visuals", "token-cost.html"), "<style>.w0{color:red}</style><figure class=w0>chart</figure>");
   return dir;
 }
 
@@ -70,6 +72,8 @@ describe("visuals", () => {
     const config = loadPackConfig(packWithVisuals());
     const html = packWidget("https://agent.test/", "run-1", config);
     expect(html).toContain('"image":"https://agent.test/visuals/token-cost.jpg"');
+    expect(html).toContain('"html":"https://agent.test/visuals/token-cost.html"');
+    expect(html).toContain("attachShadow");
     expect(html).toContain("Show on page");
     expect(html).toContain("#wa-root.hints #wa-chips");
     expect(html).toContain("typeHint");
@@ -85,6 +89,9 @@ describe("visuals", () => {
     const hit = await fetchFn(new Request("https://agent.test/visuals/token-cost.jpg"));
     expect(hit.status).toBe(200);
     expect(hit.headers.get("content-type")).toBe("image/jpeg");
+    const saved = await fetchFn(new Request("https://agent.test/visuals/token-cost.html"));
+    expect(saved.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+    expect(await saved.text()).toContain("<figure class=w0>");
     const escape = await fetchFn(new Request("https://agent.test/visuals/..%2Fpack.json"));
     expect(await escape.text()).not.toContain('"brand"');
   });
