@@ -360,7 +360,9 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
           const { css, out } = rebuild(text);
           if (!out.textContent.trim() && !out.querySelector("img,svg,video")) return fig.remove();
           /* Layout carries the meaning in diagrams and cards: keep the site's own layout there. */
-          if (v.kind !== "table" && out.querySelector("img,svg,video") && !out.querySelector(":scope > svg:only-child")) {
+          /* Grid and flex boxes (rate cards, plan cards, flows) and pictures carry meaning in their layout. */
+          const laidOut = /display:(inline-)?(grid|flex)/.test(css) || !!out.querySelector("img,svg,video");
+          if (v.kind !== "table" && laidOut) {
             shadow.innerHTML = "<style>:host{display:block}</style>" + repairCss(text);
             const fit = () => {
               const el = shadow.lastElementChild;
@@ -467,6 +469,19 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
           };
           card.appendChild(more);
         });
+      }
+      /* A real answer (not a question back) gets a way to go deeper. */
+      if (lead && !/\\?\\s*$/.test(lead.trim())) {
+        const acts = node("div", "wa-acts");
+        const more = node("button", "wa-deeper");
+        more.type = "button";
+        more.textContent = "Explain more";
+        more.onclick = () => {
+          acts.remove();
+          send("Explain that in more detail, with an example.");
+        };
+        acts.appendChild(more);
+        card.appendChild(acts);
       }
       card.querySelectorAll("a.wa-md-link").forEach((a) => {
         try {
@@ -793,6 +808,14 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
             mask-image: linear-gradient(#000 75%, transparent);
   }
   .wa-visual .wa-more { margin-top: 2px; }
+  .wa-acts { margin-top: 12px; display: flex; gap: 8px; }
+  .wa-deeper {
+    border: 1px solid var(--wa-edge); border-radius: 999px; cursor: pointer;
+    background: transparent; color: var(--wa-on);
+    padding: 6px 12px; font: 600 12.5px/1 ${body}; letter-spacing: -0.01em;
+    transition: background .16s ease;
+  }
+  .wa-deeper:hover { background: var(--wa-tint); }
   .wa-visual figcaption {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 8px 2px 0;

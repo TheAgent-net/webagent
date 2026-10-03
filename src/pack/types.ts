@@ -50,7 +50,7 @@ export interface AgentModel {
   id: string;
   apiBase?: string;
   reasoningEffort?: string;
-  /** Chat model that checks if a visual fits an answer. Default: gpt-4o-mini. */
+  /** Chat model that checks if a visual fits an answer. Default: the pack model. */
   visualJudge?: string;
 }
 
