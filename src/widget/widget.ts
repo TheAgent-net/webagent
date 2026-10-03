@@ -7,7 +7,8 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
   const markup = widgetMarkup(publicUrl, runId, config);
   const fabOpen = config.brand.fabLabel;
   const markdown = config.widget.markdown !== false;
-  const hints = (config.widget.chips.length ? config.widget.chips : [config.widget.placeholder || fabOpen]).slice(0, 4);
+  const typed = config.widget.hints?.length ? config.widget.hints : config.widget.chips;
+  const hints = (typed.length ? typed : [config.widget.placeholder || fabOpen]).slice(0, 8);
   const base = publicUrl.replace(/\/+$/, "");
   const visuals = Object.fromEntries(
     (config.visuals ?? []).map((v) => [
@@ -138,8 +139,10 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
     const rich = (t) => (md ? md(t) : "<p>" + esc(t).replace(/\\n/g, "<br>") + "</p>");
     const keep = () => { if (log) log.scrollTop = log.scrollHeight; };
     const path = (p) => (p || "/").replace(/\\/+$/, "") || "/";
+    const far = (v) => /^https?:/.test(v.page) && new URL(v.page).origin !== location.origin;
+    const pagePath = (v) => (/^https?:/.test(v.page) ? new URL(v.page).pathname : v.page);
     const liveFor = (v) => {
-      if (path(location.pathname) !== path(v.page)) return null;
+      if (far(v) || path(location.pathname) !== path(pagePath(v))) return null;
       try {
         const el = document.querySelector(v.selector);
         if (!el || el.closest("#wa-root")) return null;
@@ -243,9 +246,16 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
         go.innerHTML = "Show on page <span aria-hidden=\\"true\\">→</span>";
         go.onclick = () => spot(live, v.label);
         cap.appendChild(go);
-      } else if (path(location.pathname) !== path(v.page)) {
+      } else if (far(v)) {
         const go = node("a", "wa-vgo");
-        go.href = v.page + "#wa-show=" + encodeURIComponent(v.id);
+        go.href = v.page;
+        go.target = "_blank";
+        go.rel = "noopener";
+        go.innerHTML = "Open page <span aria-hidden=\\"true\\">↗</span>";
+        cap.appendChild(go);
+      } else if (path(location.pathname) !== path(pagePath(v))) {
+        const go = node("a", "wa-vgo");
+        go.href = pagePath(v) + "#wa-show=" + encodeURIComponent(v.id);
         go.innerHTML = "Open on site <span aria-hidden=\\"true\\">↗</span>";
         cap.appendChild(go);
       }
@@ -419,7 +429,7 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
   const display = b.fonts.display;
   const body = b.fonts.body;
   const google = b.fonts.google ? `@import url("${b.fonts.google}");` : "";
-  const chipList = (w.chips.length ? w.chips : config.widget.chips).slice(0, 4);
+  const chipList = w.chips.slice(0, 3);
   const chips = chipList
     .map((q) => `<button class="wa-chip" type="button" data-q="${esc(q)}">${esc(q)}</button>`)
     .join("");

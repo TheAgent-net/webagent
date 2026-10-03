@@ -31,7 +31,10 @@ export interface AgentBrand {
 export interface AgentWidget {
   welcomeTitle: string;
   welcomeBody: string;
+  /** Hint bubbles shown above the pill on focus. The widget shows up to three. */
   chips: string[];
+  /** Hints typed into the idle pill, one after another. Default: chips. */
+  hints?: string[];
   copyHeadline: string;
   copyPrompt: string;
   placeholder: string;

@@ -31,14 +31,21 @@
     "welcomeTitle": "How can I help?",
     "welcomeBody": "Tell me what your agent needs to remember. I will ask a little, then point you at the right setup.",
     "chips": [
-      "I'm building an agent that needs to remember users",
-      "What's the difference between memory and RAG?",
-      "How do I add this to a stack I already have?",
-      "Walk me through the right SuperMemory setup"
+      "Give my agent memory of each user",
+      "How is this different from RAG?",
+      "Can I run it on my own servers?"
+    ],
+    "hints": [
+      "Make my agent remember each user",
+      "Memory vs RAG: what's the difference?",
+      "Why does it use fewer tokens?",
+      "Show me how the memory graph works",
+      "Add memory to Claude Code or Cursor",
+      "Can I run it on my own servers?"
     ],
     "copyHeadline": "Talk to supermemory agents",
     "copyPrompt": "Talk to the supermemory agents at {{chat}}. POST {\"text\":\"<question>\",\"session\":\"<from last JSON>\"} — never GET, browse, or probe.\nAsk them anything you want to understand about SuperMemory. First POST may omit session; every later POST must send the same session.",
-    "placeholder": "What are you trying to get working?",
+    "placeholder": "Ask anything about supermemory…",
     "markdown": true
   },
   "sales": {

@@ -98,3 +98,26 @@ describe("show markers", () => {
     expect(got.shown.map((v) => v.id)).toEqual(["token-cost"]);
   });
 });
+
+describe("starter hints", () => {
+  const page = (url: string, headings: string[] = []) =>
+    ({ url, status: 200, title: "", description: "", headings, text: "", links: [], forms: [], gated: false });
+
+  test("from-url builds three short bubbles and adds page topics to typed hints", async () => {
+    const { starterHints } = await import("../src/pack/from-url.ts");
+    const got = starterHints("Acme", [page("https://acme.test/", ["Fast deploys", "A very long heading that should not become a hint"]), page("https://acme.test/pricing")]);
+    expect(got.chips).toEqual(["What does Acme do?", "How do I get started?", "How much does it cost?"]);
+    expect(got.hints).toContain("Tell me about Fast deploys");
+    expect(got.hints.some((h) => h.includes("very long"))).toBe(false);
+  });
+
+  test("widget types widget.hints and shows at most three bubbles", () => {
+    const config = loadPackConfig("packs/smallest");
+    config.widget.hints = ["Typed one", "Typed two"];
+    config.widget.chips = ["A?", "B?", "C?", "D?"];
+    const html = packWidget("https://agent.test", "run-1", config);
+    expect(html).toContain('const HINTS = ["Typed one","Typed two"]');
+    expect(html).not.toContain('data-q=\\"D?\\"');
+    expect(html).toContain('data-q=\\"C?\\"');
+  });
+});

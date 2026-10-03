@@ -7,6 +7,7 @@ import { DEFAULT_POLICY } from "../retrieve/policy.ts";
 import { brandFromPages, defaultWidget, extractBrand } from "./brand.ts";
 import { captureVisuals } from "../site/visual.ts";
 import { defaultInstruction } from "./load.ts";
+import type { PageShot } from "../site/types.ts";
 import type { AgentPackConfig } from "./types.ts";
 
 const UA = "webagent-ingest/0.4";
@@ -34,12 +35,8 @@ export async function fromUrl(start: string, opts: FromUrlOpts = {}): Promise<{ 
   const brand = homeHtml
     ? await extractBrand(homeHtml, origin, pages[0])
     : brandFromPages(pages, origin);
-  const chips = (pages[0]?.headings ?? [])
-    .filter((h) => h.length > 8 && h.length < 60)
-    .slice(0, 4)
-    .map((h) => "What should I know about " + h + "?");
-  if (!chips.length) chips.push("What does this site offer?", "Where do I start?");
-  const widget = defaultWidget(brand, chips);
+  const { chips, hints } = starterHints(brand.name, pages);
+  const widget = { ...defaultWidget(brand, chips), hints, placeholder: `Ask anything about ${brand.name}…` };
   const llmsTxt = llmsPages[0]?.url;
   const config: AgentPackConfig = {
     id: host,
@@ -91,6 +88,22 @@ export async function fromUrl(start: string, opts: FromUrlOpts = {}): Promise<{ 
     }
   }
   return { dir: out, config };
+}
+
+/** Short starter questions from what the crawl found. Bubbles stay generic. Typed hints add page topics. */
+export function starterHints(name: string, pages: PageShot[]): { chips: string[]; hints: string[] } {
+  const paths = pages.map((p) => new URL(p.url).pathname.toLowerCase());
+  const has = (re: RegExp) => paths.some((p) => re.test(p));
+  const chips = [`What does ${name} do?`, "How do I get started?"];
+  if (has(/pricing|plans/)) chips.push("How much does it cost?");
+  else if (has(/docs|api|reference/)) chips.push("Is there an API?");
+  else chips.push("Who is it for?");
+  const topics = (pages[0]?.headings ?? [])
+    .map((h) => h.replace(/[.:!?]+$/, "").trim())
+    .filter((h) => h.length > 6 && h.length <= 34 && h.split(/\s+/).length <= 6)
+    .slice(0, 3)
+    .map((h) => `Tell me about ${h}`);
+  return { chips, hints: [...chips, ...topics] };
 }
 
 async function tryLlms(origin: string, fetchFn: typeof fetch) {

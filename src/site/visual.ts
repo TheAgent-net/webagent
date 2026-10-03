@@ -19,9 +19,12 @@ export interface Visual {
 export interface CaptureOpts {
   out: string;
   chrome?: string;
+  /** Paths on `base`, or full URLs on other sites. A full URL becomes the visual's page. */
   pages?: string[];
   maxPages?: number;
   maxVisuals?: number;
+  /** Fetch every page request through Bun. Use behind a TLS proxy that Chromium does not trust. */
+  relay?: boolean;
 }
 
 /** Raw block from the page before the picture is saved. */
@@ -55,6 +58,7 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900, deviceScaleFactor: 1 });
+    if (opts.relay ?? !!process.env.HTTPS_PROXY) await relayRequests(page);
     const queue = opts.pages?.length ? [...opts.pages] : ["/"];
     const seen = new Set<string>();
     const maxPages = opts.maxPages ?? 8;
@@ -63,7 +67,8 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
       const path = queue.shift()!;
       if (seen.has(path)) continue;
       seen.add(path);
-      const res = await page.goto(root + path, { waitUntil: "networkidle2", timeout: 45000 }).catch(() => null);
+      const target = /^https?:\/\//.test(path) ? path : root + path;
+      const res = await page.goto(target, { waitUntil: "networkidle2", timeout: 45000 }).catch(() => null);
       if (!res || res.status() >= 400) continue;
       if (!opts.pages?.length) {
         const links = await page.evaluate(listLinks);
@@ -73,7 +78,7 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
       for (const block of blocks) {
         if (visuals.length >= maxVisuals) break;
         const id = uniqueId(block.label, used);
-        const image = await savePicture(page, root, block, join(dir, id));
+        const image = await savePicture(page, target, block, join(dir, id));
         if (!image) {
           used.delete(id);
           continue;
@@ -123,7 +128,7 @@ export function findVisuals(visuals: Visual[], query: string, extra: string[] = 
       .toLowerCase()
       .split(/[^a-z0-9]+/)
       .filter((w) => w.length > 2 && !STOP.has(w))
-      .map((w) => (w.length > 4 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
+      .map((w) => (w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
   const own = new Set(split(query));
   const terms = new Map<string, number>([...own].map((w) => [w, 1]));
   for (const t of extra.flatMap(split)) if (!terms.has(t)) terms.set(t, 0.5);
@@ -157,13 +162,33 @@ export function findVisuals(visuals: Visual[], query: string, extra: string[] = 
     .map((x) => x.v);
 }
 
-const STOP = new Set(["the", "and", "for", "how", "what", "does", "can", "you", "your", "with", "this", "that", "are", "is", "it", "do", "about", "show", "me", "much", "many", "use", "get", "work", "works"]);
+const STOP = new Set(["the", "and", "for", "how", "what", "does", "can", "you", "your", "with", "this", "that", "are", "is", "it", "do", "about", "show", "me", "much", "many", "use", "get", "work", "works", "why", "who", "when", "where", "which", "will", "would", "should", "could", "there", "they", "them", "own", "need", "want"]);
 
 type Page = import("puppeteer-core").Page;
 
-async function savePicture(page: Page, root: string, block: Block, stem: string): Promise<string> {
+/** Answer each remote request with Bun fetch, which checks TLS against the system trust store. */
+async function relayRequests(page: Page): Promise<void> {
+  await page.setRequestInterception(true);
+  page.on("request", async (req) => {
+    const url = req.url();
+    const host = /^https?:/.test(url) ? new URL(url).hostname : "";
+    if (!host || host === "127.0.0.1" || host === "localhost") return req.continue();
+    try {
+      const res = await fetch(url, { method: req.method(), headers: req.headers(), body: req.postData() });
+      const headers: Record<string, string> = {};
+      res.headers.forEach((v, k) => {
+        if (k !== "content-encoding" && k !== "content-length" && k !== "transfer-encoding") headers[k] = v;
+      });
+      await req.respond({ status: res.status, headers, body: Buffer.from(await res.arrayBuffer()) });
+    } catch {
+      await req.abort().catch(() => {});
+    }
+  });
+}
+
+async function savePicture(page: Page, pageUrl: string, block: Block, stem: string): Promise<string> {
   if (block.kind === "image" && block.src) {
-    const url = new URL(block.src, root + "/").href;
+    const url = new URL(block.src, pageUrl).href;
     const got = await page.evaluate(fetchBytes, url).catch(() => null);
     if (got && got.data) {
       const ext = extFor(got.type, url);
@@ -174,6 +199,7 @@ async function savePicture(page: Page, root: string, block: Block, stem: string)
   if (!block.shown) return "";
   const handle = await page.$(block.selector);
   if (!handle) return "";
+  await handle.evaluate(hideFloating);
   await handle.evaluate((el) => el.scrollIntoView({ block: "start" }));
   await new Promise((r) => setTimeout(r, 700));
   const box = await handle.boundingBox();
@@ -246,6 +272,15 @@ async function fetchBytes(url: string): Promise<{ type: string; data: string } |
   return { type: blob.type, data: btoa(bin) };
 }
 
+/** Hide fixed and sticky bars (headers, sidebars, chat buttons) so they do not cover the shot. */
+function hideFloating(target: Element): void {
+  for (const el of Array.from(document.querySelectorAll("body *"))) {
+    if (el === target || el.contains(target) || target.contains(el)) continue;
+    const pos = getComputedStyle(el).position;
+    if (pos === "fixed" || pos === "sticky") (el as HTMLElement).style.setProperty("visibility", "hidden", "important");
+  }
+}
+
 function listLinks(): string[] {
   const out = new Set<string>();
   for (const a of Array.from(document.querySelectorAll("a[href]"))) {
@@ -258,7 +293,8 @@ function listLinks(): string[] {
 }
 
 function listBlocks(): Block[] {
-  const clean = (s: string | null | undefined) => (s || "").replace(/\s+/g, " ").trim();
+  const clean = (s: string | null | undefined) =>
+    (s || "").replace(/[\u200b-\u200d\ufeff]/g, "").replace(/\s+/g, " ").trim();
   const cut = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s);
   const selectorFor = (el: Element): string => {
     if (el.id && document.querySelectorAll("#" + CSS.escape(el.id)).length === 1) return "#" + CSS.escape(el.id);
@@ -283,6 +319,14 @@ function listBlocks(): Block[] {
     const style = getComputedStyle(el);
     return r.width > 0 && r.height > 0 && style.display !== "none" && style.visibility !== "hidden";
   };
+  /** Text of the last h2 to h4 that comes before `el` in the page. */
+  const headingBefore = (el: Element): string => {
+    let hit = "";
+    for (const h of Array.from(document.querySelectorAll("h2, h3, h4"))) {
+      if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) hit = clean(h.textContent);
+    }
+    return hit;
+  };
   const inside = (el: Element, taken: Element[]) => taken.some((t) => t === el || t.contains(el));
   const blocks: Block[] = [];
   const taken: Element[] = [];
@@ -290,7 +334,9 @@ function listBlocks(): Block[] {
     Array.from(new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2))).slice(0, 12);
   const push = (el: Element, block: Omit<Block, "selector" | "shown" | "width" | "height" | "tags">) => {
     if (!block.label || blocks.some((b) => b.label === block.label)) return;
+    if (/^(other|related|more|recent) (posts|articles|stories)/i.test(block.label)) return;
     const r = el.getBoundingClientRect();
+    if (r.height > 0 && r.height < 120) return;
     const head = clean(el.closest("section")?.querySelector("h1, h2, h3")?.textContent);
     blocks.push({
       ...block,
@@ -321,15 +367,18 @@ function listBlocks(): Block[] {
   for (const table of Array.from(document.querySelectorAll("table"))) {
     if (inside(table, taken) || !shown(table)) continue;
     const section = table.closest("section");
+    const title = clean(document.querySelector("h1")?.textContent) || clean(document.title);
+    const near = headingBefore(table);
     const label =
       clean(table.querySelector("caption")?.textContent) ||
       clean(section?.querySelector("h2, h3")?.textContent) ||
+      (near && near !== title ? `${title}: ${near}` : title) ||
       "Table";
     const head = Array.from(table.querySelectorAll("th")).map((th) => clean(th.textContent)).filter(Boolean);
     push(table, { kind: "table", label, text: head.slice(0, 6).join(", "), src: "" });
   }
   for (const section of Array.from(document.querySelectorAll("section, [id] > header"))) {
-    if (!shown(section)) continue;
+    if (!shown(section) || section.getBoundingClientRect().height < 240) continue;
     const head = section.querySelector("h1, h2");
     const label = clean(head?.textContent);
     if (!label) continue;
