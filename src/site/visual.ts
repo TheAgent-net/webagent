@@ -329,10 +329,12 @@ function snapshotElement(root: Element): { html: string; fonts: string[] } {
   const plainStyle = frame.contentWindow!.getComputedStyle(plainProbe);
   const baseFor = (el: Element): CSSStyleDeclaration => {
     const svg = el.namespaceURI === SVG;
-    const key = (svg ? "svg:" : "") + el.localName;
+    const key = (svg ? "svg:" : "") + el.localName + (el.hasAttribute("href") ? ":href" : "");
     let cs = defaults.get(key);
     if (!cs) {
       const probe = svg ? blank.createElementNS(SVG, el.localName) : blank.createElement(el.localName);
+      /* A link only gets link color and underline when it has an href. */
+      if (el.hasAttribute("href")) probe.setAttribute("href", "#");
       (svg && el.localName !== "svg" ? svgHost : blank.body).appendChild(probe);
       cs = frame.contentWindow!.getComputedStyle(probe);
       defaults.set(key, cs);
