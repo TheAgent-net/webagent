@@ -15,6 +15,8 @@ export interface AgentBrand {
     accent: string;
     fab: string;
     fabText: string;
+    /** Panel glass color. Default: paper at 88%. */
+    glass?: string;
   };
   fonts: {
     display: string;
