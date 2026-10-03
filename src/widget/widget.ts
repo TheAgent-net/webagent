@@ -282,7 +282,10 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
               for (const k of ["colspan", "rowspan"]) if (n.getAttribute(k)) el.setAttribute(k, n.getAttribute(k));
             }
             walk(n, el);
-            if (el.textContent.trim() || el.querySelector("img,svg,video") || tag === "BR") {
+            /* An empty cell holds a column in place (a blank corner above row labels). Never drop table structure. */
+            const cell = tag === "TH" || tag === "TD";
+            const frame2 = (tag === "TR" || tag === "THEAD" || tag === "TBODY" || tag === "TFOOT" || tag === "TABLE") && el.querySelector("th,td");
+            if (cell || frame2 || el.textContent.trim() || el.querySelector("img,svg,video") || tag === "BR") {
               if (tag === "TABLE") {
                 const wrap = document.createElement("div");
                 wrap.className = "x";
