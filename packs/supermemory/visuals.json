@@ -1,0 +1,134 @@
+[
+  {
+    "id": "scatter-plot-of-arc",
+    "kind": "image",
+    "label": "Scatter plot of ARC-AGI-3 score against cost. Frontier models approach 100% at the top ri…",
+    "text": "",
+    "page": "/",
+    "selector": "#q-arc > div > img",
+    "image": "visuals/scatter-plot-of-arc.png",
+    "width": 495,
+    "height": 228
+  },
+  {
+    "id": "a-supermemory-memory-graph",
+    "kind": "image",
+    "label": "A supermemory memory graph: clusters of linked memories joined by connections across a da…",
+    "text": "",
+    "page": "/",
+    "selector": "#q-graph > div > img",
+    "image": "visuals/a-supermemory-memory-graph.jpg",
+    "width": 495,
+    "height": 241
+  },
+  {
+    "id": "the-field-a-blue",
+    "kind": "figure",
+    "label": "The field: a blue meadow, the recurring image of memory forming",
+    "text": "",
+    "page": "/",
+    "selector": "#content > div > figure",
+    "image": "visuals/the-field-a-blue.jpg",
+    "width": 640,
+    "height": 267
+  },
+  {
+    "id": "figure-1-raw-data",
+    "kind": "figure",
+    "label": "Figure 1. Raw data enters supermemory. learner-1 updates, merges, infers and forgets agai…",
+    "text": "",
+    "page": "/",
+    "selector": "#memo > figure",
+    "image": "visuals/figure-1-raw-data.jpg",
+    "width": 640,
+    "height": 414
+  },
+  {
+    "id": "per-question-token-cost",
+    "kind": "figure",
+    "label": "Per-question token cost versus corpus size",
+    "text": "",
+    "page": "/",
+    "selector": "#production > div > div:nth-of-type(5) > div:nth-of-type(2) > figure",
+    "image": "visuals/per-question-token-cost.jpg",
+    "width": 598,
+    "height": 372
+  },
+  {
+    "id": "founder-chatarmin-on-x",
+    "kind": "figure",
+    "label": "Founder, Chatarmin · on X↗",
+    "text": "",
+    "page": "/",
+    "selector": "#production > figure",
+    "image": "visuals/founder-chatarmin-on-x.jpg",
+    "width": 640,
+    "height": 92
+  },
+  {
+    "id": "server-time-then-end",
+    "kind": "table",
+    "label": "Server time, then end-to-end time, in milliseconds",
+    "text": "Operation, Server, End to end, Search, Profile",
+    "page": "/",
+    "selector": "#production > div > div:nth-of-type(1) > table",
+    "image": "visuals/server-time-then-end.jpg",
+    "width": 231,
+    "height": 93
+  },
+  {
+    "id": "what-we-do",
+    "kind": "section",
+    "label": "What we do",
+    "text": "Scale and Enterprise include advanced document extraction for PDFs, with OCR and descriptions of figures and diagrams. Free, Pro and Max keep standard PDF extr…",
+    "page": "/",
+    "selector": "#what",
+    "image": "visuals/what-we-do.jpg",
+    "width": 640,
+    "height": 646
+  },
+  {
+    "id": "in-production",
+    "kind": "section",
+    "label": "In production",
+    "text": "Our promise is the best memory for agents: the kind people feel, not just the kind that tops a benchmark.",
+    "page": "/",
+    "selector": "#production",
+    "image": "visuals/in-production.jpg",
+    "width": 640,
+    "height": 1477
+  },
+  {
+    "id": "supermemory-runs-everywhere-even",
+    "kind": "section",
+    "label": "supermemory runs everywhere, even in air-gapped environments.",
+    "text": "We build all the critical infrastructure ourselves. Which means we can deploy it wherever your data lives.",
+    "page": "/",
+    "selector": "#security",
+    "image": "visuals/supermemory-runs-everywhere-even.jpg",
+    "width": 640,
+    "height": 842
+  },
+  {
+    "id": "writing",
+    "kind": "section",
+    "label": "Writing",
+    "text": "",
+    "page": "/",
+    "selector": "#writing",
+    "image": "visuals/writing.jpg",
+    "width": 640,
+    "height": 270
+  },
+  {
+    "id": "careers",
+    "kind": "section",
+    "label": "Careers",
+    "text": "We’re a small team based in San Francisco, building the memory layer for every model and every harness. If that is the problem you want to spend the next few y…",
+    "page": "/",
+    "selector": "#careers",
+    "image": "visuals/careers.jpg",
+    "width": 640,
+    "height": 208
+  }
+]

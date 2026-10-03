@@ -1,10 +1,12 @@
-import { join } from "node:path";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { join, normalize } from "node:path";
 import type { Harness } from "../harness.ts";
 import { intake } from "../intake.ts";
 import type { AgentPackConfig } from "../pack/types.ts";
 import { isPixelClone } from "../pack/clone.ts";
 import { demoFileResponse } from "../pack/demo-site.ts";
 import { chatHowToBody } from "../pack/prompt.ts";
+import { splitShows } from "../site/visual.ts";
 import { widgetJs } from "../widget/widget.ts";
 import { agentCard, CARD_PATHS, connectPrompt, linkHeader, type AgentCardMeta } from "./card.ts";
 import { corsPreflight, withCors } from "./cors.ts";
@@ -62,6 +64,10 @@ async function route(
       headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
     });
   }
+  if (url.pathname.startsWith("/visuals/") && req.method === "GET") {
+    const file = visualFile(pack, url.pathname);
+    if (file) return file;
+  }
   if (url.pathname === "/widget.js") {
     const js = widgetJs(base, lobby.run.id, pack ?? pagePack(meta));
     return new Response(js, {
@@ -89,9 +95,11 @@ async function route(
     const text = String(body.text ?? "").trim();
     if (!text) return Response.json(chatHowToBody(base));
     const hit = sessions.open(body.session);
-    const ex = await hit.room.say(chatFrom(req, body), text);
+    const side = chatFrom(req, body);
+    const ex = await hit.room.say(side, text);
     return Response.json({
       ...ex,
+      ...(side === "machine" ? machineReply(ex.lastText, base, pack) : {}),
       session: hit.id,
       runId: hit.room.run.id,
       company: pack?.brand.name || meta.name,
@@ -185,5 +193,36 @@ function pagePack(meta: AgentCardMeta): AgentPackConfig {
       placeholder: "Ask a question",
       markdown: true,
     },
+  };
+}
+
+const PICTURE_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+  ".gif": "image/gif",
+};
+
+/** Serve one captured visual picture from the pack folder. */
+function visualFile(pack: AgentPackConfig | undefined, path: string): Response | null {
+  if (!pack?.dir) return null;
+  const root = normalize(join(pack.dir, "visuals"));
+  const abs = normalize(join(pack.dir, decodeURIComponent(path)));
+  if (!abs.startsWith(root + "/")) return null;
+  const type = PICTURE_TYPES[abs.slice(abs.lastIndexOf(".")).toLowerCase()];
+  if (!type || !existsSync(abs) || !statSync(abs).isFile()) return null;
+  return new Response(new Uint8Array(readFileSync(abs)), {
+    headers: { "Content-Type": type, "Cache-Control": "public, max-age=86400" },
+  });
+}
+
+/** A machine gets clean text plus picture links, not `[[show:id]]` markers. */
+function machineReply(lastText: string, base: string, pack?: AgentPackConfig): { lastText: string; visuals?: object[] } {
+  const { text, shown } = splitShows(lastText || "", pack?.visuals);
+  if (!shown.length) return { lastText: text };
+  return {
+    lastText: text,
+    visuals: shown.map((v) => ({ id: v.id, label: v.label, page: v.page, image: base + "/" + v.image })),
   };
 }

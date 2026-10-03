@@ -205,7 +205,7 @@ describe("supermemory pack", () => {
     expect(html).toContain("--wa-ink: #0a0a0a");
     expect(html).toContain("Ask supermemory");
     expect(html).toContain("Talk to the supermemory agents");
-    expect(html).toContain("innerHTML = md");
+    expect(html).toContain("innerHTML = rich(");
   });
 
   test("host GET / is the pixel clone + widget; GET /chat how-to; session reuse", async () => {

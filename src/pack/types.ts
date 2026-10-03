@@ -1,5 +1,6 @@
 import type { EmbedFn, DocChunk, RetrievalInfo, RetrievePolicy, RetrievePolicyJson } from "../retrieve/types.ts";
 import type { PageShot, SitePack } from "../site/types.ts";
+import type { Visual } from "../site/visual.ts";
 import type { Tool } from "../tools.ts";
 
 export interface AgentBrand {
@@ -82,6 +83,10 @@ export interface AgentPackConfig {
   tools?: string[];
   skills?: AgentSkill[];
   card?: AgentCardCfg;
+  /** Visual blocks from `visuals.json`. The loader sets this. */
+  visuals?: Visual[];
+  /** Pack folder on disk. The loader sets this. */
+  dir?: string;
 }
 
 export interface PackRuntime {

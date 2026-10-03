@@ -14,6 +14,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent ask <text>             one echo run");
   console.error("  webagent from-url <url>         crawl a site → write a pack");
   console.error("  webagent serve --pack <dir>     host a pack (widget + POST /chat)");
+  console.error("  webagent capture --pack <dir>   save site visuals for the widget (Chromium)");
   console.error("  webagent serve [addr]           generic host, no pack");
   console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
@@ -225,6 +226,36 @@ switch (args[0]) {
     console.error(`  machine ${hosted.url}/mcp  run ${hosted.room.run.id}`);
     console.error(`  local   http://127.0.0.1:${port}/`);
     await new Promise(() => {});
+    break;
+  }
+  case "capture": {
+    const pack = flag(args, "--pack");
+    if (!pack) {
+      console.error("usage: webagent capture --pack <dir> [--url <site>] [--pages /,/pricing] [--max 8]");
+      process.exit(2);
+    }
+    const { loadPackConfig } = await import("./pack/load.ts");
+    const { captureVisuals } = await import("./site/visual.ts");
+    const config = loadPackConfig(pack);
+    const clone = join(process.cwd(), "demo", config.id, "site");
+    let url = flag(args, "--url");
+    let stop = () => {};
+    if (!url && existsSync(join(clone, "index.html"))) {
+      const { serveDemoSite } = await import("./pack/demo-site.ts");
+      const site = serveDemoSite(clone, 0, "http://127.0.0.1");
+      url = "http://127.0.0.1:" + site.port;
+      stop = site.stop;
+    }
+    url ||= config.origin;
+    const pages = flag(args, "--pages")?.split(",").map((p) => p.trim()).filter(Boolean);
+    console.error("capturing visuals from " + url + " ...");
+    try {
+      const visuals = await captureVisuals(url, { out: config.dir!, pages, maxPages: Number(flag(args, "--max")) || 8 });
+      for (const v of visuals) console.error(`  ${v.kind.padEnd(8)} ${v.id.padEnd(36)} ${v.page}`);
+      console.error(`wrote ${visuals.length} visuals to ${join(config.dir!, "visuals.json")}`);
+    } finally {
+      stop();
+    }
     break;
   }
   case "serve": {

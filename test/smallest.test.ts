@@ -405,7 +405,7 @@ describe("build + host", () => {
     expect(body).not.toContain("#7CFFB2");
     expect(body).not.toContain("framerusercontent.com");
     expect(body).toContain("wa-md-link");
-    expect(body).toContain("innerHTML = md");
+    expect(body).toContain("innerHTML = rich(");
     expect(body).toContain("/widget.js");
 
     const cardRes = await fetchFn(new Request("http://t/", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
