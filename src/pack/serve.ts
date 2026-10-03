@@ -3,6 +3,7 @@ import { listen, type Hosted } from "../host/listen.ts";
 import { openaiModel } from "../models.ts";
 import { attachAgent, attachPackTools } from "./attach.ts";
 import { openPack, type BuildAgentOpts } from "./build.ts";
+import { embedVisuals, pickVisual } from "./docs.ts";
 import type { PackRuntime } from "./types.ts";
 
 export interface ServePackOpts extends BuildAgentOpts {
@@ -15,6 +16,12 @@ export interface ServePackOpts extends BuildAgentOpts {
 export async function servePack(dir: string, opts: ServePackOpts = {}): Promise<{ hosted: Hosted; runtime: PackRuntime; modelName: string }> {
   const h = opts.harness ?? defaultHarness();
   const runtime = await openPack(dir, opts);
+  try {
+    const n = await embedVisuals(runtime, opts.embed);
+    if (n) console.error("indexed " + n + " visual descriptions");
+  } catch (err) {
+    console.error("visual embeddings skipped:", err instanceof Error ? err.message : err);
+  }
   const pin = runtime.config.model?.id;
   const hasKey = !!process.env.OPENAI_API_KEY;
   if (hasKey && pin) {
@@ -24,6 +31,7 @@ export async function servePack(dir: string, opts: ServePackOpts = {}): Promise<
         baseUrl: runtime.config.model?.apiBase || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
         model: pin,
         apiKeyEnv: "OPENAI_API_KEY",
+        reasoningEffort: runtime.config.model?.reasoningEffort,
       }),
     );
   }
@@ -40,6 +48,7 @@ export async function servePack(dir: string, opts: ServePackOpts = {}): Promise<
     model: modelId,
     publicUrl,
     pack: runtime.config,
+    finish: runtime.config.visuals?.length ? (said, reply) => pickVisual(runtime, said, reply) : undefined,
     card: {
       name: runtime.config.brand.name,
       description: runtime.config.card?.description || runtime.config.brand.tagline,

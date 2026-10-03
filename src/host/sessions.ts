@@ -61,7 +61,7 @@ export function cloneRoom(harness: Harness, src: Room): Room {
     tools,
   });
   for (const pin of pins) run.inject({ vars: pin.content });
-  return new Room(harness, { run });
+  return new Room(harness, { run, finish: src.finish });
 }
 
 function sanitize(id?: string | null): string | undefined {

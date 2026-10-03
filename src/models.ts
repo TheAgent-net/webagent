@@ -90,7 +90,22 @@ function lastUser(msgs: readonly Message[]): string {
   return "";
 }
 
-export function openaiModel(opts: { id: string; baseUrl: string; model: string; apiKeyEnv: string }): Model {
+/** Luna reasons by default. Other GPT-5 models stay at none unless pack/env sets it. */
+export function reasoningEffortFor(model: string, explicit?: string): string | undefined {
+  const set = (explicit || process.env.OPENAI_REASONING_EFFORT || "").trim();
+  if (set) return set;
+  if (/luna/i.test(model)) return "medium";
+  if (/gpt-5/i.test(model)) return "none";
+  return undefined;
+}
+
+export function openaiModel(opts: {
+  id: string;
+  baseUrl: string;
+  model: string;
+  apiKeyEnv: string;
+  reasoningEffort?: string;
+}): Model {
   const key = process.env[opts.apiKeyEnv] ?? "";
   return {
     id: opts.id,
@@ -106,10 +121,14 @@ export function openaiModel(opts: { id: string; baseUrl: string; model: string; 
         await reasonResponses(base, opts.model, req, out, headers, signal);
         return;
       }
-      const body: Record<string, unknown> = { model: opts.model, messages: toOpenAI(req.messages) };
-      if (/gpt-5/i.test(opts.model)) {
-        body.reasoning_effort = process.env.OPENAI_REASONING_EFFORT || "none";
+      const effort = /gpt-5/i.test(opts.model) ? reasoningEffortFor(opts.model, opts.reasoningEffort) : undefined;
+      /* Chat completions refuses function tools with reasoning. Send those turns to /responses. */
+      if (effort && effort !== "none" && req.tools.length) {
+        await reasonResponses(base, opts.model, req, out, headers, signal, effort);
+        return;
       }
+      const body: Record<string, unknown> = { model: opts.model, messages: toOpenAI(req.messages) };
+      if (effort) body.reasoning_effort = effort;
       if (req.tools.length) {
         body.tools = req.tools.map((t) => ({
           type: "function",
@@ -215,11 +234,13 @@ async function reasonResponses(
   out: Assembler,
   headers: Record<string, string>,
   signal?: AbortSignal,
+  effort?: string,
 ): Promise<void> {
   const body: Record<string, unknown> = {
     model,
     input: toResponsesInput(req.messages),
   };
+  if (effort) body.reasoning = { effort };
   if (req.tools.length) {
     body.tools = req.tools.map((t) => ({
       type: "function",

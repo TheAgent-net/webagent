@@ -4,7 +4,7 @@ import type { AgentPackConfig } from "../pack/types.ts";
 import type { AgentCardMeta } from "./card.ts";
 import { host } from "./host.ts";
 import { tapFetch, type Hop } from "./hop.ts";
-import { Room } from "./room.ts";
+import { Room, type Finish } from "./room.ts";
 import { Sessions } from "./sessions.ts";
 
 export type { Hop } from "./hop.ts";
@@ -19,6 +19,8 @@ export interface ListenOpts {
   onHop?: (hop: Hop) => void;
   card?: AgentCardMeta;
   pack?: AgentPackConfig;
+  /** Last step on every reply. */
+  finish?: Finish;
 }
 
 export interface Hosted {
@@ -32,7 +34,7 @@ export interface Hosted {
 export function listen(harness: Harness, opts: ListenOpts = {}): Hosted {
   const port = opts.port ?? 8787;
   const hostname = opts.hostname ?? "0.0.0.0";
-  const room = new Room(harness, { model: opts.model ?? "echo", run: opts.run });
+  const room = new Room(harness, { model: opts.model ?? "echo", run: opts.run, finish: opts.finish });
   const sessions = new Sessions(harness, room);
   const tls = tlsEnv();
   const localProto = tls ? "https" : "http";

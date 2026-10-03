@@ -1,0 +1,71 @@
+# supermemory
+
+> Agents need memory. supermemory is building the default engine for memory and continual learning for agents, available through an API, plugins, and MCP.
+
+supermemory builds the learning systems that make continuously improving AI possible. Our model, learner-1, extracts and dreams on the context of every user, task, and tenant, stores it in a vector-graph database, and brings it back to the model by injecting tokens into its context in real time. Learning and memory live outside the model providers, so they carry across any model and any harness. Today supermemory serves the memory and context for 100k+ organizations, with tens of millions of end users, processing over a trillion tokens every month.
+
+## Quick Start
+
+- [API documentation](/docs)
+- [Complete documentation index](/docs/llms.txt)
+- [Coding agent setup: CLI, skill, and docs MCP](/docs/agents-and-mcp)
+- [Quickstart: add, wait for processing, and retrieve](/docs/quickstart)
+- [TypeScript and Python SDKs](/docs/integrations/supermemory-sdk)
+- [Console: plugins, documents, memories, API keys, and billing](https://console.supermemory.ai)
+
+## Core API Endpoints
+
+- Add content for memory extraction: POST https://api.supermemory.ai/v3/documents
+- Read processing status: GET https://api.supermemory.ai/v3/documents/{id}
+- Search documents: POST https://api.supermemory.ai/v3/search
+- Search memories: POST https://api.supermemory.ai/v4/search
+- OpenAPI specification (request schemas and authentication): /openapi.json
+
+API requests require an API key from the console, sent as Authorization: Bearer <SUPERMEMORY_API_KEY>. Keep keys out of browser code and public files.
+Adding content is asynchronous: wait for processing to finish before retrieval. For immediate memory tests, the quickstart documents dreaming: "instant" and its additional operation charge.
+
+The docs MCP at /docs/mcp searches documentation for coding agents. The Memory MCP at https://mcp.supermemory.ai/mcp stores and recalls user memories; see /docs/supermemory-mcp/setup for authentication and setup.
+
+## Integrations
+
+Works with: TypeScript, Python, REST API, Claude Code, Cursor, OpenClaw, OpenCode, Windsurf, Hermes, ChatGPT, Claude, Grok, Vercel AI SDK, LangChain, LangGraph, CrewAI, OpenAI SDK, Mastra, Zapier, n8n, Pipecat, LiveKit
+
+- [All integrations](/docs/integrations/supermemory-sdk)
+- [Agents and MCP](/docs/agents-and-mcp)
+- [supermemory MCP](/docs/supermemory-mcp/setup)
+- [Connectors](/docs/connectors/overview)
+
+## What we do
+
+- **Memory that keeps learning**: learner-1 extracts and dreams on the context of every user, task, and tenant, stores it in a vector-graph database, and brings it back to the model by injecting tokens into its context in real time.
+- **Any model, any harness**: learning and memory live outside the model providers, so they carry across models and harnesses and stay interoperable, in context, and yours.
+- **The hard infrastructure, done**: dense, interconnected, growing learnings with an understanding of time, already serving 100k+ organizations and over a trillion tokens a month.
+- **Advanced document extraction**: Scale and Enterprise include advanced PDF extraction with OCR and descriptions of figures and diagrams. Free, Pro and Max keep standard PDF extraction. [Document support](/docs/concepts/content-types#advanced-document-extraction).
+
+## Research
+
+- [Research](/research)
+- MemoryBench (our open eval platform): https://git.new/membench
+- [Blog](/blog): engineering notes, technical reports, and announcements
+
+## Pricing
+
+Usage-based, with monthly credits included in every plan. Same per-unit rates on every plan; supported updates using the same customId in the same organization bill only the net-new token delta. New document identities and full replacements can incur fresh ingestion charges; search and other operations are metered separately.
+
+- [Product](/product): what the memory engine does: memories, the graph that infers, updates and forgets, profiles, recall, connectors, SDKs and plugins, hosting (cloud, dedicated, or a local binary)
+
+- [Pricing](/pricing)
+- [Talk to sales](https://cal.com/supermemory/meet?overlayCalendar=true)
+
+## Company
+
+- Website: 
+- GitHub: https://github.com/supermemoryai
+- X/Twitter: https://x.com/supermemory
+- Security: https://supermemory.link/security
+- Contact: https://cal.com/supermemory/meet?overlayCalendar=true
+
+## Optional
+
+- [llms-full.txt](/llms-full.txt): the long form, with features, endpoints, and pages
+- [Changelog](/changelog)

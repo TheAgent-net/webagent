@@ -399,13 +399,13 @@ describe("build + host", () => {
     expect(body).toContain("Ask Smallest");
     expect(body).toContain("smallest.ai");
     expect(body).toContain("font-family: Geist");
-    expect(body).toContain("background: #191919");
-    expect(body).toContain("background: #f5f5f5");
     expect(body).toContain("--wa-ink: #191919");
+    expect(body).toContain("--wa-wash: #f5f5f5");
+    expect(body).toContain("getElementById(\"wa-hint\")");
     expect(body).not.toContain("#7CFFB2");
     expect(body).not.toContain("framerusercontent.com");
     expect(body).toContain("wa-md-link");
-    expect(body).toContain("innerHTML = md");
+    expect(body).toContain("innerHTML = rich(");
     expect(body).toContain("/widget.js");
 
     const cardRes = await fetchFn(new Request("http://t/", { headers: { Accept: "application/json", "User-Agent": "curl/8" } }));
