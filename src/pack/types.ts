@@ -104,6 +104,8 @@ export interface PackRuntime {
   chunks: DocChunk[];
   retrieval?: RetrievalInfo;
   embedQuery?: EmbedFn;
+  /** Embedding of each visual's description, by visual id. Empty without an embedder. */
+  visualVectors?: Map<string, number[]>;
 }
 
 export interface PackToolAttach {

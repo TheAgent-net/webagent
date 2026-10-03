@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 /** One visual block on a site page: an image, a figure, a table, or a section. */
@@ -122,6 +122,33 @@ export function splitShows(text: string, visuals: Visual[] = []): { text: string
     .replace(/\n{3,}/g, "\n\n")
     .trim();
   return { text: clean, shown };
+}
+
+/**
+ * Say what a visual shows, in words: label, section, caption, and the visible text of the saved element.
+ * Retrieval embeds this text, and the model reads it to judge relevance.
+ */
+export function describeVisual(v: Visual, dir?: string, max = 700): string {
+  const parts = [v.label, (v.tags ?? []).filter((t) => t !== v.kind).join(" "), v.text];
+  if (v.html && dir) {
+    try {
+      const html = readFileSync(join(dir, v.html), "utf8");
+      parts.push(
+        html
+          .replace(/<style[\s\S]*?<\/style>/gi, " ")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&#39;|&quot;/g, "'"),
+      );
+    } catch {
+      /* no saved element: label and caption only */
+    }
+  }
+  const text = parts.filter(Boolean).join(". ").replace(/\s+/g, " ").trim();
+  return text.length > max ? text.slice(0, max - 1) + "…" : text;
 }
 
 /**

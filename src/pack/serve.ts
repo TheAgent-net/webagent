@@ -3,6 +3,7 @@ import { listen, type Hosted } from "../host/listen.ts";
 import { openaiModel } from "../models.ts";
 import { attachAgent, attachPackTools } from "./attach.ts";
 import { openPack, type BuildAgentOpts } from "./build.ts";
+import { embedVisuals } from "./docs.ts";
 import type { PackRuntime } from "./types.ts";
 
 export interface ServePackOpts extends BuildAgentOpts {
@@ -15,6 +16,11 @@ export interface ServePackOpts extends BuildAgentOpts {
 export async function servePack(dir: string, opts: ServePackOpts = {}): Promise<{ hosted: Hosted; runtime: PackRuntime; modelName: string }> {
   const h = opts.harness ?? defaultHarness();
   const runtime = await openPack(dir, opts);
+  try {
+    await embedVisuals(runtime, opts.embed);
+  } catch (err) {
+    console.error("visual embeddings skipped:", err instanceof Error ? err.message : err);
+  }
   const pin = runtime.config.model?.id;
   const hasKey = !!process.env.OPENAI_API_KEY;
   if (hasKey && pin) {

@@ -50,7 +50,9 @@ export const REPLY_SHAPE = [
 /** How to attach a site visual that docs_lookup returned. */
 export const VISUAL_RULE = [
   "VISUALS FROM THE SITE",
-  "docs_lookup can return visuals: charts, diagrams, tables, or sections from the site, each with an id.",
-  "Attach one when it shows the answer better than words. Write [[show:ID]] on its own line after the first paragraph.",
-  "Use at most one per reply. Do not attach one to a greeting or a question back. Use only an id that docs_lookup returned.",
+  "docs_lookup can return visuals: charts, diagrams, tables, or sections from the site. Each has an id, a label, and `shows`: what it contains.",
+  "Read `shows`. Attach a visual only when it directly shows the answer to this question, so the visitor understands faster than from words.",
+  "A shared word or topic is not enough. A high relevance score is not enough. If you are not sure it helps, attach nothing.",
+  "To attach one, write [[show:ID]] on its own line after the first paragraph. Use at most one per reply.",
+  "Never attach one to a greeting or a question back. Use only an id that docs_lookup returned in this turn.",
 ].join("\n");
