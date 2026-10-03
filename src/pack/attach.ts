@@ -8,7 +8,8 @@ import type { PackRuntime } from "./types.ts";
 
 /**
  * Bind a pack agent. The run gets one system prompt in a fixed order:
- * pack instruction, reply shape, visual rule. Tools: docs_lookup plus the pack's own tools.
+ * pack instruction, then reply shape. Tools: docs_lookup plus the pack's own tools.
+ * Visuals are not the model's job: pickVisual attaches one after the answer.
  * Pass `instruction` to try a different pack instruction (prompt tuning).
  */
 export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: string; instruction?: string }): Run {
@@ -19,7 +20,7 @@ export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: s
 
 /** The full system prompt for a pack run. */
 export function composePrompt(runtime: PackRuntime, instruction = runtime.instruction): string {
-  return [instruction.trim(), REPLY_SHAPE, runtime.config.visuals?.length ? VISUAL_RULE : ""].filter(Boolean).join("\n\n");
+  return [instruction.trim(), REPLY_SHAPE].filter(Boolean).join("\n\n");
 }
 
 export async function attachPackTools(h: Harness, run: Run, runtime: PackRuntime): Promise<void> {
@@ -42,14 +43,7 @@ export const REPLY_SHAPE = [
   "- Then add detail only if it helps: at most 3 short bullets, or 3-5 numbered steps for a setup.",
   "- Use plain words. One idea per sentence. Bold only the one key term.",
   "- A greeting or a question back to the visitor is one short paragraph.",
+  "- Speak about the product, not about your sources. Never say \"the docs say\", \"the docs do not specify\", \"according to the documentation\", or \"I could not find\".",
+  "- State what is true. Leave out what you do not know. If the visitor needs an exact fact you do not have, offer to connect them with the team.",
 ].join("\n");
 
-/** How to attach a site visual that docs_lookup returned. */
-export const VISUAL_RULE = [
-  "VISUALS FROM THE SITE",
-  "docs_lookup can return visuals: charts, diagrams, tables, or sections from the site. Each has an id, a label, and `shows`: what it contains.",
-  "Read `shows`. Attach a visual only when it directly shows the answer to this question, so the visitor understands faster than from words.",
-  "A shared word or topic is not enough. A high relevance score is not enough. If you are not sure it helps, attach nothing.",
-  "To attach one, write [[show:ID]] on its own line after the first paragraph. Use at most one per reply.",
-  "Never attach one to a greeting or a question back. Use only an id that docs_lookup returned in this turn.",
-].join("\n");

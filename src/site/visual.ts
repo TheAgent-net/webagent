@@ -411,6 +411,13 @@ function snapshotElement(root: Element): { html: string; fonts: string[] } {
     const cs = getComputedStyle(src);
     const parent = i === 0 || !src.parentElement ? undefined : getComputedStyle(src.parentElement);
     let main = styleText(cs, baseFor(src), parent, src.namespaceURI === SVG ? baseFor(svgHost) : plainStyle);
+    /* A width that matches the default still matters when the style is set: without it, "solid" draws 3px. */
+    for (const side of ["top", "right", "bottom", "left"]) {
+      if (cs.getPropertyValue(`border-${side}-style`) !== "none" && !main.includes(`border-${side}-width:`)) {
+        main += `border-${side}-width:${cs.getPropertyValue(`border-${side}-width`)};`;
+      }
+    }
+    if (cs.outlineStyle !== "none" && !main.includes("outline-width:")) main += `outline-width:${cs.outlineWidth};`;
     if (cs.position === "sticky" || cs.position === "fixed") main += "position:static;";
     if (cs.overflowX !== "visible" && src.scrollWidth > src.clientWidth + 4) {
       main += `overflow:visible;width:${src.scrollWidth}px;max-width:none;`;

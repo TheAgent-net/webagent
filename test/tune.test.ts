@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { composePrompt, REPLY_SHAPE, VISUAL_RULE } from "../src/pack/attach.ts";
+import { composePrompt, REPLY_SHAPE } from "../src/pack/attach.ts";
 import { loadPackConfig, packPolicy } from "../src/pack/index.ts";
 import { checkReply, paretoFront, pickParent, type Candidate, type CaseScore, type TuneCase } from "../src/pack/tune.ts";
 
@@ -42,11 +42,12 @@ describe("tune selection", () => {
 });
 
 describe("one system prompt", () => {
-  test("pack instruction, then reply shape, then the visual rule", () => {
+  test("pack instruction, then reply shape; visuals stay out of the prompt", () => {
     const config = loadPackConfig("packs/smallest");
     const runtime = { config, dir: "", instruction: "PACK RULES", policy: packPolicy(config), site: {} as never, pages: [], chunks: [] };
     expect(composePrompt(runtime)).toBe("PACK RULES\n\n" + REPLY_SHAPE);
     config.visuals = [{ id: "x", kind: "figure", label: "X", text: "", page: "/", selector: "#x", image: "visuals/x.jpg", width: 1, height: 1 }];
-    expect(composePrompt(runtime, "TRY THIS")).toBe("TRY THIS\n\n" + REPLY_SHAPE + "\n\n" + VISUAL_RULE);
+    expect(composePrompt(runtime, "TRY THIS")).toBe("TRY THIS\n\n" + REPLY_SHAPE);
+    expect(REPLY_SHAPE).toContain("the docs do not specify");
   });
 });

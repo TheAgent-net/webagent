@@ -9,7 +9,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Harness } from "../harness.ts";
 import { openaiModel } from "../models.ts";
-import { attachAgent, attachPackTools, REPLY_SHAPE, VISUAL_RULE } from "./attach.ts";
+import { attachAgent, attachPackTools, REPLY_SHAPE } from "./attach.ts";
+import { pickVisual } from "./docs.ts";
 import type { PackRuntime } from "./types.ts";
 
 /** One visitor scenario. The last turn's reply is scored. */
@@ -142,7 +143,7 @@ export async function tunePrompt(runtime: PackRuntime, cases: TuneCase[], opts: 
     for (const turn of c.turns) {
       run.inject({ text: "[human] " + turn });
       const ex = await run.start();
-      replies.push(ex.lastText ?? "");
+      replies.push(await pickVisual(runtime, turn, ex.lastText ?? "").catch(() => ex.lastText ?? ""));
     }
     const calls = run.getContext().flatMap((m) => (m.toolCalls ?? []).map((t) => t.name));
     return { replies, calls };
@@ -244,13 +245,12 @@ async function reflect(base: string, key: string, model: string, text: string, w
         "You improve the instruction (system prompt) of a website assistant. Read the failures, find the rule that caused each one, and fix it.",
         "Keep every product fact that is in the current instruction. Do not invent facts.",
         "Keep behavior that already works. Remove repetition and rules that fight each other.",
-        "The platform adds the two blocks below after your instruction. Do not repeat them, and do not contradict them.",
+        "The platform adds the block below after your instruction. Do not repeat it, and do not contradict it.",
+        "The platform picks visuals by itself after each answer. Do not write rules about visuals.",
         "Write in short, plain sentences. Use headed sections and lists. Stay under 750 words.",
         "Return only the new instruction text.",
         "",
         REPLY_SHAPE,
-        "",
-        VISUAL_RULE,
       ].join("\n"),
     },
     { role: "user", content: `CURRENT INSTRUCTION\n<<<\n${text}\n>>>\n\nFAILURES\n${evidence}` },
