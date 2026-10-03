@@ -109,14 +109,14 @@ describe("supermemory pack", () => {
     expect(copy).toContain("Talk to the supermemory agents at https://sm.test/chat");
     expect(copy).toContain("never GET, browse, or probe");
     const instruction = loadInstruction("packs/supermemory", config);
-    expect(instruction).toContain("ONE question");
-    expect(instruction).toContain("THREE WAYS OUT");
+    expect(instruction).toContain("One question only");
+    expect(instruction).toContain("three ways out");
     expect(instruction).toContain("docs_lookup");
     expect(instruction).toContain("capture_intent");
     expect(instruction).toContain("recommend_path");
     expect(instruction).toMatch(/FIRST PATH|hosted Memory API/i);
     expect(instruction).toMatch(/self-host/i);
-    expect(instruction).toContain("Do not interview");
+    expect(instruction).toContain("Do not start an interview");
   });
 
   test("parseLlmsIndex reads supermemory docs links", () => {

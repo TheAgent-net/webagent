@@ -18,6 +18,7 @@ import {
 } from "./intent.ts";
 import { planText, recommendPath } from "./recommend.ts";
 
+/** Add the setup tools. The rules for when to call them live in instruction.md. */
 export function attach(h: Harness, run: Run, _runtime: PackRuntime): void {
   const capture = captureIntentTool();
   const rec = recommendPathTool();
@@ -25,16 +26,6 @@ export function attach(h: Harness, run: Run, _runtime: PackRuntime): void {
   h.addTool(rec);
   run.useTool(capture);
   run.useTool(rec);
-  run.inject({
-    vars: [
-      "You are the supermemory assistant. Lead with the hosted Memory API.",
-      "If they asked about SuperMemory, answer it. Do not start a setup interview on a product question.",
-      "Explore the visitor first when they want a setup. Do not dump MCP vs SDK vs self-host.",
-      "Greeting only: two short sentences on how you can help, then one open question about them.",
-      "If they mention Mem0, Pinecone, or LangChain, do not start there. Hosted SuperMemory first. That stack is only if they must keep it.",
-      "Self-host only if data must stay local. Plugins/MCP only after they said they already have an assistant.",
-    ].join("\n"),
-  });
 }
 
 export function captureIntentTool(): Tool {
