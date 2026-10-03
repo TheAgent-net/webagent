@@ -16,7 +16,13 @@ export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: s
     vars: [
       "You are the " + runtime.config.brand.name + " assistant.",
       "Docs at " + (runtime.config.docs?.origin || runtime.config.origin) + ".",
-      "Retrieval: " + (runtime.retrieval?.mode ?? "lexical") + ", " + runtime.chunks.length + " chunks.",
+      "Retrieval: " +
+        (runtime.retrieval?.mode ?? "lexical") +
+        ", " +
+        runtime.chunks.length +
+        " chunks" +
+        (runtime.visualVectors?.size ? ", " + runtime.visualVectors.size + " visuals" : "") +
+        ".",
       "Call docs_lookup for a quote or URL.",
     ].join("\n"),
   });
