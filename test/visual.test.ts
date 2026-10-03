@@ -6,7 +6,7 @@ import { Harness } from "../src/harness.ts";
 import { host } from "../src/host/host.ts";
 import { Room } from "../src/host/room.ts";
 import { Sessions } from "../src/host/sessions.ts";
-import { REPLY_SHAPE, VISUAL_RULE } from "../src/pack/attach.ts";
+import { REPLY_SHAPE } from "../src/pack/attach.ts";
 import { iconHref } from "../src/pack/brand.ts";
 import { docsLookupTool } from "../src/pack/docs.ts";
 import { loadPackConfig, packPolicy } from "../src/pack/index.ts";
@@ -52,13 +52,11 @@ describe("visuals", () => {
     expect(findVisuals([chart, deploy], "pricing")).toEqual([]);
   });
 
-  test("docs_lookup returns matching visuals; the prompt holds only the rule", async () => {
+  test("docs_lookup returns pages only; reply rules keep the answer first", async () => {
     const config = loadPackConfig(packWithVisuals());
     const runtime = { config, dir: config.dir!, instruction: "", policy: packPolicy(config), site: {} as never, pages: [], chunks: [] };
     const out = (await docsLookupTool(runtime).call({ query: "token cost per question" })) as { visuals?: { id: string }[] };
-    expect(out.visuals?.map((v) => v.id)).toEqual(["token-cost"]);
-    expect(VISUAL_RULE).toContain("[[show:ID]]");
-    expect(VISUAL_RULE).not.toContain("token-cost");
+    expect(out.visuals).toBeUndefined();
     expect(REPLY_SHAPE).toContain("first paragraph");
   });
 
@@ -154,8 +152,44 @@ describe("visual relevance", () => {
     expect(await relevantVisuals(runtime as never, "hello there", [], fake)).toEqual([]);
   });
 
-  test("the rule puts relevance before shared words", () => {
-    expect(VISUAL_RULE).toContain("A shared word or topic is not enough");
-    expect(VISUAL_RULE).toContain("If you are not sure it helps, attach nothing");
+});
+
+describe("visual pick after the answer", () => {
+  const axes = ["price", "token", "graph"];
+  const fake = async (texts: string[]) =>
+    texts.map((t) => {
+      const low = t.toLowerCase();
+      const v = axes.map((a) => (low.includes(a) ? 1 : 0));
+      if (/cost|plan|usd/.test(low)) v[0] += 1;
+      return v.some(Boolean) ? v : [0, 0, 0.01];
+    });
+  const setup = async () => {
+    const { embedVisuals } = await import("../src/pack/docs.ts");
+    const config = loadPackConfig(packWithVisuals());
+    const plans: Visual = { ...chart, id: "plans", label: "Plans", text: "Pro 19 USD per month", tags: ["section"], html: undefined };
+    config.visuals = [chart, plans];
+    const runtime = { config, dir: config.dir!, instruction: "", policy: packPolicy(config), site: {} as never, pages: [], chunks: [] };
+    await embedVisuals(runtime as never, fake);
+    return runtime;
+  };
+  const answer = "Plans start free. Pro costs 19 USD a month and includes 20 USD of credits.\n\n- Max is 100 USD.";
+
+  test("the judge's pick goes after the first paragraph", async () => {
+    const { pickVisual } = await import("../src/pack/docs.ts");
+    const runtime = await setup();
+    const out = await pickVisual(runtime as never, "what does it cost", answer, {
+      embed: fake,
+      judge: async () => JSON.stringify({ id: "plans" }),
+    });
+    expect(out).toBe("Plans start free. Pro costs 19 USD a month and includes 20 USD of credits.\n\n[[show:plans]]\n\n- Max is 100 USD.");
+  });
+
+  test("no visual when the judge says none, for a question back, or for an unknown id", async () => {
+    const { pickVisual } = await import("../src/pack/docs.ts");
+    const runtime = await setup();
+    expect(await pickVisual(runtime as never, "what does it cost", answer, { embed: fake, judge: async () => '{"id":null}' })).toBe(answer);
+    expect(await pickVisual(runtime as never, "what does it cost", answer, { embed: fake, judge: async () => '{"id":"made-up"}' })).toBe(answer);
+    const back = "Happy to help with pricing for your team. How many end users will it serve?";
+    expect(await pickVisual(runtime as never, "pricing?", back, { embed: fake, judge: async () => '{"id":"plans"}' })).toBe(back);
   });
 });

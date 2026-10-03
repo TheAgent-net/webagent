@@ -3,7 +3,7 @@ import { listen, type Hosted } from "../host/listen.ts";
 import { openaiModel } from "../models.ts";
 import { attachAgent, attachPackTools } from "./attach.ts";
 import { openPack, type BuildAgentOpts } from "./build.ts";
-import { embedVisuals } from "./docs.ts";
+import { embedVisuals, pickVisual } from "./docs.ts";
 import type { PackRuntime } from "./types.ts";
 
 export interface ServePackOpts extends BuildAgentOpts {
@@ -48,6 +48,7 @@ export async function servePack(dir: string, opts: ServePackOpts = {}): Promise<
     model: modelId,
     publicUrl,
     pack: runtime.config,
+    finish: runtime.config.visuals?.length ? (said, reply) => pickVisual(runtime, said, reply) : undefined,
     card: {
       name: runtime.config.brand.name,
       description: runtime.config.card?.description || runtime.config.brand.tagline,
