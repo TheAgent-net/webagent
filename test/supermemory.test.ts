@@ -203,12 +203,17 @@ describe("supermemory pack", () => {
     expect(local.path).toMatch(/Self-host/i);
     expect(local.docs[0]?.url).toContain("self-hosting");
 
+    const cursor = recommendPath(inferIntent("How do I add SuperMemory memory to Cursor?"));
+    expect(cursor.docs[0]?.url).toContain("/integrations/cursor");
+    expect(cursor.implementation[0]).toMatch(/add-plugin cursor-supermemory/);
+
     const notYet = await rec.call({ use_case: "" });
     expect((notYet as { enough: boolean }).enough).toBe(false);
   });
 
   test("info questions skip the interview", () => {
     expect(isInfoQuestion("what is supermemory")).toBe(true);
+    expect(isInfoQuestion("How do I add SuperMemory memory to Cursor?")).toBe(true);
     expect(isInfoQuestion("I'm building an agent that needs to remember users")).toBe(false);
   });
 
