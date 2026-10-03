@@ -19,6 +19,7 @@ const LLMS = `
 - [User profiles](https://supermemory.ai/docs/concepts/user-profiles.md): Static + dynamic facts.
 - [Self-hosting](https://supermemory.ai/docs/self-hosting/overview.md): Local binary.
 - [Pipecat](https://supermemory.ai/docs/integrations/pipecat.md): Voice memory plugin.
+- [Cursor](https://supermemory.ai/docs/integrations/cursor.md): cursor-supermemory: persistent memory across your Cursor chats.
 - [MCP](https://supermemory.ai/docs/supermemory-mcp/mcp.md): Give every MCP-compatible assistant shared memory.
 `;
 
@@ -60,6 +61,11 @@ function mockFetch(): typeof fetch {
     }
     if (url.includes("pipecat")) {
       return new Response("# Pipecat\nConversational memory plugin for a voice pipeline.", {
+        headers: { "content-type": "text/markdown" },
+      });
+    }
+    if (url.includes("/integrations/cursor")) {
+      return new Response("# Cursor\nInstall with /add-plugin cursor-supermemory so Cursor chats keep memory.", {
         headers: { "content-type": "text/markdown" },
       });
     }
@@ -121,7 +127,7 @@ describe("supermemory pack", () => {
 
   test("parseLlmsIndex reads supermemory docs links", () => {
     const links = parseLlmsIndex(LLMS);
-    expect(links.length).toBe(6);
+    expect(links.length).toBe(7);
     expect(links.some((l) => l.mdUrl.endsWith("quickstart.md"))).toBe(true);
     expect(links.every((l) => l.url.startsWith("https://supermemory.ai/docs/"))).toBe(true);
     const ranked = rankDocLinks(links, ["/docs/quickstart", "/docs/concepts/memory-vs-rag"]);
@@ -165,6 +171,13 @@ describe("supermemory pack", () => {
       policy,
     );
     expect(plugin[0]?.url).toMatch(/mcp|pipecat/i);
+
+    const cursor = searchHits(
+      { origin: pack.origin, pages: pack.pages, chunks: pack.chunks },
+      "How do I add SuperMemory memory to Cursor?",
+      policy,
+    );
+    expect(cursor[0]?.url).toMatch(/integrations\/cursor/i);
   });
 
   test("capture_intent answers product questions and recommend_path leads hosted", async () => {
