@@ -7,6 +7,8 @@ export interface Visual {
   kind: "image" | "figure" | "table" | "section";
   label: string;
   text: string;
+  /** Search words: the kind plus the heading of the section that holds it. */
+  tags?: string[];
   page: string;
   selector: string;
   image: string;
@@ -25,6 +27,7 @@ export interface CaptureOpts {
 /** Raw block from the page before the picture is saved. */
 interface Block {
   kind: Visual["kind"];
+  tags: string[];
   label: string;
   text: string;
   selector: string;
@@ -80,6 +83,7 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
           kind: block.kind,
           label: block.label,
           text: block.text,
+          tags: block.tags,
           page: path,
           selector: block.selector,
           image: "visuals/" + image,
@@ -109,12 +113,51 @@ export function splitShows(text: string, visuals: Visual[] = []): { text: string
   return { text: clean, shown };
 }
 
-/** Short catalog line per visual for the model. */
-export function listVisualLines(visuals: Visual[]): string {
-  return visuals
-    .map((v) => `- ${v.id}: ${v.label}${v.text ? " — " + v.text : ""} (page ${v.page})`)
-    .join("\n");
+/**
+ * Rank visuals for a question. Words from the question count fully. Expanded terms count half.
+ * A word weighs more when few visuals hold it. A label hit counts most, then tags, then text.
+ */
+export function findVisuals(visuals: Visual[], query: string, extra: string[] = [], limit = 2): Visual[] {
+  const split = (s: string) =>
+    s
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length > 2 && !STOP.has(w))
+      .map((w) => (w.length > 4 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
+  const own = new Set(split(query));
+  const terms = new Map<string, number>([...own].map((w) => [w, 1]));
+  for (const t of extra.flatMap(split)) if (!terms.has(t)) terms.set(t, 0.5);
+  if (!terms.size || !visuals.length) return [];
+  const docs = visuals.map((v) => ({
+    v,
+    label: split(v.label),
+    tags: split((v.tags ?? []).join(" ")),
+    text: split(v.text),
+  }));
+  const has = (words: string[], t: string) => words.some((w) => w === t || (t.length >= 4 && w.startsWith(t)));
+  const n = docs.length;
+  const scored = docs.map((d) => {
+    let total = 0;
+    let mine = false;
+    for (const [t, w] of terms) {
+      const df = docs.filter((x) => has(x.label, t) || has(x.tags, t) || has(x.text, t)).length;
+      if (!df || (n >= 4 && df / n > 0.5)) continue;
+      const idf = 1 + Math.log(n / df);
+      const hit = (has(d.label, t) ? 3 : 0) + (has(d.tags, t) ? 2 : 0) + (has(d.text, t) ? 1 : 0);
+      if (hit && w === 1) mine = true;
+      total += w * idf * hit;
+    }
+    return { v: d.v, total: mine ? total : 0 };
+  });
+  const ranked = scored.filter((x) => x.total >= 2.5).sort((a, b) => b.total - a.total);
+  const top = ranked[0]?.total ?? 0;
+  return ranked
+    .filter((x) => x.total >= top * 0.6)
+    .slice(0, limit)
+    .map((x) => x.v);
 }
+
+const STOP = new Set(["the", "and", "for", "how", "what", "does", "can", "you", "your", "with", "this", "that", "are", "is", "it", "do", "about", "show", "me", "much", "many", "use", "get", "work", "works"]);
 
 type Page = import("puppeteer-core").Page;
 
@@ -243,11 +286,15 @@ function listBlocks(): Block[] {
   const inside = (el: Element, taken: Element[]) => taken.some((t) => t === el || t.contains(el));
   const blocks: Block[] = [];
   const taken: Element[] = [];
-  const push = (el: Element, block: Omit<Block, "selector" | "shown" | "width" | "height">) => {
+  const words = (s: string) =>
+    Array.from(new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2))).slice(0, 12);
+  const push = (el: Element, block: Omit<Block, "selector" | "shown" | "width" | "height" | "tags">) => {
     if (!block.label || blocks.some((b) => b.label === block.label)) return;
     const r = el.getBoundingClientRect();
+    const head = clean(el.closest("section")?.querySelector("h1, h2, h3")?.textContent);
     blocks.push({
       ...block,
+      tags: [block.kind, ...words(head)],
       label: cut(block.label, 90),
       text: cut(block.text, 160),
       selector: selectorFor(el),

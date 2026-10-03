@@ -1,6 +1,7 @@
 import { defaultQueryEmbed, type EmbedFn } from "../retrieve/embed.ts";
 import { expandQuery, searchHits, searchHitsHybrid } from "../retrieve/search.ts";
 import type { RetrievePolicy } from "../retrieve/types.ts";
+import { findVisuals } from "../site/visual.ts";
 import type { Tool } from "../tools.ts";
 import type { PackRuntime } from "./types.ts";
 
@@ -9,7 +10,7 @@ export function docsLookupTool(runtime: PackRuntime, hint?: string): Tool {
   return {
     name: "docs_lookup",
     description:
-      "Hybrid search over crawled pages (BM25 + embeddings when available). Returns the best sections with URLs. Use for a quote or implementation detail.",
+      "Hybrid search over crawled pages (BM25 + embeddings when available). Returns the best sections with URLs, plus matching site visuals when the pack has them. Use for a quote, an implementation detail, or a visual.",
     schema: {
       type: "object",
       properties: {
@@ -27,10 +28,18 @@ export function docsLookupTool(runtime: PackRuntime, hint?: string): Tool {
       const hits = hybrid
         ? await searchHitsHybrid(corpus, query, embed, policy, { focus, limit: 4 })
         : searchHits(corpus, query, policy, { focus, limit: 4 });
+      const expanded = expandQuery(query, policy);
+      const visuals = findVisuals(runtime.config.visuals ?? [], query, expanded).map((v) => ({
+        id: v.id,
+        kind: v.kind,
+        label: v.label,
+        page: v.page,
+      }));
       return {
         query,
-        expanded: expandQuery(query, policy),
+        expanded,
         hits,
+        ...(visuals.length ? { visuals } : {}),
         source: hybrid ? "hybrid" : "lexical",
         model: runtime.retrieval?.model,
         hint:
