@@ -130,6 +130,35 @@ describe("luna reasoning", () => {
     expect(reasoningEffortFor("gpt-5.4")).toBe("none");
     expect(reasoningEffortFor("gpt-6-astra")).toBeUndefined();
   });
+
+  test("Luna with tools uses /responses; without tools uses chat completions", async () => {
+    const { Assembler } = await import("../src/assembler.ts");
+    const { openaiModel } = await import("../src/models.ts");
+    const calls: { url: string; body: Record<string, unknown> }[] = [];
+    const realFetch = globalThis.fetch;
+    process.env.WA_TEST_KEY = "k";
+    globalThis.fetch = (async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) });
+      const json = url.endsWith("/responses")
+        ? { output: [{ type: "message", content: [{ type: "output_text", text: "ok" }] }] }
+        : { choices: [{ message: { content: "ok" } }] };
+      return new Response(JSON.stringify(json));
+    }) as typeof fetch;
+    try {
+      const model = openaiModel({ id: "o", baseUrl: "https://api.test/v1", model: "gpt-5.6-luna", apiKeyEnv: "WA_TEST_KEY" });
+      const tool = { name: "docs_lookup", description: "d", schema: { type: "object", properties: {} } };
+      await model.reason({ messages: [{ role: "user", content: "hi" }], tools: [tool] } as never, new Assembler());
+      await model.reason({ messages: [{ role: "user", content: "hi" }], tools: [] } as never, new Assembler());
+    } finally {
+      globalThis.fetch = realFetch;
+      delete process.env.WA_TEST_KEY;
+    }
+    expect(calls[0]!.url).toBe("https://api.test/v1/responses");
+    expect(calls[0]!.body.reasoning).toEqual({ effort: "medium" });
+    expect(calls[0]!.body.reasoning_effort).toBeUndefined();
+    expect(calls[1]!.url).toBe("https://api.test/v1/chat/completions");
+    expect(calls[1]!.body.reasoning_effort).toBe("medium");
+  });
 });
 
 describe("smallest pack tools", () => {
