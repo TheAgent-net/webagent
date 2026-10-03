@@ -128,7 +128,7 @@ export function findVisuals(visuals: Visual[], query: string, extra: string[] = 
       .toLowerCase()
       .split(/[^a-z0-9]+/)
       .filter((w) => w.length > 2 && !STOP.has(w))
-      .map((w) => (w.length > 4 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
+      .map((w) => (w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w));
   const own = new Set(split(query));
   const terms = new Map<string, number>([...own].map((w) => [w, 1]));
   for (const t of extra.flatMap(split)) if (!terms.has(t)) terms.set(t, 0.5);
@@ -162,7 +162,7 @@ export function findVisuals(visuals: Visual[], query: string, extra: string[] = 
     .map((x) => x.v);
 }
 
-const STOP = new Set(["the", "and", "for", "how", "what", "does", "can", "you", "your", "with", "this", "that", "are", "is", "it", "do", "about", "show", "me", "much", "many", "use", "get", "work", "works"]);
+const STOP = new Set(["the", "and", "for", "how", "what", "does", "can", "you", "your", "with", "this", "that", "are", "is", "it", "do", "about", "show", "me", "much", "many", "use", "get", "work", "works", "why", "who", "when", "where", "which", "will", "would", "should", "could", "there", "they", "them", "own", "need", "want"]);
 
 type Page = import("puppeteer-core").Page;
 
@@ -199,6 +199,7 @@ async function savePicture(page: Page, pageUrl: string, block: Block, stem: stri
   if (!block.shown) return "";
   const handle = await page.$(block.selector);
   if (!handle) return "";
+  await handle.evaluate(hideFloating);
   await handle.evaluate((el) => el.scrollIntoView({ block: "start" }));
   await new Promise((r) => setTimeout(r, 700));
   const box = await handle.boundingBox();
@@ -271,6 +272,15 @@ async function fetchBytes(url: string): Promise<{ type: string; data: string } |
   return { type: blob.type, data: btoa(bin) };
 }
 
+/** Hide fixed and sticky bars (headers, sidebars, chat buttons) so they do not cover the shot. */
+function hideFloating(target: Element): void {
+  for (const el of Array.from(document.querySelectorAll("body *"))) {
+    if (el === target || el.contains(target) || target.contains(el)) continue;
+    const pos = getComputedStyle(el).position;
+    if (pos === "fixed" || pos === "sticky") (el as HTMLElement).style.setProperty("visibility", "hidden", "important");
+  }
+}
+
 function listLinks(): string[] {
   const out = new Set<string>();
   for (const a of Array.from(document.querySelectorAll("a[href]"))) {
@@ -283,7 +293,8 @@ function listLinks(): string[] {
 }
 
 function listBlocks(): Block[] {
-  const clean = (s: string | null | undefined) => (s || "").replace(/\s+/g, " ").trim();
+  const clean = (s: string | null | undefined) =>
+    (s || "").replace(/[\u200b-\u200d\ufeff]/g, "").replace(/\s+/g, " ").trim();
   const cut = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s);
   const selectorFor = (el: Element): string => {
     if (el.id && document.querySelectorAll("#" + CSS.escape(el.id)).length === 1) return "#" + CSS.escape(el.id);

@@ -29,7 +29,10 @@ export function docsLookupTool(runtime: PackRuntime, hint?: string): Tool {
         ? await searchHitsHybrid(corpus, query, embed, policy, { focus, limit: 4 })
         : searchHits(corpus, query, policy, { focus, limit: 4 });
       const expanded = expandQuery(query, policy);
-      const visuals = findVisuals(runtime.config.visuals ?? [], query, expanded).map((v) => ({
+      /* The brand name is on most visuals, so it says nothing about which one fits. */
+      const brand = runtime.config.brand.name.replace(/[^a-z0-9]+/gi, " ").trim();
+      const topic = brand ? query.replace(new RegExp(`\\b${brand.split(" ").join("\\s*")}\\b`, "gi"), " ") : query;
+      const visuals = findVisuals(runtime.config.visuals ?? [], topic, expanded).map((v) => ({
         id: v.id,
         kind: v.kind,
         label: v.label,
