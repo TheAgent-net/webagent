@@ -191,53 +191,144 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       spotTimer = setTimeout(off, 5200);
       setTimeout(() => document.addEventListener("pointerdown", off, true), 400);
     };
-    const liveCopy = (el, frame) => {
-      if (el.querySelector("canvas, video, iframe")) return false;
-      const width = Math.max(el.getBoundingClientRect().width, el.scrollWidth);
-      const from = [el, ...el.querySelectorAll("*")];
-      if (from.length > 2500) return false;
-      const copy = el.cloneNode(true);
-      const to = [copy, ...copy.querySelectorAll("*")];
-      for (let i = 0; i < from.length && i < to.length; i++) {
-        const cs = getComputedStyle(from[i]);
-        if (cs.overflowX !== "visible" && from[i].scrollWidth > from[i].clientWidth + 4) return false;
-        let css = "";
-        for (let j = 0; j < cs.length; j++) css += cs[j] + ":" + cs.getPropertyValue(cs[j]) + ";";
-        to[i].setAttribute("style", css + "transition:none;animation:none;");
-        to[i].removeAttribute("id");
-      }
-      copy.style.margin = "0";
-      copy.setAttribute("aria-hidden", "true");
-      copy.querySelectorAll("a, button, input, select, textarea").forEach((c) => c.setAttribute("tabindex", "-1"));
-      const inner = node("div", "wa-live-inner");
-      const bodyStyle = getComputedStyle(document.body);
-      const htmlBg = getComputedStyle(document.documentElement).backgroundColor;
-      const clear = (c) => !c || c === "transparent" || c === "rgba(0, 0, 0, 0)";
-      inner.style.width = width + "px";
-      inner.style.fontFamily = bodyStyle.fontFamily;
-      inner.style.fontSize = bodyStyle.fontSize;
-      inner.style.lineHeight = bodyStyle.lineHeight;
-      inner.style.letterSpacing = bodyStyle.letterSpacing;
-      inner.style.color = bodyStyle.color;
-      inner.style.background = !clear(bodyStyle.backgroundColor) ? bodyStyle.backgroundColor : !clear(htmlBg) ? htmlBg : "#fff";
-      inner.appendChild(copy);
-      frame.appendChild(inner);
-      const fit = () => {
-        const scale = Math.min(1, frame.clientWidth / width);
-        inner.style.transform = "scale(" + scale + ")";
-        const tall = inner.offsetHeight * scale;
-        const full = frame.classList.contains("full");
-        frame.style.height = (full ? tall : Math.min(tall, 360)) + "px";
-        frame.classList.toggle("cut", !full && tall > 360);
+    /* Chat style for a rebuilt visual. Lives in the shadow root. Custom properties come from the panel. */
+    const NATIVE_CSS = [
+      ":host{display:block}",
+      ".n{color:var(--wa-ink);font-size:14px;line-height:1.55;letter-spacing:-0.01em;overflow-wrap:anywhere}",
+      ".n h4{margin:.9em 0 .3em;font-size:15px;font-weight:600;line-height:1.3}",
+      ".n h4:first-child,.n p:first-child{margin-top:0}",
+      ".n p{margin:.35em 0}",
+      ".n ul,.n ol{margin:.35em 0;padding-left:1.2em}",
+      ".n li{margin:.2em 0}",
+      ".n table{width:100%;border-collapse:collapse;margin:.3em 0;font-size:13.5px}",
+      ".n th{text-align:left;font-weight:600;padding:6px 12px 6px 0;border-bottom:1px solid var(--wa-line);vertical-align:bottom}",
+      ".n td{padding:7px 12px 7px 0;border-bottom:1px solid color-mix(in srgb,var(--wa-line) 60%,transparent);vertical-align:top}",
+      ".n tr:last-child td{border-bottom:0}",
+      ".n .x{overflow-x:auto}",
+      ".n code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em;background:color-mix(in srgb,var(--wa-ink) 6%,transparent);padding:.1em .35em;border-radius:5px}",
+      ".n pre{white-space:pre-wrap;font-size:12.5px}",
+      ".n a{color:inherit;text-decoration:underline;text-underline-offset:2px}",
+      ".n img,.n video{display:block;max-width:100%;height:auto;max-height:300px;border-radius:12px;margin:.5em 0}",
+      ".n svg{max-width:100%;height:auto}",
+      ".n .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:.4em 0}",
+      ".n .g img{max-height:160px}",
+    ].join("");
+    const KEEP = { H1: "h4", H2: "h4", H3: "h4", H4: "h4", H5: "h4", H6: "h4", P: "p", FIGCAPTION: "p", BLOCKQUOTE: "p", UL: "ul", OL: "ol", LI: "li", TABLE: "table", THEAD: "thead", TBODY: "tbody", TFOOT: "tfoot", TR: "tr", TH: "th", TD: "td", CAPTION: "p", PRE: "pre", STRONG: "strong", B: "strong", EM: "em", I: "em", CODE: "code", A: "a", BR: "br", SUP: "sup", SUB: "sub" };
+    const DROP = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEMPLATE: 1, BUTTON: 1, INPUT: 1, SELECT: 1, TEXTAREA: 1, FORM: 1, IFRAME: 1 };
+    /*
+     * Rebuild a saved block as chat content: keep the meaning (headings, text, lists, tables, links, images),
+     * drop the site's layout and styling. SVG charts keep their saved styling. Hidden parts stay hidden.
+     */
+    const rebuild = (html) => {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const css = Array.from(doc.querySelectorAll("style")).map((x) => x.textContent || "").join("");
+      const hidden = new Set();
+      css.replace(/\\.(w[0-9a-z]+)\\{([^}]*)\\}/g, (_m, cls, body) => {
+        if (/display:none|visibility:hidden|opacity:0;|clip:rect\\(0/.test(body) || /width:1px;/.test(body) && /height:1px;/.test(body)) hidden.add(cls);
+        return "";
+      });
+      const out = document.createElement("div");
+      out.className = "n";
+      const walk = (src, dst) => {
+        for (const n of Array.from(src.childNodes)) {
+          if (n.nodeType === 3) {
+            const t = (n.textContent || "").replace(/\\s+/g, " ");
+            if (t.trim() || (dst.lastChild && t === " ")) dst.appendChild(document.createTextNode(t));
+            continue;
+          }
+          if (n.nodeType !== 1) continue;
+          const cls = n.getAttribute("class") || "";
+          if (cls && hidden.has(cls)) continue;
+          const tag = n.tagName.toUpperCase();
+          if (DROP[tag]) continue;
+          if (n.localName === "svg") {
+            dst.appendChild(document.importNode(n, true));
+            continue;
+          }
+          if (tag === "IMG") {
+            const src2 = n.getAttribute("src");
+            if (!src2) continue;
+            const img = document.createElement("img");
+            img.src = src2;
+            img.alt = n.getAttribute("alt") || "";
+            img.loading = "lazy";
+            dst.appendChild(img);
+            continue;
+          }
+          if (tag === "VIDEO") {
+            const src2 = n.getAttribute("src") || (n.querySelector("source") && n.querySelector("source").getAttribute("src"));
+            if (!src2) continue;
+            const vid = document.createElement("video");
+            vid.src = src2;
+            vid.muted = true;
+            vid.autoplay = true;
+            vid.loop = true;
+            vid.playsInline = true;
+            dst.appendChild(vid);
+            continue;
+          }
+          const keep = KEEP[tag];
+          if (keep) {
+            const el = document.createElement(keep);
+            if (tag === "A") {
+              const href = n.getAttribute("href") || "";
+              if (/^https?:/.test(href)) {
+                el.href = href;
+                el.target = "_blank";
+                el.rel = "noopener";
+              }
+            }
+            if (tag === "TH" || tag === "TD") {
+              for (const k of ["colspan", "rowspan"]) if (n.getAttribute(k)) el.setAttribute(k, n.getAttribute(k));
+            }
+            walk(n, el);
+            if (el.textContent.trim() || el.querySelector("img,svg,video") || tag === "BR") {
+              if (tag === "TABLE") {
+                const wrap = document.createElement("div");
+                wrap.className = "x";
+                wrap.appendChild(el);
+                dst.appendChild(wrap);
+              } else dst.appendChild(el);
+            }
+            continue;
+          }
+          /* Layout boxes: keep as plain blocks so lines stay apart. A box of several pictures becomes a grid. */
+          const box = document.createElement("div");
+          walk(n, box);
+          if (!box.textContent.trim() && !box.querySelector("img,svg,video")) continue;
+          const pics = Array.from(box.children).filter((c) => c.querySelector && (c.matches("img,svg,video") || c.querySelector("img,svg,video")));
+          if (pics.length >= 2 && pics.length === box.children.length) box.className = "g";
+          if (box.childNodes.length === 1 && box.firstChild.nodeType === 1) dst.appendChild(box.firstChild);
+          else dst.appendChild(box);
+        }
       };
-      frame.wafit = fit;
-      requestAnimationFrame(fit);
-      setTimeout(fit, 400);
-      return true;
+      const root = doc.body;
+      walk(root, out);
+      return { css, out };
     };
-    /* Render the saved element in a shadow root, so page CSS and widget CSS do not touch it. */
-    const savedCopy = (v, frame) => {
-      if (!v.html) return false;
+    /* A saved border with a style and no width had width 0: say so, or "solid" draws 3px. */
+    const repairCss = (html) =>
+      html.replace(/\{([^}]*)\}/g, (_m, body) => {
+        let add = "";
+        for (const side of ["top", "right", "bottom", "left"]) {
+          const style = body.match(new RegExp("border-" + side + "-style:([^;]+);"));
+          if (style && style[1] !== "none" && body.indexOf("border-" + side + "-width:") < 0) add += "border-" + side + "-width:0px;";
+        }
+        const outline = body.match(/outline-style:([^;]+);/);
+        if (outline && outline[1] !== "none" && body.indexOf("outline-width:") < 0) add += "outline-width:0px;";
+        return "{" + body + add + "}";
+      });
+    /* Render a visual as part of the answer. The site's own image files show as images. Nothing else shows as a picture. */
+    const nativeCopy = (v, frame, fig) => {
+      if (v.kind === "image" && !v.html) {
+        const img = node("img");
+        img.src = v.image;
+        img.alt = v.label;
+        img.loading = "lazy";
+        img.onerror = () => fig.remove();
+        frame.appendChild(img);
+        return;
+      }
       if (FONTS && !document.getElementById("wa-fonts")) {
         const link = node("link");
         link.id = "wa-fonts";
@@ -245,61 +336,77 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
         link.href = FONTS;
         document.head.appendChild(link);
       }
-      const host = node("div", "wa-live-inner");
+      const host = node("div");
       const shadow = host.attachShadow({ mode: "open" });
       frame.appendChild(host);
-      frame.classList.add("saved");
-      const fit = () => {
-        const el = shadow.lastElementChild;
-        if (!el) return;
-        const width = Math.max(el.scrollWidth, el.offsetWidth);
-        const scale = Math.min(1, frame.clientWidth / width);
-        host.style.width = width + "px";
-        host.style.transform = "scale(" + scale + ")";
-        const tall = host.offsetHeight * scale;
-        const full = frame.classList.contains("full");
-        frame.style.height = (full ? tall : Math.min(tall, 360)) + "px";
-        frame.classList.toggle("cut", !full && tall > 360);
+      const fold = () => {
+        const tall = host.getBoundingClientRect().height;
+        if (tall > 420) {
+          frame.classList.add("cut");
+          const more = node("button", "wa-more");
+          more.type = "button";
+          more.textContent = "Show more";
+          more.onclick = () => {
+            const open = frame.classList.toggle("cut");
+            more.textContent = open ? "Show more" : "Show less";
+          };
+          fig.insertBefore(more, fig.lastChild);
+        }
+        keep();
       };
-      frame.wafit = fit;
       fetch(v.html)
         .then((res) => (res.ok ? res.text() : Promise.reject(res.status)))
         .then((text) => {
-          shadow.innerHTML = text;
-          requestAnimationFrame(fit);
-          setTimeout(fit, 500);
-          shadow.querySelectorAll("img").forEach((img) => img.addEventListener("load", fit));
+          const { css, out } = rebuild(text);
+          if (!out.textContent.trim() && !out.querySelector("img,svg,video")) return fig.remove();
+          /* Layout carries the meaning in diagrams and cards: keep the site's own layout there. */
+          if (v.kind !== "table" && out.querySelector("img,svg,video") && !out.querySelector(":scope > svg:only-child")) {
+            shadow.innerHTML = "<style>:host{display:block}</style>" + repairCss(text);
+            const fit = () => {
+              const el = shadow.lastElementChild;
+              if (!el) return;
+              const width = Math.max(el.scrollWidth, el.offsetWidth);
+              const scale = Math.min(1, frame.clientWidth / width);
+              frame.style.overflow = "hidden";
+              host.style.width = width + "px";
+              host.style.transformOrigin = "0 0";
+              host.style.transform = "scale(" + scale + ")";
+              frame.style.height = host.offsetHeight * scale + "px";
+            };
+            requestAnimationFrame(() => { fit(); fold(); });
+            shadow.querySelectorAll("img").forEach((img) => img.addEventListener("load", fit));
+            return;
+          }
+          const style = document.createElement("style");
+          style.textContent = css + NATIVE_CSS;
+          shadow.appendChild(style);
+          shadow.appendChild(out);
+          requestAnimationFrame(() => {
+            if (host.offsetHeight > 420) {
+              frame.classList.add("cut");
+              const more = node("button", "wa-more");
+              more.type = "button";
+              more.textContent = "Show more";
+              more.onclick = () => {
+                const open = frame.classList.toggle("cut");
+                more.textContent = open ? "Show more" : "Show less";
+              };
+              fig.insertBefore(more, fig.lastChild);
+            }
+            keep();
+          });
         })
-        .catch(() => {
-          host.remove();
-          frame.classList.remove("saved");
-          const img = node("img");
-          img.src = v.image;
-          img.alt = v.label;
-          frame.appendChild(img);
-        });
-      return true;
+        .catch(() => fig.remove());
     };
     const visualNode = (v) => {
+      if (!v.html && v.kind !== "image") return null;
       const fig = node("figure", "wa-visual");
       const frame = node("div", "wa-frame");
+      fig.appendChild(frame);
+      nativeCopy(v, frame, fig);
       const live = liveFor(v);
-      const isLive = !!live && v.kind !== "image" && liveCopy(live, frame);
-      const isSaved = !isLive && savedCopy(v, frame);
-      if (!isLive && !isSaved) {
-        const img = node("img");
-        img.src = v.image;
-        img.alt = v.label;
-        img.loading = "lazy";
-        img.onload = () => { frame.classList.toggle("cut", img.offsetHeight >= 359); keep(); };
-        frame.appendChild(img);
-      }
-      frame.onclick = () => {
-        frame.classList.toggle("full");
-        if (frame.wafit) frame.wafit();
-      };
       const cap = node("figcaption");
-      cap.innerHTML = (isLive ? '<span class="wa-live-tag">Live</span>' : "") + '<span class="wa-vlabel">' + esc(v.label) + "</span>";
+      cap.innerHTML = '<span class="wa-vlabel">' + esc(v.label) + "</span>";
       if (live) {
         const go = node("button", "wa-vgo");
         go.type = "button";
@@ -319,7 +426,6 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
         go.innerHTML = "Open on site <span aria-hidden=\\"true\\">↗</span>";
         cap.appendChild(go);
       }
-      fig.appendChild(frame);
       fig.appendChild(cap);
       return fig;
     };
@@ -343,7 +449,8 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
         d.innerHTML = rich(lead);
         card.appendChild(d);
       }
-      if (shown) card.appendChild(visualNode(shown));
+      const fig = shown && visualNode(shown);
+      if (fig) card.appendChild(fig);
       if (rest) {
         const body = node("div", "wa-body");
         body.innerHTML = rich(rest);
@@ -677,33 +784,15 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     0%, 80%, 100% { opacity: .3; transform: translateY(0); }
     40% { opacity: 1; transform: translateY(-2px); }
   }
-  .wa-visual { margin: 14px 0 4px; }
-  .wa-frame {
-    position: relative; overflow: hidden; cursor: zoom-in;
-    border: 1px solid var(--wa-edge); border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  .wa-visual { margin: 12px 0 4px; }
+  .wa-frame { position: relative; }
+  .wa-frame > img { display: block; max-width: 100%; height: auto; max-height: 320px; border-radius: 12px; }
+  .wa-frame.cut {
+    max-height: 420px; overflow: hidden;
+    -webkit-mask-image: linear-gradient(#000 75%, transparent);
+            mask-image: linear-gradient(#000 75%, transparent);
   }
-  .wa-frame img { display: block; width: 100%; height: auto; max-height: 360px; object-fit: cover; object-position: top center; }
-  .wa-frame.cut::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 56px;
-    background: linear-gradient(transparent, color-mix(in srgb, var(--wa-paper) 94%, transparent));
-    pointer-events: none;
-  }
-  .wa-frame.full { cursor: zoom-out; }
-  .wa-frame.full img { max-height: none; }
-  .wa-frame.full::after { display: none; }
-  .wa-live-inner { transform-origin: 0 0; pointer-events: none; }
-  .wa-live-tag {
-    position: relative; flex-shrink: 0;
-    padding: 2px 8px 2px 18px; border-radius: 999px;
-    background: var(--wa-tint); border: 1px solid var(--wa-edge);
-    font: 600 10.5px/1.4 ${body}; letter-spacing: .02em; color: var(--wa-on);
-  }
-  .wa-live-tag::before {
-    content: ""; position: absolute; left: 7px; top: 50%; margin-top: -3px;
-    width: 6px; height: 6px; border-radius: 999px; background: #16a34a;
-  }
+  .wa-visual .wa-more { margin-top: 2px; }
   .wa-visual figcaption {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 8px 2px 0;
