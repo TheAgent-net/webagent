@@ -213,7 +213,7 @@ switch (args[0]) {
   case "capture": {
     const pack = flag(args, "--pack");
     if (!pack) {
-      console.error("usage: webagent capture --pack <dir> [--url <site>] [--pages /,/pricing] [--max 8]");
+      console.error("usage: webagent capture --pack <dir> [--url <site>] [--pages /,/pricing,https://other.site/page] [--max 8] [--max-visuals 40]");
       process.exit(2);
     }
     const { loadPackConfig } = await import("./pack/load.ts");
@@ -232,7 +232,12 @@ switch (args[0]) {
     const pages = flag(args, "--pages")?.split(",").map((p) => p.trim()).filter(Boolean);
     console.error("capturing visuals from " + url + " ...");
     try {
-      const visuals = await captureVisuals(url, { out: config.dir!, pages, maxPages: Number(flag(args, "--max")) || 8 });
+      const visuals = await captureVisuals(url, {
+        out: config.dir!,
+        pages,
+        maxPages: Number(flag(args, "--max")) || 8,
+        maxVisuals: Number(flag(args, "--max-visuals")) || 40,
+      });
       for (const v of visuals) console.error(`  ${v.kind.padEnd(8)} ${v.id.padEnd(36)} ${v.page}`);
       console.error(`wrote ${visuals.length} visuals to ${join(config.dir!, "visuals.json")}`);
     } finally {

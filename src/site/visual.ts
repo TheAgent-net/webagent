@@ -19,9 +19,12 @@ export interface Visual {
 export interface CaptureOpts {
   out: string;
   chrome?: string;
+  /** Paths on `base`, or full URLs on other sites. A full URL becomes the visual's page. */
   pages?: string[];
   maxPages?: number;
   maxVisuals?: number;
+  /** Fetch every page request through Bun. Use behind a TLS proxy that Chromium does not trust. */
+  relay?: boolean;
 }
 
 /** Raw block from the page before the picture is saved. */
@@ -55,6 +58,7 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900, deviceScaleFactor: 1 });
+    if (opts.relay ?? !!process.env.HTTPS_PROXY) await relayRequests(page);
     const queue = opts.pages?.length ? [...opts.pages] : ["/"];
     const seen = new Set<string>();
     const maxPages = opts.maxPages ?? 8;
@@ -63,7 +67,8 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
       const path = queue.shift()!;
       if (seen.has(path)) continue;
       seen.add(path);
-      const res = await page.goto(root + path, { waitUntil: "networkidle2", timeout: 45000 }).catch(() => null);
+      const target = /^https?:\/\//.test(path) ? path : root + path;
+      const res = await page.goto(target, { waitUntil: "networkidle2", timeout: 45000 }).catch(() => null);
       if (!res || res.status() >= 400) continue;
       if (!opts.pages?.length) {
         const links = await page.evaluate(listLinks);
@@ -73,7 +78,7 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
       for (const block of blocks) {
         if (visuals.length >= maxVisuals) break;
         const id = uniqueId(block.label, used);
-        const image = await savePicture(page, root, block, join(dir, id));
+        const image = await savePicture(page, target, block, join(dir, id));
         if (!image) {
           used.delete(id);
           continue;
@@ -161,9 +166,29 @@ const STOP = new Set(["the", "and", "for", "how", "what", "does", "can", "you", 
 
 type Page = import("puppeteer-core").Page;
 
-async function savePicture(page: Page, root: string, block: Block, stem: string): Promise<string> {
+/** Answer each remote request with Bun fetch, which checks TLS against the system trust store. */
+async function relayRequests(page: Page): Promise<void> {
+  await page.setRequestInterception(true);
+  page.on("request", async (req) => {
+    const url = req.url();
+    const host = /^https?:/.test(url) ? new URL(url).hostname : "";
+    if (!host || host === "127.0.0.1" || host === "localhost") return req.continue();
+    try {
+      const res = await fetch(url, { method: req.method(), headers: req.headers(), body: req.postData() });
+      const headers: Record<string, string> = {};
+      res.headers.forEach((v, k) => {
+        if (k !== "content-encoding" && k !== "content-length" && k !== "transfer-encoding") headers[k] = v;
+      });
+      await req.respond({ status: res.status, headers, body: Buffer.from(await res.arrayBuffer()) });
+    } catch {
+      await req.abort().catch(() => {});
+    }
+  });
+}
+
+async function savePicture(page: Page, pageUrl: string, block: Block, stem: string): Promise<string> {
   if (block.kind === "image" && block.src) {
-    const url = new URL(block.src, root + "/").href;
+    const url = new URL(block.src, pageUrl).href;
     const got = await page.evaluate(fetchBytes, url).catch(() => null);
     if (got && got.data) {
       const ext = extFor(got.type, url);
@@ -290,7 +315,9 @@ function listBlocks(): Block[] {
     Array.from(new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2))).slice(0, 12);
   const push = (el: Element, block: Omit<Block, "selector" | "shown" | "width" | "height" | "tags">) => {
     if (!block.label || blocks.some((b) => b.label === block.label)) return;
+    if (/^(other|related|more|recent) (posts|articles|stories)/i.test(block.label)) return;
     const r = el.getBoundingClientRect();
+    if (r.height > 0 && r.height < 120) return;
     const head = clean(el.closest("section")?.querySelector("h1, h2, h3")?.textContent);
     blocks.push({
       ...block,
