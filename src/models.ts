@@ -121,11 +121,14 @@ export function openaiModel(opts: {
         await reasonResponses(base, opts.model, req, out, headers, signal);
         return;
       }
-      const body: Record<string, unknown> = { model: opts.model, messages: toOpenAI(req.messages) };
-      if (/gpt-5/i.test(opts.model)) {
-        const effort = reasoningEffortFor(opts.model, opts.reasoningEffort);
-        if (effort) body.reasoning_effort = effort;
+      const effort = /gpt-5/i.test(opts.model) ? reasoningEffortFor(opts.model, opts.reasoningEffort) : undefined;
+      /* Chat completions refuses function tools with reasoning. Send those turns to /responses. */
+      if (effort && effort !== "none" && req.tools.length) {
+        await reasonResponses(base, opts.model, req, out, headers, signal, effort);
+        return;
       }
+      const body: Record<string, unknown> = { model: opts.model, messages: toOpenAI(req.messages) };
+      if (effort) body.reasoning_effort = effort;
       if (req.tools.length) {
         body.tools = req.tools.map((t) => ({
           type: "function",
@@ -231,11 +234,13 @@ async function reasonResponses(
   out: Assembler,
   headers: Record<string, string>,
   signal?: AbortSignal,
+  effort?: string,
 ): Promise<void> {
   const body: Record<string, unknown> = {
     model,
     input: toResponsesInput(req.messages),
   };
+  if (effort) body.reasoning = { effort };
   if (req.tools.length) {
     body.tools = req.tools.map((t) => ({
       type: "function",
