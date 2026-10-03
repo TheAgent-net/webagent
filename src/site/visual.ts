@@ -82,7 +82,7 @@ export async function captureVisuals(base: string, opts: CaptureOpts): Promise<V
       for (const block of blocks) {
         if (visuals.length >= maxVisuals) break;
         const id = uniqueId(block.label, used);
-        const { image, html } = await savePicture(page, target, block, join(dir, id), fonts);
+        const { image, html } = await savePicture(page, target, block, join(dir, id), fonts, root);
         if (!image) {
           used.delete(id);
           continue;
@@ -198,6 +198,7 @@ async function savePicture(
   block: Block,
   stem: string,
   fonts: Set<string>,
+  base: string,
 ): Promise<{ image: string; html?: string }> {
   const name = stem.split("/").pop()!;
   if (block.kind === "image" && block.src) {
@@ -227,8 +228,11 @@ async function savePicture(
   writeFileSync(stem + ".jpg", shot);
   const snap = await handle.evaluate(snapshotElement).catch(() => null);
   if (!snap?.html) return { image: name + ".jpg" };
-  for (const f of snap.fonts) fonts.add(f);
-  writeFileSync(stem + ".html", snap.html);
+  /* Files on the capture host are the site's own files. Keep them site-relative. */
+  const local = new URL(base).origin;
+  const relative = (text: string) => text.split(local + "/").join("/");
+  for (const f of snap.fonts) fonts.add(relative(f));
+  writeFileSync(stem + ".html", relative(snap.html));
   return { image: name + ".jpg", html: name + ".html" };
 }
 
@@ -307,7 +311,12 @@ function hideFloating(target: Element): void {
  */
 function snapshotElement(root: Element): { html: string; fonts: string[] } {
   const SVG = "http://www.w3.org/2000/svg";
-  const skip = /^(transition|animation|will-change|view-transition|cursor|caret|pointer-events|user-select|-webkit-user)/;
+  /* Variables are already resolved into real values. Logical sides repeat the physical sides. */
+  const skip =
+    /^(--|transition|animation|will-change|view-transition|cursor|caret|pointer-events|user-select|-webkit-user|-webkit-text-(fill|stroke)-color|border-(inline|block)|margin-(inline|block)|padding-(inline|block)|inset-|(min-|max-)?(inline|block)-size|scroll-)/;
+  /* An inherited value that matches the parent comes for free. */
+  const inherits =
+    /^(color|font|line-height|letter-spacing|word-spacing|text-(align|indent|transform|shadow|rendering|wrap)|white-space|visibility|direction|quotes|list-style|-webkit-font-smoothing|tab-size|hyphens|word-break|overflow-wrap|fill|stroke|writing-mode|orientation)/;
   const frame = document.createElement("iframe");
   frame.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
   document.body.appendChild(frame);
@@ -315,6 +324,9 @@ function snapshotElement(root: Element): { html: string; fonts: string[] } {
   const svgHost = blank.createElementNS(SVG, "svg");
   blank.body.appendChild(svgHost);
   const defaults = new Map<string, CSSStyleDeclaration>();
+  const plainProbe = blank.createElement("div");
+  blank.body.appendChild(plainProbe);
+  const plainStyle = frame.contentWindow!.getComputedStyle(plainProbe);
   const baseFor = (el: Element): CSSStyleDeclaration => {
     const svg = el.namespaceURI === SVG;
     const key = (svg ? "svg:" : "") + el.localName;
@@ -327,13 +339,22 @@ function snapshotElement(root: Element): { html: string; fonts: string[] } {
     }
     return cs;
   };
-  const styleText = (cs: CSSStyleDeclaration, base: CSSStyleDeclaration | null): string => {
+  const styleText = (
+    cs: CSSStyleDeclaration,
+    base: CSSStyleDeclaration | null,
+    parent?: CSSStyleDeclaration,
+    plain?: CSSStyleDeclaration,
+  ): string => {
     let out = "";
     for (let i = 0; i < cs.length; i++) {
       const prop = cs[i]!;
       if (skip.test(prop)) continue;
       const value = cs.getPropertyValue(prop);
-      if (base && base.getPropertyValue(prop) === value) continue;
+      /* Skip an inherited value that matches the parent, unless the browser sets its own (link color, heading weight). */
+      const own = base && plain && base.getPropertyValue(prop) !== plain.getPropertyValue(prop);
+      if (parent && !own && inherits.test(prop)) {
+        if (parent.getPropertyValue(prop) === value) continue;
+      } else if (base && base.getPropertyValue(prop) === value) continue;
       out += prop + ":" + value + ";";
     }
     return out;
@@ -359,7 +380,8 @@ function snapshotElement(root: Element): { html: string; fonts: string[] } {
       continue;
     }
     const cs = getComputedStyle(src);
-    let main = styleText(cs, baseFor(src));
+    const parent = i === 0 || !src.parentElement ? undefined : getComputedStyle(src.parentElement);
+    let main = styleText(cs, baseFor(src), parent, src.namespaceURI === SVG ? baseFor(svgHost) : plainStyle);
     if (cs.position === "sticky" || cs.position === "fixed") main += "position:static;";
     if (cs.overflowX !== "visible" && src.scrollWidth > src.clientWidth + 4) {
       main += `overflow:visible;width:${src.scrollWidth}px;max-width:none;`;
