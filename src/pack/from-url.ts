@@ -5,6 +5,7 @@ import { indexPages } from "../retrieve/chunk.ts";
 import { fillVectors, type EmbedFn } from "../retrieve/embed.ts";
 import { DEFAULT_POLICY } from "../retrieve/policy.ts";
 import { brandFromPages, defaultWidget, extractBrand } from "./brand.ts";
+import { captureVisuals } from "../site/visual.ts";
 import { defaultInstruction } from "./load.ts";
 import type { AgentPackConfig } from "./types.ts";
 
@@ -15,6 +16,8 @@ export interface FromUrlOpts {
   maxPages?: number;
   fetch?: typeof fetch;
   embed?: EmbedFn | false;
+  /** Capture site visuals with Chromium. Default: on for a live crawl, off with a custom fetch. */
+  visuals?: boolean;
 }
 
 export async function fromUrl(start: string, opts: FromUrlOpts = {}): Promise<{ dir: string; config: AgentPackConfig }> {
@@ -79,6 +82,14 @@ export async function fromUrl(start: string, opts: FromUrlOpts = {}): Promise<{ 
       2,
     ) + "\n",
   );
+  if (opts.visuals ?? !opts.fetch) {
+    try {
+      const paths = [...new Set(state.pages.map((p) => new URL(p.url).pathname))].slice(0, 8);
+      config.visuals = await captureVisuals(origin, { out, pages: paths });
+    } catch (err) {
+      console.error("visual capture skipped: " + (err instanceof Error ? err.message : String(err)));
+    }
+  }
   return { dir: out, config };
 }
 

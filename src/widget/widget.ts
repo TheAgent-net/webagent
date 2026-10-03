@@ -26,6 +26,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
   const BASE = ${JSON.stringify(publicUrl.replace(/\/+$/, ""))};
   const FAB_OPEN = ${JSON.stringify(fabOpen)};
   const HINTS = ${JSON.stringify(hints)};
+  const PLACEHOLDER = ${JSON.stringify(config.widget.placeholder || "Ask anything…")};
   const VISUALS = ${JSON.stringify(visuals)};
   const BRAND = ${JSON.stringify(config.brand.wordmark || config.brand.name)};
   const bind = () => {
@@ -40,83 +41,89 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
     const hint = document.getElementById("wa-hint");
     const form = document.getElementById("wa-form");
     const sendBtn = document.querySelector(".wa-send");
-    let hintI = 0;
-    let hintTimer = 0;
     let sending = false;
-    const busyHint = () => !!(input && (input.value.trim() || document.activeElement === input));
+    let talked = false;
+    /* Idle field: type a hint, hold, erase, then the next hint. */
+    let hintI = 0;
+    let typeTimer = 0;
+    const focused = () => !!input && document.activeElement === input;
+    const typing = () => !!(hint && HINTS.length && input && !input.value && !focused());
     const paintHint = () => {
-      if (!hint || !HINTS.length) return;
-      hint.textContent = HINTS[hintI % HINTS.length];
-      hint.dataset.on = busyHint() ? "0" : "1";
+      if (!hint) return;
+      if (input && input.value) { hint.dataset.on = "0"; return; }
+      hint.dataset.on = "1";
+      hint.classList.toggle("typing", typing());
+      if (!typing()) hint.textContent = PLACEHOLDER;
     };
-    const cycleHint = () => {
-      if (busyHint() || !HINTS.length || !hint) return;
-      hint.classList.add("swap");
-      setTimeout(() => {
-        hintI = (hintI + 1) % HINTS.length;
-        hint.classList.add("from");
-        paintHint();
-        hint.classList.remove("swap");
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => hint.classList.remove("from"));
-        });
-      }, 240);
+    const typeHint = () => {
+      clearTimeout(typeTimer);
+      if (!typing()) { paintHint(); return; }
+      const text = HINTS[hintI % HINTS.length];
+      hint.classList.add("typing");
+      let n = 0;
+      const grow = () => {
+        if (!typing()) { paintHint(); return; }
+        hint.textContent = text.slice(0, ++n);
+        typeTimer = setTimeout(n < text.length ? grow : shrink, n < text.length ? 34 + Math.random() * 40 : 1700);
+      };
+      const shrink = () => {
+        if (!typing()) { paintHint(); return; }
+        hint.textContent = text.slice(0, --n);
+        if (n > 0) typeTimer = setTimeout(shrink, 16);
+        else { hintI++; typeTimer = setTimeout(typeHint, 420); }
+      };
+      grow();
     };
-    const startHints = () => {
-      paintHint();
-      if (hintTimer) clearInterval(hintTimer);
-      hintTimer = setInterval(cycleHint, 3000);
-    };
+    const startHints = () => { paintHint(); typeHint(); };
     const syncSend = () => {
       const on = !!(input && input.value.trim());
       if (sendBtn) sendBtn.classList.toggle("on", on);
       paintHint();
     };
+    const setHints = (on) => { if (root) root.classList.toggle("hints", on && !talked); };
     const setOpen = (open) => {
       if (root) root.classList.toggle("open", open);
       panel.classList.toggle("open", open);
       fab.classList.toggle("open", open);
       fab.setAttribute("aria-expanded", open ? "true" : "false");
-      if (backdrop) backdrop.setAttribute("aria-hidden", open ? "false" : "true");
       panel.setAttribute("aria-hidden", open ? "false" : "true");
+      if (open) setHints(false);
       paintHint();
+    };
+    const wake = () => { if (talked) setOpen(true); else setHints(true); };
+    const rest = () => {
+      setOpen(false);
+      setHints(false);
+      if (input) input.blur();
+      typeHint();
     };
     fab.onclick = (e) => {
       e.preventDefault();
-      const next = !panel.classList.contains("open");
-      setOpen(next);
-      if (next && input) input.focus();
-      else if (input) input.blur();
+      if (panel.classList.contains("open")) rest();
+      else if (input) input.focus();
     };
     const closeBtn = document.getElementById("wa-close");
-    if (closeBtn) closeBtn.onclick = () => { setOpen(false); if (input) input.blur(); };
-    if (backdrop) backdrop.onclick = () => { setOpen(false); if (input) input.blur(); };
+    if (closeBtn) closeBtn.onclick = rest;
+    if (backdrop) backdrop.onclick = rest;
     document.addEventListener("pointerdown", (e) => {
-      if (!panel.classList.contains("open") || !root) return;
+      if (!root || !(panel.classList.contains("open") || root.classList.contains("hints"))) return;
       const t = e.target;
       if (root.contains(t) || (t && t.closest && t.closest("#wa-spot"))) return;
-      setOpen(false);
-      if (input) input.blur();
+      rest();
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && panel.classList.contains("open")) {
-        setOpen(false);
-        if (input) input.blur();
-      }
+      if (e.key === "Escape" && root && (panel.classList.contains("open") || root.classList.contains("hints"))) rest();
     });
     if (form) {
       form.addEventListener("pointerdown", (e) => {
-        if (panel.classList.contains("open")) return;
         if (sendBtn && sendBtn.contains(e.target)) return;
-        if (input && e.target !== input) input.focus();
+        if (input && e.target !== input) { e.preventDefault(); input.focus(); }
       });
     }
     if (input) {
-      input.addEventListener("focus", () => setOpen(true));
-      input.addEventListener("input", () => {
-        if (input.value.trim()) setOpen(true);
-        syncSend();
-      });
+      input.addEventListener("focus", () => { clearTimeout(typeTimer); wake(); paintHint(); });
+      input.addEventListener("blur", () => { if (!input.value) typeHint(); });
+      input.addEventListener("input", syncSend);
     }
     const copyBtn = document.getElementById("wa-copy-prompt");
     if (copyBtn) copyBtn.onclick = async () => {
@@ -330,7 +337,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       openCard = null;
       fillCard(card, text);
       const turn = card.parentElement;
-      if (turn && log) log.scrollTop += turn.getBoundingClientRect().top - log.getBoundingClientRect().top - 14;
+      if (turn && log) log.scrollTop += turn.getBoundingClientRect().top - log.getBoundingClientRect().top - 26;
     };
     const showHash = () => {
       const m = location.hash.match(/^#wa-show=([\\w-]+)/);
@@ -351,6 +358,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       const text = (preset || (input && input.value) || "").trim();
       if (!text || sending) return;
       sending = true;
+      talked = true;
       if (sendBtn) sendBtn.classList.add("busy");
       setOpen(true);
       add("human", text);
@@ -418,6 +426,9 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
   const firstHint = chipList[0] || w.placeholder || b.fabLabel;
   const arrow = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12h12M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const chevron = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const mark = b.logo
+    ? `<img class="wa-logo" src="${esc(b.logo)}" alt="" aria-hidden="true"/>`
+    : `<span class="wa-mark" aria-hidden="true"><span class="wa-orb"></span></span>`;
   const glass = c.glass || `color-mix(in srgb, ${c.paper} 88%, transparent)`;
   return `
 <style>
@@ -486,6 +497,7 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     background: var(--wa-ink);
     display: grid; place-items: center;
   }
+  .wa-logo { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; }
   .wa-orb {
     width: 8px; height: 8px; border-radius: 999px;
     background: var(--wa-paper);
@@ -691,15 +703,33 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     color: var(--wa-on);
   }
   .wa-welcome p { margin: 0; max-width: 32em; color: var(--wa-soft); font-size: 15px; line-height: 1.5; }
-  #wa-chips { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 18px; }
-  .wa-chip {
-    border: 1px solid var(--wa-edge); border-radius: 999px; cursor: pointer;
-    background: var(--wa-tint); color: var(--wa-on);
-    padding: 8px 14px; text-align: left;
-    font: 500 13.5px/1.35 ${body}; letter-spacing: -0.01em;
-    transition: background .16s ease, transform .16s ease;
+  #wa-chips {
+    display: none; width: 100%;
+    flex-direction: column; align-items: flex-start; gap: 8px;
+    padding: 0 4px;
   }
-  .wa-chip:hover { background: color-mix(in srgb, var(--wa-ink) 11%, transparent); transform: translateX(2px); }
+  #wa-root.hints #wa-chips { display: flex; }
+  .wa-chip {
+    border: 0; border-radius: 999px; cursor: pointer;
+    background: color-mix(in srgb, var(--wa-ink) 48%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+            backdrop-filter: blur(14px) saturate(1.3);
+    color: var(--wa-paper);
+    padding: 10px 18px; text-align: left; max-width: 100%;
+    font: 600 14px/1.35 ${body}; letter-spacing: -0.01em;
+    box-shadow: 0 6px 18px rgba(0,0,0,.1);
+    pointer-events: auto;
+    transition: background .18s ease, transform .18s ease;
+  }
+  .wa-chip:hover { background: color-mix(in srgb, var(--wa-ink) 72%, transparent); transform: translateY(-1px); }
+  #wa-root.hints .wa-chip { animation: wa-rise .46s var(--wa-ease) both; }
+  #wa-root.hints .wa-chip:nth-last-child(2) { animation-delay: .05s; }
+  #wa-root.hints .wa-chip:nth-last-child(3) { animation-delay: .1s; }
+  #wa-root.hints .wa-chip:nth-last-child(4) { animation-delay: .15s; }
+  @keyframes wa-rise {
+    from { opacity: 0; transform: translateY(14px) scale(.96); filter: blur(4px); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
   .wa-form {
     width: min(360px, 100%);
     display: flex; gap: 6px; align-items: center;
@@ -732,8 +762,13 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     transition: opacity .26s ease, transform .3s var(--wa-ease);
   }
   #wa-hint[data-on="1"] { opacity: 1; }
-  #wa-hint.swap { opacity: 0; transform: translateY(-70%); }
-  #wa-hint.from { opacity: 0; transform: translateY(-20%); }
+  #wa-hint.typing::after {
+    content: ""; display: inline-block; width: 1.5px; height: 1.05em;
+    margin-left: 2px; vertical-align: -0.16em;
+    background: currentColor;
+    animation: wa-blink 1s steps(1) infinite;
+  }
+  @keyframes wa-blink { 50% { opacity: 0; } }
   .wa-send {
     appearance: none; -webkit-appearance: none;
     width: 34px; height: 34px; border: 0; border-radius: 999px; cursor: pointer;
@@ -753,7 +788,7 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     .wa-lead { font-size: 15.5px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    #wa-panel, .wa-form, #wa-hint, .wa-ask, .wa-card.reveal > *, .wa-welcome > *, .wa-status, .wa-status span, #wa-spot {
+    #wa-panel, .wa-form, #wa-hint, #wa-hint::after, .wa-chip, .wa-ask, .wa-card.reveal > *, .wa-welcome > *, .wa-status, .wa-status span, #wa-spot {
       animation: none !important; transition: none !important; filter: none !important;
     }
   }
@@ -764,7 +799,7 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     <div id="wa-panel" role="dialog" aria-label="${esc(b.name)} agent" aria-hidden="true">
       <div class="wa-panel-inner">
         <div class="wa-hdr">
-          <div class="wa-brand"><span class="wa-mark" aria-hidden="true"><span class="wa-orb"></span></span><strong class="wa-wordmark">${esc(b.wordmark || b.name)}</strong></div>
+          <div class="wa-brand">${mark}<strong class="wa-wordmark">${esc(b.wordmark || b.name)}</strong></div>
           <div class="wa-hdr-actions">
             <button type="button" id="wa-copy-prompt">Copy prompt</button>
             <button id="wa-close" type="button" aria-label="Minimize">${chevron}</button>
@@ -775,11 +810,11 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
           <div class="wa-welcome" id="wa-welcome">
             <h4>${esc(w.welcomeTitle)}</h4>
             <p>${esc(w.welcomeBody)}</p>
-            <div id="wa-chips">${chips}</div>
           </div>
         </div>
       </div>
     </div>
+    <div id="wa-chips" role="list">${chips}</div>
     <form class="wa-form" id="wa-form">
       <button id="wa-fab" type="button" aria-expanded="false" aria-label="${esc(b.fabLabel)}"><span class="wa-fab-label">${esc(b.fabLabel)}</span></button>
       <div class="wa-field">

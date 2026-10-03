@@ -6,9 +6,11 @@ import { Harness } from "../src/harness.ts";
 import { host } from "../src/host/host.ts";
 import { Room } from "../src/host/room.ts";
 import { Sessions } from "../src/host/sessions.ts";
-import { REPLY_SHAPE, visualVars } from "../src/pack/attach.ts";
-import { loadPackConfig } from "../src/pack/index.ts";
-import { listVisualLines, type Visual } from "../src/site/visual.ts";
+import { REPLY_SHAPE, VISUAL_RULE } from "../src/pack/attach.ts";
+import { iconHref } from "../src/pack/brand.ts";
+import { docsLookupTool } from "../src/pack/docs.ts";
+import { loadPackConfig, packPolicy } from "../src/pack/index.ts";
+import { findVisuals, type Visual } from "../src/site/visual.ts";
 import { packWidget } from "../src/widget/widget.ts";
 
 const chart: Visual = {
@@ -16,6 +18,7 @@ const chart: Visual = {
   kind: "figure",
   label: "Per-question token cost",
   text: "Cost versus corpus size",
+  tags: ["figure", "production"],
   page: "/",
   selector: "#production > figure",
   image: "visuals/token-cost.jpg",
@@ -40,12 +43,27 @@ describe("visuals", () => {
     expect(config.visuals?.[0]?.id).toBe("token-cost");
   });
 
-  test("model sees each visual id and the show marker", () => {
-    expect(listVisualLines([chart])).toContain("- token-cost: Per-question token cost — Cost versus corpus size (page /)");
-    const vars = visualVars([chart]);
-    expect(vars).toContain("[[show:ID]]");
-    expect(vars).toContain("at most one");
+  test("ranking finds a visual by label, tags, and text", () => {
+    const deploy: Visual = { ...chart, id: "deploy", label: "Runs everywhere", text: "Air-gapped", tags: ["section", "security"] };
+    expect(findVisuals([chart, deploy], "token cost").map((v) => v.id)).toEqual(["token-cost"]);
+    expect(findVisuals([chart, deploy], "security review").map((v) => v.id)).toEqual(["deploy"]);
+    expect(findVisuals([chart, deploy], "pricing")).toEqual([]);
+  });
+
+  test("docs_lookup returns matching visuals; the prompt holds only the rule", async () => {
+    const config = loadPackConfig(packWithVisuals());
+    const runtime = { config, dir: config.dir!, instruction: "", policy: packPolicy(config), site: {} as never, pages: [], chunks: [] };
+    const out = (await docsLookupTool(runtime).call({ query: "token cost per question" })) as { visuals?: { id: string }[] };
+    expect(out.visuals?.map((v) => v.id)).toEqual(["token-cost"]);
+    expect(VISUAL_RULE).toContain("[[show:ID]]");
+    expect(VISUAL_RULE).not.toContain("token-cost");
     expect(REPLY_SHAPE).toContain("first paragraph");
+  });
+
+  test("site icon becomes the brand logo", () => {
+    const html = '<link rel="icon" href="/favicon.ico"><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">';
+    expect(iconHref(html, "https://site.test")).toBe("https://site.test/favicon.svg?v=2");
+    expect(iconHref("<p>no icon</p>", "https://site.test")).toBeUndefined();
   });
 
   test("widget embeds visuals with absolute picture urls", () => {
@@ -53,6 +71,8 @@ describe("visuals", () => {
     const html = packWidget("https://agent.test/", "run-1", config);
     expect(html).toContain('"image":"https://agent.test/visuals/token-cost.jpg"');
     expect(html).toContain("Show on page");
+    expect(html).toContain("#wa-root.hints #wa-chips");
+    expect(html).toContain("typeHint");
     const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1] ?? "";
     expect(() => new Function(script)).not.toThrow();
   });

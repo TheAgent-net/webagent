@@ -5,7 +5,6 @@ import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
 import { attachPack } from "../site/attach.ts";
 import { docsLookupTool } from "./docs.ts";
-import { listVisualLines, type Visual } from "../site/visual.ts";
 import type { PackRuntime } from "./types.ts";
 
 export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: string }): Run {
@@ -22,8 +21,7 @@ export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: s
     ].join("\n"),
   });
   run.inject({ vars: REPLY_SHAPE });
-  const visuals = runtime.config.visuals ?? [];
-  if (visuals.length) run.inject({ vars: visualVars(visuals) });
+  if (runtime.config.visuals?.length) run.inject({ vars: VISUAL_RULE });
   return run;
 }
 
@@ -49,13 +47,10 @@ export const REPLY_SHAPE = [
   "- A greeting or a question back to the visitor is one short paragraph.",
 ].join("\n");
 
-/** Tell the model which site visuals it can attach, and how. */
-export function visualVars(visuals: Visual[]): string {
-  return [
-    "VISUALS FROM THE SITE",
-    "You can attach one visual when it shows the answer better than words: a chart, a diagram, a table, or a section.",
-    "To attach it, write [[show:ID]] on its own line after the first paragraph. Use at most one per reply.",
-    "Do not attach a visual to a greeting, a question back, or when no visual matches. Never invent an ID.",
-    listVisualLines(visuals),
-  ].join("\n");
-}
+/** How to attach a site visual that docs_lookup returned. */
+export const VISUAL_RULE = [
+  "VISUALS FROM THE SITE",
+  "docs_lookup can return visuals: charts, diagrams, tables, or sections from the site, each with an id.",
+  "Attach one when it shows the answer better than words. Write [[show:ID]] on its own line after the first paragraph.",
+  "Use at most one per reply. Do not attach one to a greeting or a question back. Use only an id that docs_lookup returned.",
+].join("\n");

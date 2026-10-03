@@ -4,6 +4,9 @@
     "kind": "image",
     "label": "Scatter plot of ARC-AGI-3 score against cost. Frontier models approach 100% at the top ri…",
     "text": "",
+    "tags": [
+      "image"
+    ],
     "page": "/",
     "selector": "#q-arc > div > img",
     "image": "visuals/scatter-plot-of-arc.png",
@@ -15,6 +18,9 @@
     "kind": "image",
     "label": "A supermemory memory graph: clusters of linked memories joined by connections across a da…",
     "text": "",
+    "tags": [
+      "image"
+    ],
     "page": "/",
     "selector": "#q-graph > div > img",
     "image": "visuals/a-supermemory-memory-graph.jpg",
@@ -26,6 +32,9 @@
     "kind": "figure",
     "label": "The field: a blue meadow, the recurring image of memory forming",
     "text": "",
+    "tags": [
+      "figure"
+    ],
     "page": "/",
     "selector": "#content > div > figure",
     "image": "visuals/the-field-a-blue.jpg",
@@ -37,6 +46,9 @@
     "kind": "figure",
     "label": "Figure 1. Raw data enters supermemory. learner-1 updates, merges, infers and forgets agai…",
     "text": "",
+    "tags": [
+      "figure"
+    ],
     "page": "/",
     "selector": "#memo > figure",
     "image": "visuals/figure-1-raw-data.jpg",
@@ -48,6 +60,10 @@
     "kind": "figure",
     "label": "Per-question token cost versus corpus size",
     "text": "",
+    "tags": [
+      "figure",
+      "production"
+    ],
     "page": "/",
     "selector": "#production > div > div:nth-of-type(5) > div:nth-of-type(2) > figure",
     "image": "visuals/per-question-token-cost.jpg",
@@ -59,6 +75,10 @@
     "kind": "figure",
     "label": "Founder, Chatarmin · on X↗",
     "text": "",
+    "tags": [
+      "figure",
+      "production"
+    ],
     "page": "/",
     "selector": "#production > figure",
     "image": "visuals/founder-chatarmin-on-x.jpg",
@@ -70,6 +90,10 @@
     "kind": "table",
     "label": "Server time, then end-to-end time, in milliseconds",
     "text": "Operation, Server, End to end, Search, Profile",
+    "tags": [
+      "table",
+      "production"
+    ],
     "page": "/",
     "selector": "#production > div > div:nth-of-type(1) > table",
     "image": "visuals/server-time-then-end.jpg",
@@ -81,6 +105,10 @@
     "kind": "section",
     "label": "What we do",
     "text": "Scale and Enterprise include advanced document extraction for PDFs, with OCR and descriptions of figures and diagrams. Free, Pro and Max keep standard PDF extr…",
+    "tags": [
+      "section",
+      "what"
+    ],
     "page": "/",
     "selector": "#what",
     "image": "visuals/what-we-do.jpg",
@@ -92,6 +120,10 @@
     "kind": "section",
     "label": "In production",
     "text": "Our promise is the best memory for agents: the kind people feel, not just the kind that tops a benchmark.",
+    "tags": [
+      "section",
+      "production"
+    ],
     "page": "/",
     "selector": "#production",
     "image": "visuals/in-production.jpg",
@@ -103,6 +135,16 @@
     "kind": "section",
     "label": "supermemory runs everywhere, even in air-gapped environments.",
     "text": "We build all the critical infrastructure ourselves. Which means we can deploy it wherever your data lives.",
+    "tags": [
+      "section",
+      "supermemory",
+      "runs",
+      "everywhere",
+      "even",
+      "air",
+      "gapped",
+      "environments"
+    ],
     "page": "/",
     "selector": "#security",
     "image": "visuals/supermemory-runs-everywhere-even.jpg",
@@ -114,6 +156,10 @@
     "kind": "section",
     "label": "Writing",
     "text": "",
+    "tags": [
+      "section",
+      "writing"
+    ],
     "page": "/",
     "selector": "#writing",
     "image": "visuals/writing.jpg",
@@ -125,6 +171,10 @@
     "kind": "section",
     "label": "Careers",
     "text": "We’re a small team based in San Francisco, building the memory layer for every model and every harness. If that is the problem you want to spend the next few y…",
+    "tags": [
+      "section",
+      "careers"
+    ],
     "page": "/",
     "selector": "#careers",
     "image": "visuals/careers.jpg",
