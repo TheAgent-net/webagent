@@ -4,4 +4,5 @@ export { crawlSite, resumeCrawl } from "./crawl.ts";
 export { inferFlows } from "./flows.ts";
 export { buildPack } from "./pack.ts";
 export { loadCorpus, saveCorpus, lookupCorpus, hasCorpus } from "./corpus.ts";
+export { captureVisuals, getChrome, listVisualLines, type Visual } from "./visual.ts";
 export type { AuthAsk, AuthGrant, IngestOpts, SiteFlow, SitePack } from "./types.ts";

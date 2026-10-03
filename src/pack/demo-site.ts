@@ -13,7 +13,7 @@ const MIME: Record<string, string> = {
   ".txt": "text/plain; charset=utf-8",
 };
 
-export function serveDemoSite(root: string, port: number, widgetOrigin: string): { stop: () => void } {
+export function serveDemoSite(root: string, port: number, widgetOrigin: string): { stop: () => void; port: number } {
   const server = Bun.serve({
     port,
     hostname: "127.0.0.1",
@@ -35,5 +35,5 @@ export function serveDemoSite(root: string, port: number, widgetOrigin: string):
       return new Response(new Uint8Array(buf), { headers: { "Content-Type": MIME[extname(rel)] || "application/octet-stream" } });
     },
   });
-  return { stop: () => server.stop(true) };
+  return { stop: () => server.stop(true), port: server.port ?? port };
 }
