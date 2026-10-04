@@ -239,18 +239,17 @@ switch (args[0]) {
       console.error("tune runs the real agent and a judge model: set OPENAI_API_KEY");
       process.exit(2);
     }
-    const { resolvePackDir } = await import("./pack/load.ts");
-    if (!existsSync(join(resolvePackDir(pack), "evals.json"))) {
-      console.error("no evals.json in the pack: add visitor cases first (see packs/supermemory/evals.json)");
-      process.exit(2);
-    }
     const { openPack } = await import("./pack/build.ts");
-    const { loadCases, tunePrompt, tuneReport } = await import("./pack/tune.ts");
+    const { loadCases, starterCases, tunePrompt, tuneReport } = await import("./pack/tune.ts");
     const { embedVisuals } = await import("./pack/docs.ts");
     const { writeFileSync } = await import("node:fs");
     const runtime = await openPack(pack, { maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220 });
     await embedVisuals(runtime).catch(() => 0);
-    const cases = loadCases(runtime.dir);
+    const own = existsSync(join(runtime.dir, "evals.json"));
+    const cases = own
+      ? loadCases(runtime.dir)
+      : starterCases(runtime.config.brand.name, runtime.pages.map((p) => new URL(p.url).pathname));
+    if (!own) console.error("no evals.json: using the generic starter cases");
     console.error(`tuning ${runtime.config.id} on ${cases.length} cases ...`);
     const { best, pool } = await tunePrompt(runtime, cases, {
       budget: Number(flag(args, "--budget")) || 8,
