@@ -76,34 +76,7 @@ export function serveDemoSite(root: string, port: number, widgetOrigin: string):
       return demoFileResponse(rootAbs, url, base) ?? new Response("not found", { status: 404 });
     },
   });
-  return { stop: () => server.stop(true), port: server.port };
-}
-
-export function demoFileResponse(root: string, url: URL, widgetOrigin: string): Response | null {
-  const rootAbs = normalize(root);
-  return fileAt(rootAbs, url, widgetOrigin.replace(/\/+$/, ""));
-}
-
-function fileAt(root: string, url: URL, widgetOrigin: string): Response | null {
-  for (const rel of candidates(url)) {
-    const abs = normalize(join(root, rel));
-    if (!abs.startsWith(root)) return new Response("no", { status: 403 });
-    if (!existsSync(abs) || !statSync(abs).isFile()) continue;
-    if (rel.endsWith(".html") || rel.split("__q_")[0]?.endsWith(".html")) {
-      const html = readFileSync(abs, "utf8")
-        .replaceAll("{{WIDGET}}", widgetOrigin)
-        .replaceAll("{{WIDGET_JS}}", widgetOrigin + "/widget.js");
-      return new Response(html, { headers: { "Content-Type": MIME[".html"]! } });
-    }
-    const buf = readFileSync(abs);
-    return new Response(new Uint8Array(buf), {
-      headers: {
-        "Content-Type": sniffType(rel, buf),
-        "Cache-Control": "public, max-age=86400",
-      },
-    });
-  }
-  return null;
+  return { stop: () => server.stop(true), port: server.port ?? port };
 }
 
 export function demoFileResponse(root: string, url: URL, widgetOrigin: string): Response | null {
