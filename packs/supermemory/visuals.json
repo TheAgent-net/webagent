@@ -1,0 +1,1322 @@
+[
+  {
+    "id": "scatter-plot-of-arc",
+    "kind": "image",
+    "label": "Scatter plot of ARC-AGI-3 score against cost. Frontier models approach 100% at the top ri…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "/",
+    "selector": "#q-arc > div > img",
+    "image": "visuals/scatter-plot-of-arc.png",
+    "width": 495,
+    "height": 228
+  },
+  {
+    "id": "a-supermemory-memory-graph",
+    "kind": "image",
+    "label": "A supermemory memory graph: clusters of linked memories joined by connections across a da…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "/",
+    "selector": "#q-graph > div > img",
+    "image": "visuals/a-supermemory-memory-graph.jpg",
+    "width": 495,
+    "height": 241
+  },
+  {
+    "id": "the-field-a-blue",
+    "kind": "figure",
+    "label": "The field: a blue meadow, the recurring image of memory forming",
+    "text": "",
+    "tags": [
+      "figure"
+    ],
+    "page": "/",
+    "selector": "#content > div > figure",
+    "image": "visuals/the-field-a-blue.jpg",
+    "html": "visuals/the-field-a-blue.html",
+    "width": 640,
+    "height": 267
+  },
+  {
+    "id": "figure-1-raw-data",
+    "kind": "figure",
+    "label": "Figure 1. Raw data enters supermemory. learner-1 updates, merges, infers and forgets agai…",
+    "text": "",
+    "tags": [
+      "figure"
+    ],
+    "page": "/",
+    "selector": "#memo > figure",
+    "image": "visuals/figure-1-raw-data.jpg",
+    "html": "visuals/figure-1-raw-data.html",
+    "width": 640,
+    "height": 414
+  },
+  {
+    "id": "per-question-token-cost",
+    "kind": "figure",
+    "label": "Per-question token cost versus corpus size",
+    "text": "",
+    "tags": [
+      "figure",
+      "production"
+    ],
+    "page": "/",
+    "selector": "#production > div > div:nth-of-type(5) > div:nth-of-type(2) > figure",
+    "image": "visuals/per-question-token-cost.jpg",
+    "html": "visuals/per-question-token-cost.html",
+    "width": 598,
+    "height": 372
+  },
+  {
+    "id": "what-we-do",
+    "kind": "section",
+    "label": "What we do",
+    "text": "Scale and Enterprise include advanced document extraction for PDFs, with OCR and descriptions of figures and diagrams. Free, Pro and Max keep standard PDF extr…",
+    "tags": [
+      "section",
+      "what"
+    ],
+    "page": "/",
+    "selector": "#what",
+    "image": "visuals/what-we-do.jpg",
+    "html": "visuals/what-we-do.html",
+    "width": 640,
+    "height": 646
+  },
+  {
+    "id": "in-production",
+    "kind": "section",
+    "label": "In production",
+    "text": "Our promise is the best memory for agents: the kind people feel, not just the kind that tops a benchmark.",
+    "tags": [
+      "section",
+      "production"
+    ],
+    "page": "/",
+    "selector": "#production",
+    "image": "visuals/in-production.jpg",
+    "html": "visuals/in-production.html",
+    "width": 640,
+    "height": 1477
+  },
+  {
+    "id": "supermemory-runs-everywhere-even",
+    "kind": "section",
+    "label": "supermemory runs everywhere, even in air-gapped environments.",
+    "text": "We build all the critical infrastructure ourselves. Which means we can deploy it wherever your data lives.",
+    "tags": [
+      "section",
+      "supermemory",
+      "runs",
+      "everywhere",
+      "even",
+      "air",
+      "gapped",
+      "environments"
+    ],
+    "page": "/",
+    "selector": "#security",
+    "image": "visuals/supermemory-runs-everywhere-even.jpg",
+    "html": "visuals/supermemory-runs-everywhere-even.html",
+    "width": 640,
+    "height": 842
+  },
+  {
+    "id": "writing",
+    "kind": "section",
+    "label": "Writing",
+    "text": "",
+    "tags": [
+      "section",
+      "writing"
+    ],
+    "page": "/",
+    "selector": "#writing",
+    "image": "visuals/writing.jpg",
+    "html": "visuals/writing.html",
+    "width": 640,
+    "height": 270
+  },
+  {
+    "id": "one-message-becomes-four",
+    "kind": "figure",
+    "label": "One message becomes four memories",
+    "text": "",
+    "tags": [
+      "figure",
+      "what",
+      "memory"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#memory > figure",
+    "image": "visuals/one-message-becomes-four.jpg",
+    "html": "visuals/one-message-becomes-four.html",
+    "width": 640,
+    "height": 263
+  },
+  {
+    "id": "three-memories-and-the",
+    "kind": "figure",
+    "label": "Three memories and the edge between them",
+    "text": "",
+    "tags": [
+      "figure",
+      "infers",
+      "updates",
+      "forgets"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#graph > figure",
+    "image": "visuals/three-memories-and-the.jpg",
+    "html": "visuals/three-memories-and-the.html",
+    "width": 640,
+    "height": 167
+  },
+  {
+    "id": "what-a-memory-is",
+    "kind": "table",
+    "label": "What a memory is",
+    "text": "Documents, Memories, What, Examples, Role, Lifecycle",
+    "tags": [
+      "table",
+      "what",
+      "memory"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#memory > table",
+    "image": "visuals/what-a-memory-is.jpg",
+    "html": "visuals/what-a-memory-is.html",
+    "width": 640,
+    "height": 217
+  },
+  {
+    "id": "infers-updates-forgets",
+    "kind": "table",
+    "label": "Infers, updates, forgets",
+    "text": "Type, Example, Behaviour, Facts, Preferences, Episodes",
+    "tags": [
+      "table",
+      "infers",
+      "updates",
+      "forgets"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#graph > table:nth-of-type(1)",
+    "image": "visuals/infers-updates-forgets.jpg",
+    "html": "visuals/infers-updates-forgets.html",
+    "width": 640,
+    "height": 154
+  },
+  {
+    "id": "profiles",
+    "kind": "section",
+    "label": "Profiles",
+    "text": "A standing picture of each user, task or tenant, maintained for you and attached to every turn without a search.",
+    "tags": [
+      "section",
+      "profiles"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#profiles",
+    "image": "visuals/profiles.jpg",
+    "html": "visuals/profiles.html",
+    "width": 640,
+    "height": 368
+  },
+  {
+    "id": "recall",
+    "kind": "section",
+    "label": "Recall",
+    "text": "",
+    "tags": [
+      "section",
+      "recall"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#recall",
+    "image": "visuals/recall.jpg",
+    "html": "visuals/recall.html",
+    "width": 640,
+    "height": 511
+  },
+  {
+    "id": "what-feeds-it",
+    "kind": "section",
+    "label": "What feeds it",
+    "text": "Text, markdown and HTML. PDFs, images, audio, video and code. Conversation transcripts. URLs. And connectors that keep syncing on their own.",
+    "tags": [
+      "section",
+      "what",
+      "feeds"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#sources",
+    "image": "visuals/what-feeds-it.jpg",
+    "html": "visuals/what-feeds-it.html",
+    "width": 640,
+    "height": 775
+  },
+  {
+    "id": "where-it-runs",
+    "kind": "section",
+    "label": "Where it runs",
+    "text": "Build on the API, or use it yourself through the tools you already have.",
+    "tags": [
+      "section",
+      "where",
+      "runs"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#everywhere",
+    "image": "visuals/where-it-runs.jpg",
+    "html": "visuals/where-it-runs.html",
+    "width": 640,
+    "height": 970
+  },
+  {
+    "id": "where-it-lives",
+    "kind": "section",
+    "label": "Where it lives",
+    "text": "Hosted anywhere, even locally. The same engine and the same API in all three.",
+    "tags": [
+      "section",
+      "where",
+      "lives"
+    ],
+    "page": "https://supermemory.ai/product",
+    "selector": "#hosting",
+    "image": "visuals/where-it-lives.jpg",
+    "html": "visuals/where-it-lives.html",
+    "width": 640,
+    "height": 957
+  },
+  {
+    "id": "the-meadow-with-what",
+    "kind": "figure",
+    "label": "The meadow, with what founders say about supermemory",
+    "text": "",
+    "tags": [
+      "figure"
+    ],
+    "page": "https://supermemory.ai/pricing/",
+    "selector": "#content > div > figure",
+    "image": "visuals/the-meadow-with-what.jpg",
+    "html": "visuals/the-meadow-with-what.html",
+    "width": 640,
+    "height": 400
+  },
+  {
+    "id": "plans",
+    "kind": "section",
+    "label": "Plans",
+    "text": "$19per month",
+    "tags": [
+      "section",
+      "plans"
+    ],
+    "page": "https://supermemory.ai/pricing/",
+    "selector": "#plans",
+    "image": "visuals/plans.jpg",
+    "html": "visuals/plans.html",
+    "width": 640,
+    "height": 932
+  },
+  {
+    "id": "custom-deployments-with-dedicated",
+    "kind": "section",
+    "label": "Custom deployments with dedicated engineering.",
+    "text": "Enterprise",
+    "tags": [
+      "section",
+      "custom",
+      "deployments",
+      "with",
+      "dedicated",
+      "engineering"
+    ],
+    "page": "https://supermemory.ai/pricing/",
+    "selector": "#enterprise",
+    "image": "visuals/custom-deployments-with-dedicated.jpg",
+    "html": "visuals/custom-deployments-with-dedicated.html",
+    "width": 640,
+    "height": 744
+  },
+  {
+    "id": "rate-card",
+    "kind": "section",
+    "label": "Rate card",
+    "text": "Billed in SM tokens, the unique tokens we actually ingest. Repeats and unchanged content are free, and the rates are the same on every plan.",
+    "tags": [
+      "section",
+      "rate",
+      "card"
+    ],
+    "page": "https://supermemory.ai/pricing/",
+    "selector": "#rates",
+    "image": "visuals/rate-card.jpg",
+    "html": "visuals/rate-card.html",
+    "width": 640,
+    "height": 689
+  },
+  {
+    "id": "questions",
+    "kind": "section",
+    "label": "Questions",
+    "text": "",
+    "tags": [
+      "section",
+      "questions"
+    ],
+    "page": "https://supermemory.ai/pricing/",
+    "selector": "#questions",
+    "image": "visuals/questions.jpg",
+    "html": "visuals/questions.html",
+    "width": 640,
+    "height": 1356
+  },
+  {
+    "id": "longmemeval-s-recall-20",
+    "kind": "table",
+    "label": "LongMemEval-S Recall@20 with aggregation",
+    "text": "Category, supermemory, Zep, Full context, SSUSingle-session — User, SSASingle-session — Assistant",
+    "tags": [
+      "table",
+      "longmemeval"
+    ],
+    "page": "https://supermemory.ai/research/",
+    "selector": "#longmemeval > div:nth-of-type(2) > table",
+    "image": "visuals/longmemeval-s-recall-20.jpg",
+    "html": "visuals/longmemeval-s-recall-20.html",
+    "width": 638,
+    "height": 395
+  },
+  {
+    "id": "state-of-the-art",
+    "kind": "section",
+    "label": "State of the art across agent memory.",
+    "text": "Public benchmarks",
+    "tags": [
+      "section",
+      "state",
+      "the",
+      "art",
+      "across",
+      "agent",
+      "memory"
+    ],
+    "page": "https://supermemory.ai/research/",
+    "selector": "#benchmarks",
+    "image": "visuals/state-of-the-art.jpg",
+    "html": "visuals/state-of-the-art.html",
+    "width": 640,
+    "height": 342
+  },
+  {
+    "id": "longmemeval-s",
+    "kind": "section",
+    "label": "LongMemEval-S",
+    "text": "Evaluation report · May 2026",
+    "tags": [
+      "section",
+      "longmemeval"
+    ],
+    "page": "https://supermemory.ai/research/",
+    "selector": "#longmemeval",
+    "image": "visuals/longmemeval-s.jpg",
+    "html": "visuals/longmemeval-s.html",
+    "width": 640,
+    "height": 628
+  },
+  {
+    "id": "memory-as-a-filesystem",
+    "kind": "section",
+    "label": "Memory as a filesystem.",
+    "text": "Systems research",
+    "tags": [
+      "section",
+      "memory",
+      "filesystem"
+    ],
+    "page": "https://supermemory.ai/research/",
+    "selector": "#systems",
+    "image": "visuals/memory-as-a-filesystem.jpg",
+    "html": "visuals/memory-as-a-filesystem.html",
+    "width": 640,
+    "height": 251
+  },
+  {
+    "id": "company-brain-is-open",
+    "kind": "section",
+    "label": "Company Brain is open source#",
+    "text": "Deploy the Company Brain Slack agent yourself on Cloudflare and keep control of your data. The hosted product has been discontinued, but its harness is now ava…",
+    "tags": [
+      "section",
+      "company",
+      "brain",
+      "open",
+      "source"
+    ],
+    "page": "https://supermemory.ai/changelog",
+    "selector": "#content > div > div:nth-of-type(2) > section",
+    "image": "visuals/company-brain-is-open.jpg",
+    "html": "visuals/company-brain-is-open.html",
+    "width": 640,
+    "height": 7455
+  },
+  {
+    "id": "company-brain-is-now",
+    "kind": "image",
+    "label": "Company Brain is now open source: an open workspace with three desks around a shared gold…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/open-sourcing-company-brain",
+    "selector": "#content > article > figure > img",
+    "image": "visuals/company-brain-is-now.webp",
+    "width": 640,
+    "height": 360
+  },
+  {
+    "id": "slack-events-pass-through",
+    "kind": "image",
+    "label": "Slack events pass through a verifying Cloudflare Worker to one CompanyBrainAgent Durable…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/open-sourcing-company-brain",
+    "selector": "#content > article > div > p:nth-of-type(11) > img",
+    "image": "visuals/slack-events-pass-through.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "proactivity-settings-offer-all",
+    "kind": "image",
+    "label": "Proactivity settings offer All channels or Only its own channel, with exceptions for indi…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/open-sourcing-company-brain",
+    "selector": "#content > article > div > p:nth-of-type(22) > img",
+    "image": "visuals/proactivity-settings-offer-all.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "proactivity-modes-listener-responds",
+    "kind": "image",
+    "label": "Proactivity modes: Listener responds only when asked; Investigator enters high-value situ…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/open-sourcing-company-brain",
+    "selector": "#content > article > div > p:nth-of-type(23) > img",
+    "image": "visuals/proactivity-modes-listener-responds.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "employee-memory-in-a",
+    "kind": "image",
+    "label": "Employee memory in a DM can read the employee’s private-channel memories and public-chann…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/open-sourcing-company-brain",
+    "selector": "#content > article > div > p:nth-of-type(35) > img",
+    "image": "visuals/employee-memory-in-a.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "glowing-golden-tracks-branch",
+    "kind": "image",
+    "label": "Glowing golden tracks branch through a blue landscape beside the headline Jev changes mem…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/jev-memory-context-engineering",
+    "selector": "#content > article > figure > img",
+    "image": "visuals/glowing-golden-tracks-branch.webp",
+    "width": 640,
+    "height": 360
+  },
+  {
+    "id": "scifact-reranker-quality-versus",
+    "kind": "image",
+    "label": "SciFact reranker quality versus price: Jev Score-10 improves on BM25 and BGE base, while…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/jev-memory-context-engineering",
+    "selector": "#content > article > div > p:nth-of-type(13) > img",
+    "image": "visuals/scifact-reranker-quality-versus.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "eight-chunking-methods-fixed",
+    "kind": "image",
+    "label": "Eight chunking methods: fixed windows, overlap, recursive separators, sentence packing, M…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/jev-memory-context-engineering",
+    "selector": "#content > article > div > p:nth-of-type(17) > img",
+    "image": "visuals/eight-chunking-methods-fixed.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "top-chunk-answer-hit",
+    "kind": "image",
+    "label": "Top-chunk answer hit rate across 72 questions: both Jev methods reach 93% with 320-charac…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/jev-memory-context-engineering",
+    "selector": "#content > article > div > p:nth-of-type(19) > img",
+    "image": "visuals/top-chunk-answer-hit.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "answer-retrieval-within-640",
+    "kind": "image",
+    "label": "Answer retrieval within 640 characters across six languages: Jev boundary scores 100% for…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/jev-memory-context-engineering",
+    "selector": "#content > article > div > p:nth-of-type(22) > img",
+    "image": "visuals/answer-retrieval-within-640.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "evaluation-of-jev-s",
+    "kind": "image",
+    "label": "Evaluation of Jev's context filtering, illustrating token savings and the risk of losing…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/jev-memory-context-engineering",
+    "selector": "#content > article > div > p:nth-of-type(30) > img",
+    "image": "visuals/evaluation-of-jev-s.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "supermemory-s-claude-code",
+    "kind": "image",
+    "label": "Supermemory's Claude Code integration showing memory context injected into an agent sessi…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/jev-memory-context-engineering",
+    "selector": "#content > article > div > p:nth-of-type(35) > img",
+    "image": "visuals/supermemory-s-claude-code.webp",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "a-softly-blurred-front",
+    "kind": "image",
+    "label": "A softly blurred, front-facing iPhone with iMessage bubbles connects to three aligned glo…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
+    "selector": "#content > article > figure > img",
+    "image": "visuals/a-softly-blurred-front.webp",
+    "width": 640,
+    "height": 360
+  },
+  {
+    "id": "i-reverse-engineered-instinct",
+    "kind": "table",
+    "label": "I reverse-engineered Instinct's memory. Here's exactly how it works: Instinct is powered…",
+    "text": "Block, Reported contents, Reported size / timing",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
+    "selector": "#content > article > div > table:nth-of-type(1)",
+    "image": "visuals/i-reverse-engineered-instinct.jpg",
+    "html": "visuals/i-reverse-engineered-instinct.html",
+    "width": 640,
+    "height": 374
+  },
+  {
+    "id": "i-reverse-engineered-instinct-2",
+    "kind": "table",
+    "label": "I reverse-engineered Instinct's memory. Here's exactly how it works: The files and folders",
+    "text": "Location, Contents",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
+    "selector": "#content > article > div > table:nth-of-type(2)",
+    "image": "visuals/i-reverse-engineered-instinct-2.jpg",
+    "html": "visuals/i-reverse-engineered-instinct-2.html",
+    "width": 640,
+    "height": 458
+  },
+  {
+    "id": "i-reverse-engineered-instinct-3",
+    "kind": "table",
+    "label": "I reverse-engineered Instinct's memory. Here's exactly how it works: Creating, updating,…",
+    "text": "Revision, Reported change",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
+    "selector": "#content > article > div > table:nth-of-type(3)",
+    "image": "visuals/i-reverse-engineered-instinct-3.jpg",
+    "html": "visuals/i-reverse-engineered-instinct-3.html",
+    "width": 640,
+    "height": 206
+  },
+  {
+    "id": "i-reverse-engineered-instinct-4",
+    "kind": "table",
+    "label": "I reverse-engineered Instinct's memory. Here's exactly how it works: There's no vector in…",
+    "text": "Query, Reported result",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
+    "selector": "#content > article > div > table:nth-of-type(4)",
+    "image": "visuals/i-reverse-engineered-instinct-4.jpg",
+    "html": "visuals/i-reverse-engineered-instinct-4.html",
+    "width": 640,
+    "height": 290
+  },
+  {
+    "id": "i-reverse-engineered-instinct-5",
+    "kind": "table",
+    "label": "I reverse-engineered Instinct's memory. Here's exactly how it works: Performance of Insti…",
+    "text": "Capability, Verdict",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/blog/reverse-engineering-instinct-memory",
+    "selector": "#content > article > div > table:nth-of-type(5)",
+    "image": "visuals/i-reverse-engineered-instinct-5.jpg",
+    "html": "visuals/i-reverse-engineered-instinct-5.html",
+    "width": 640,
+    "height": 689
+  },
+  {
+    "id": "quickstart-c-user-profile",
+    "kind": "table",
+    "label": "Quickstart: C. User profile",
+    "text": "Path, Use when",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/quickstart",
+    "selector": "#content > div:nth-of-type(11) > div > div > div > table",
+    "image": "visuals/quickstart-c-user-profile.jpg",
+    "html": "visuals/quickstart-c-user-profile.html",
+    "width": 472,
+    "height": 160
+  },
+  {
+    "id": "text-files-chats-and",
+    "kind": "image",
+    "label": "Text, files, chats and connectors flow into Supermemory. The RAG path runs through the sm…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/docs/overview/what-is-supermemory",
+    "selector": "#content > span:nth-of-type(5) > span > picture > img",
+    "image": "visuals/text-files-chats-and.jpg",
+    "width": 472,
+    "height": 266
+  },
+  {
+    "id": "memory-graph",
+    "kind": "image",
+    "label": "memory graph",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/docs/overview/what-is-supermemory",
+    "selector": "#content > span:nth-of-type(11) > span > picture > img",
+    "image": "visuals/memory-graph.png",
+    "width": 472,
+    "height": 313
+  },
+  {
+    "id": "how-supermemory-works-what",
+    "kind": "table",
+    "label": "How Supermemory works: What the pipeline does",
+    "text": "Stage, What happens",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/how-it-works",
+    "selector": "#content > div:nth-of-type(4) > div > div > div > table",
+    "image": "visuals/how-supermemory-works-what.jpg",
+    "html": "visuals/how-supermemory-works-what.html",
+    "width": 472,
+    "height": 271
+  },
+  {
+    "id": "how-supermemory-works-dreaming",
+    "kind": "table",
+    "label": "How Supermemory works: Dreaming (how memories enter the graph)",
+    "text": "Mode, Default?, Behavior, When to use",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/how-it-works",
+    "selector": "#content > div:nth-of-type(6) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/how-supermemory-works-dreaming.jpg",
+    "html": "visuals/how-supermemory-works-dreaming.html",
+    "width": 600,
+    "height": 503
+  },
+  {
+    "id": "how-supermemory-works-what-2",
+    "kind": "table",
+    "label": "How Supermemory works: What you get out",
+    "text": "Output, Role, Go deeper",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/how-it-works",
+    "selector": "#content > div:nth-of-type(8) > div > div > div > table",
+    "image": "visuals/how-supermemory-works-what-2.jpg",
+    "html": "visuals/how-supermemory-works-what-2.html",
+    "width": 472,
+    "height": 280
+  },
+  {
+    "id": "graph-memory-documents-vs",
+    "kind": "table",
+    "label": "Graph memory: Documents vs memories",
+    "text": "Documents, Memories",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/graph-memory",
+    "selector": "#content > div:nth-of-type(2) > div > div > div > table",
+    "image": "visuals/graph-memory-documents-vs.jpg",
+    "html": "visuals/graph-memory-documents-vs.html",
+    "width": 472,
+    "height": 257
+  },
+  {
+    "id": "graph-memory-memory-types",
+    "kind": "table",
+    "label": "Graph memory: Memory types",
+    "text": "Type, Example, Behavior",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/graph-memory",
+    "selector": "#content > div:nth-of-type(7) > div > div > div > table",
+    "image": "visuals/graph-memory-memory-types.jpg",
+    "html": "visuals/graph-memory-memory-types.html",
+    "width": 472,
+    "height": 180
+  },
+  {
+    "id": "graph-memory-related-in",
+    "kind": "table",
+    "label": "Graph memory: Related in the docs",
+    "text": "If you need…, Go to",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/graph-memory",
+    "selector": "#content > div:nth-of-type(9) > div > div > div > table",
+    "image": "visuals/graph-memory-related-in.jpg",
+    "html": "visuals/graph-memory-related-in.html",
+    "width": 472,
+    "height": 254
+  },
+  {
+    "id": "search-adds-context-to",
+    "kind": "image",
+    "label": "Search adds context to the prompt after a round trip; a profile rides along with every pr…",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/user-profiles",
+    "selector": "#content > span:nth-of-type(6) > span > picture > img",
+    "image": "visuals/search-adds-context-to.png",
+    "width": 472,
+    "height": 180
+  },
+  {
+    "id": "user-profiles-why-profiles",
+    "kind": "table",
+    "label": "User profiles: Why Profiles?",
+    "text": "Problem, Search Only, With Profiles",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/user-profiles",
+    "selector": "#content > div:nth-of-type(2) > div > div > div > table",
+    "image": "visuals/user-profiles-why-profiles.jpg",
+    "html": "visuals/user-profiles-why-profiles.html",
+    "width": 472,
+    "height": 160
+  },
+  {
+    "id": "container-tags-where-container",
+    "kind": "table",
+    "label": "Container tags: Where container tags are used",
+    "text": "Operation, Behavior",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/container-tags",
+    "selector": "#content > div:nth-of-type(7) > div > div > div > table",
+    "image": "visuals/container-tags-where-container.jpg",
+    "html": "visuals/container-tags-where-container.html",
+    "width": 472,
+    "height": 217
+  },
+  {
+    "id": "container-tags-per-container",
+    "kind": "table",
+    "label": "Container tags: Per-container settings",
+    "text": "Setting, Purpose",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/container-tags",
+    "selector": "#content > div:nth-of-type(9) > div > div > div > table",
+    "image": "visuals/container-tags-per-container.jpg",
+    "html": "visuals/container-tags-per-container.html",
+    "width": 472,
+    "height": 163
+  },
+  {
+    "id": "container-tags-choosing-a",
+    "kind": "table",
+    "label": "Container tags: Choosing a convention",
+    "text": "Pattern, Example, Use case",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/concepts/container-tags",
+    "selector": "#content > div:nth-of-type(11) > div > div > div > table",
+    "image": "visuals/container-tags-choosing-a.jpg",
+    "html": "visuals/container-tags-choosing-a.html",
+    "width": 472,
+    "height": 259
+  },
+  {
+    "id": "ingesting-context-to-supermemory",
+    "kind": "table",
+    "label": "Ingesting context to supermemory: Supported file types",
+    "text": "Type, Formats, Processing",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/ingestion/add-memories",
+    "selector": "#content > div:nth-of-type(9) > div > div > div > table",
+    "image": "visuals/ingesting-context-to-supermemory.jpg",
+    "html": "visuals/ingesting-context-to-supermemory.html",
+    "width": 472,
+    "height": 217
+  },
+  {
+    "id": "ingesting-context-to-supermemory-2",
+    "kind": "table",
+    "label": "Ingesting context to supermemory: Parameters",
+    "text": "Parameter, Type, Description",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/ingestion/add-memories",
+    "selector": "#content > div:nth-of-type(11) > div > div > div > table",
+    "image": "visuals/ingesting-context-to-supermemory-2.jpg",
+    "html": "visuals/ingesting-context-to-supermemory-2.html",
+    "width": 472,
+    "height": 886
+  },
+  {
+    "id": "ingesting-context-to-supermemory-3",
+    "kind": "table",
+    "label": "Ingesting context to supermemory: filterByMetadata parameter",
+    "text": "Key, Type, Description",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/ingestion/add-memories",
+    "selector": "#content > div:nth-of-type(17) > div > div > div > table",
+    "image": "visuals/ingesting-context-to-supermemory-3.jpg",
+    "html": "visuals/ingesting-context-to-supermemory-3.html",
+    "width": 472,
+    "height": 128
+  },
+  {
+    "id": "ingesting-context-to-supermemory-4",
+    "kind": "table",
+    "label": "Ingesting context to supermemory: Processing pipeline",
+    "text": "Status, Error, Cause",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/ingestion/add-memories",
+    "selector": "#error-handling-accordion-children > div:nth-of-type(1) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/ingesting-context-to-supermemory-4.jpg",
+    "html": "visuals/ingesting-context-to-supermemory-4.html",
+    "width": 462,
+    "height": 314
+  },
+  {
+    "id": "search-parameters",
+    "kind": "table",
+    "label": "Search: Parameters",
+    "text": "Parameter, Type, Default, Description",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/recall/search",
+    "selector": "#content > div:nth-of-type(6) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/search-parameters.jpg",
+    "html": "visuals/search-parameters.html",
+    "width": 600,
+    "height": 767
+  },
+  {
+    "id": "supermemory-sdk-error-handling",
+    "kind": "table",
+    "label": "Supermemory SDK: Error handling & retries",
+    "text": "Status, Error",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/integrations/supermemory-sdk",
+    "selector": "#panel-typescript-0 > div:nth-of-type(4) > div > div > div > table",
+    "image": "visuals/supermemory-sdk-error-handling.jpg",
+    "html": "visuals/supermemory-sdk-error-handling.html",
+    "width": 472,
+    "height": 328
+  },
+  {
+    "id": "vercel-ai-sdk-quick",
+    "kind": "table",
+    "label": "Vercel AI SDK: Quick comparison",
+    "text": "Approach, Use Case, Setup",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/integrations/ai-sdk",
+    "selector": "#content > div:nth-of-type(4) > div > div > div > table",
+    "image": "visuals/vercel-ai-sdk-quick.jpg",
+    "html": "visuals/vercel-ai-sdk-quick.html",
+    "width": 472,
+    "height": 163
+  },
+  {
+    "id": "supermemory-mcp-searchable-space",
+    "kind": "image",
+    "label": "Supermemory MCP searchable space picker",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
+    "selector": "#content > span:nth-of-type(17) > span > picture > img",
+    "image": "visuals/supermemory-mcp-searchable-space.png",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "supermemory-mcp-guided-save",
+    "kind": "image",
+    "label": "Supermemory MCP guided save draft with editable memory content and a space selector",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
+    "selector": "#content > span:nth-of-type(20) > span > picture > img",
+    "image": "visuals/supermemory-mcp-guided-save.png",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "supermemory-mcp-file-picker",
+    "kind": "image",
+    "label": "Supermemory MCP file picker with a writable-space selector",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
+    "selector": "#content > span:nth-of-type(24) > span > picture > img",
+    "image": "visuals/supermemory-mcp-file-picker.png",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "supermemory-mcp-interactive-graph",
+    "kind": "image",
+    "label": "Supermemory MCP interactive graph of documents and memories",
+    "text": "",
+    "tags": [
+      "image"
+    ],
+    "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
+    "selector": "#content > span:nth-of-type(28) > span > picture > img",
+    "image": "visuals/supermemory-mcp-interactive-graph.png",
+    "width": 0,
+    "height": 0
+  },
+  {
+    "id": "overview-tools",
+    "kind": "table",
+    "label": "Overview: Tools",
+    "text": "Tool, Use it for, Inputs, Result",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
+    "selector": "#content > div:nth-of-type(2) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/overview-tools.jpg",
+    "html": "visuals/overview-tools.html",
+    "width": 600,
+    "height": 747
+  },
+  {
+    "id": "overview-interactive-widgets",
+    "kind": "table",
+    "label": "Overview: Interactive widgets",
+    "text": "Tool, What it opens",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
+    "selector": "#content > div:nth-of-type(3) > div > div > div > table",
+    "image": "visuals/overview-interactive-widgets.jpg",
+    "html": "visuals/overview-interactive-widgets.html",
+    "width": 472,
+    "height": 198
+  },
+  {
+    "id": "overview-resources-and-context",
+    "kind": "table",
+    "label": "Overview: Resources and context prompt",
+    "text": "Kind, Name or URI, What it returns",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/supermemory-mcp/mcp",
+    "selector": "#content > div:nth-of-type(4) > div > div > div > table",
+    "image": "visuals/overview-resources-and-context.jpg",
+    "html": "visuals/overview-resources-and-context.html",
+    "width": 472,
+    "height": 300
+  },
+  {
+    "id": "supermemory-local-self-hosted",
+    "kind": "table",
+    "label": "Supermemory local: Self-hosted vs. the platform",
+    "text": "Self-hosted, Platform",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/self-hosting/overview",
+    "selector": "#content > div:nth-of-type(4) > div > div > div > table",
+    "image": "visuals/supermemory-local-self-hosted.jpg",
+    "html": "visuals/supermemory-local-self-hosted.html",
+    "width": 472,
+    "height": 525
+  },
+  {
+    "id": "billing-usage-meters-what",
+    "kind": "table",
+    "label": "Billing & usage: Meters (what we count)",
+    "text": "Feature ID, UI label, What counts, Unit",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/overview/billing",
+    "selector": "#content > div:nth-of-type(3) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/billing-usage-meters-what.jpg",
+    "html": "visuals/billing-usage-meters-what.html",
+    "width": 600,
+    "height": 772
+  },
+  {
+    "id": "billing-usage-list-rates",
+    "kind": "table",
+    "label": "Billing & usage: List rates (USD)",
+    "text": "Meter, USD per unit, Approx per 1K units",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/overview/billing",
+    "selector": "#content > div:nth-of-type(4) > div > div > div > table",
+    "image": "visuals/billing-usage-list-rates.jpg",
+    "html": "visuals/billing-usage-list-rates.html",
+    "width": 472,
+    "height": 253
+  },
+  {
+    "id": "billing-usage-search-and",
+    "kind": "table",
+    "label": "Billing & usage: Search and profile",
+    "text": "Call, Typical meter",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/overview/billing",
+    "selector": "#content > div:nth-of-type(5) > div > div > div > table",
+    "image": "visuals/billing-usage-search-and.jpg",
+    "html": "visuals/billing-usage-search-and.html",
+    "width": 472,
+    "height": 144
+  },
+  {
+    "id": "billing-usage-requirements",
+    "kind": "table",
+    "label": "Billing & usage: Requirements",
+    "text": "Requirement, Why",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/overview/billing",
+    "selector": "#content > div:nth-of-type(7) > div > div > div > table",
+    "image": "visuals/billing-usage-requirements.jpg",
+    "html": "visuals/billing-usage-requirements.html",
+    "width": 472,
+    "height": 221
+  },
+  {
+    "id": "billing-usage-credits-and",
+    "kind": "table",
+    "label": "Billing & usage: Credits and balance behavior",
+    "text": "Concept, Behavior",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/overview/billing",
+    "selector": "#content > div:nth-of-type(9) > div > div > div > table",
+    "image": "visuals/billing-usage-credits-and.jpg",
+    "html": "visuals/billing-usage-credits-and.html",
+    "width": 472,
+    "height": 451
+  },
+  {
+    "id": "billing-usage-plan-credit",
+    "kind": "table",
+    "label": "Billing & usage: Plan credit inclusion (approximate)",
+    "text": "Plan, Product ID, Included credits / month",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/overview/billing",
+    "selector": "#content > div:nth-of-type(10) > div > div > div > table",
+    "image": "visuals/billing-usage-plan-credit.jpg",
+    "html": "visuals/billing-usage-plan-credit.html",
+    "width": 472,
+    "height": 236
+  },
+  {
+    "id": "billing-usage-plan-summary",
+    "kind": "table",
+    "label": "Billing & usage: Plan summary",
+    "text": "Plan, Price (list), Included credits, Best for",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/overview/billing",
+    "selector": "#content > div:nth-of-type(11) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/billing-usage-plan-summary.jpg",
+    "html": "visuals/billing-usage-plan-summary.html",
+    "width": 600,
+    "height": 334
+  },
+  {
+    "id": "billing-usage-feature-availability",
+    "kind": "table",
+    "label": "Billing & usage: Feature availability",
+    "text": "Feature, Free, Pro, Max, Scale, Enterprise",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/overview/billing",
+    "selector": "#content > div:nth-of-type(12) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/billing-usage-feature-availability.jpg",
+    "html": "visuals/billing-usage-feature-availability.html",
+    "width": 900,
+    "height": 907
+  },
+  {
+    "id": "connectors-overview-sync-mechanisms",
+    "kind": "table",
+    "label": "Connectors overview: Sync mechanisms",
+    "text": "Provider, Real-time Sync, Scheduled Sync, Manual Sync",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/connectors/overview",
+    "selector": "#content > div:nth-of-type(5) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/connectors-overview-sync-mechanisms.jpg",
+    "html": "visuals/connectors-overview-sync-mechanisms.html",
+    "width": 600,
+    "height": 368
+  },
+  {
+    "id": "connectors-overview-delete-connections",
+    "kind": "table",
+    "label": "Connectors overview: Delete connections",
+    "text": "Parameter, Type, Default, Description",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/connectors/overview",
+    "selector": "#content > div:nth-of-type(7) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/connectors-overview-delete-connections.jpg",
+    "html": "visuals/connectors-overview-delete-connections.html",
+    "width": 600,
+    "height": 207
+  },
+  {
+    "id": "memorybench-zep",
+    "kind": "table",
+    "label": "MemoryBench: Zep",
+    "text": "Benchmark, Tests, Source",
+    "tags": [
+      "table"
+    ],
+    "page": "https://supermemory.ai/docs/memorybench/overview",
+    "selector": "#content > div:nth-of-type(5) > div:nth-of-type(1) > div > div > table",
+    "image": "visuals/memorybench-zep.jpg",
+    "html": "visuals/memorybench-zep.html",
+    "width": 476,
+    "height": 420
+  }
+]

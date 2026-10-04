@@ -14,8 +14,10 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent ask <text>             one echo run");
   console.error("  webagent from-url <url>         crawl a site → write a pack");
   console.error("  webagent serve --pack <dir>     host a pack (widget + POST /chat)");
+  console.error("  webagent capture --pack <dir>   save site visuals for the widget (Chromium)");
+  console.error("  webagent tune --pack <dir>      GEPA: tune the pack instruction on evals.json");
   console.error("  webagent serve [addr]           generic host, no pack");
-  console.error("  webagent demo <name>            pack host + demo site preview");
+  console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
   console.error("  webagent pair <url>             two agents: site seller + buyer (Cursor SDK)");
@@ -125,21 +127,39 @@ switch (args[0]) {
   case "demo": {
     const name = args[1];
     if (!name) {
-      console.error("usage: webagent demo <name> [addr]");
+      console.error("usage: webagent demo <name> [addr] [--refresh] [--site-port N]");
       process.exit(2);
     }
     const addr = positional(args.slice(2)) || ":8787";
     const sitePort = Number(flag(args, "--site-port") || 0) || Number(addr.replace(/^.*:/, "")) + 1;
-    await startPack(h, packDirFor(name), addr);
-    const { existsSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    const site = join(process.cwd(), "demo", name, "site");
-    if (existsSync(join(site, "index.html"))) {
-      const { serveDemoSite } = await import("./pack/demo-site.ts");
-      const origin = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + (Number(addr.replace(/^.*:/, "")) || 8787);
-      serveDemoSite(site, sitePort, origin);
-      console.error(`  demo    http://127.0.0.1:${sitePort}/  (embeds ${origin}/widget.js)`);
+    const refresh = args.includes("--refresh");
+    const dir = packDirFor(name);
+    const { loadPackConfig } = await import("./pack/load.ts");
+    const { ensureDemoClone } = await import("./pack/clone.ts");
+    const { serveDemoSite } = await import("./pack/demo-site.ts");
+    const config = loadPackConfig(dir);
+    if (!config.origin) {
+      console.error("pack.json missing origin — demo cannot pixel-clone the webpage");
+      process.exit(2);
     }
+    const site = join(process.cwd(), "demo", name, "site");
+    const widgetOrigin = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + (Number(addr.replace(/^.*:/, "")) || 8787);
+    console.error("pixel-cloning " + config.origin + " → " + site + (refresh ? " (refresh)" : ""));
+    const packP = startPack(h, dir, addr);
+    try {
+      const cloned = await ensureDemoClone({ origin: config.origin, out: site, refresh });
+      console.error(
+        `  clone   ${cloned.files} files  ${Math.round(cloned.htmlBytes / 1024)}kb html` +
+          (cloned.fresh ? "  fresh" : "  cached") +
+          (cloned.landed && cloned.landed !== config.origin ? "  via " + cloned.landed : ""),
+      );
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+    await packP;
+    serveDemoSite(site, sitePort, widgetOrigin);
+    console.error(`  demo    http://127.0.0.1:${sitePort}/  (pixel clone + ${widgetOrigin}/widget.js)`);
     await new Promise(() => {});
     break;
   }
@@ -209,6 +229,74 @@ switch (args[0]) {
     await new Promise(() => {});
     break;
   }
+  case "tune": {
+    const pack = flag(args, "--pack");
+    if (!pack) {
+      console.error("usage: webagent tune --pack <dir> [--budget 8] [--model <judge and reflect model>]");
+      process.exit(2);
+    }
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("tune runs the real agent and a judge model: set OPENAI_API_KEY");
+      process.exit(2);
+    }
+    const { openPack } = await import("./pack/build.ts");
+    const { loadCases, starterCases, tunePrompt, tuneReport } = await import("./pack/tune.ts");
+    const { embedVisuals } = await import("./pack/docs.ts");
+    const { writeFileSync } = await import("node:fs");
+    const runtime = await openPack(pack, { maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220 });
+    await embedVisuals(runtime).catch(() => 0);
+    const own = existsSync(join(runtime.dir, "evals.json"));
+    const cases = own
+      ? loadCases(runtime.dir)
+      : starterCases(runtime.config.brand.name, runtime.pages.map((p) => new URL(p.url).pathname));
+    if (!own) console.error("no evals.json: using the generic starter cases");
+    console.error(`tuning ${runtime.config.id} on ${cases.length} cases ...`);
+    const { best, pool } = await tunePrompt(runtime, cases, {
+      budget: Number(flag(args, "--budget")) || 8,
+      model: flag(args, "--model"),
+      log: (line) => console.error("  " + line),
+    });
+    writeFileSync(join(runtime.dir, "instruction.tuned.md"), best.text.trim() + "\n");
+    writeFileSync(join(runtime.dir, "tune-report.md"), tuneReport(pool, best) + "\n");
+    console.error(`best ${best.id} mean ${best.mean.toFixed(3)} (seed ${pool[0]!.mean.toFixed(3)})`);
+    console.error(`wrote ${join(runtime.dir, "instruction.tuned.md")} and tune-report.md. Review it, then copy it over instruction.md.`);
+    break;
+  }
+  case "capture": {
+    const pack = flag(args, "--pack");
+    if (!pack) {
+      console.error("usage: webagent capture --pack <dir> [--url <site>] [--pages /,/pricing,https://other.site/page] [--max 8] [--max-visuals 40]");
+      process.exit(2);
+    }
+    const { loadPackConfig } = await import("./pack/load.ts");
+    const { captureVisuals } = await import("./site/visual.ts");
+    const config = loadPackConfig(pack);
+    const clone = join(process.cwd(), "demo", config.id, "site");
+    let url = flag(args, "--url");
+    let stop = () => {};
+    if (!url && existsSync(join(clone, "index.html"))) {
+      const { serveDemoSite } = await import("./pack/demo-site.ts");
+      const site = serveDemoSite(clone, 0, "http://127.0.0.1");
+      url = "http://127.0.0.1:" + site.port;
+      stop = site.stop;
+    }
+    url ||= config.origin;
+    const pages = flag(args, "--pages")?.split(",").map((p) => p.trim()).filter(Boolean);
+    console.error("capturing visuals from " + url + " ...");
+    try {
+      const visuals = await captureVisuals(url, {
+        out: config.dir!,
+        pages,
+        maxPages: Number(flag(args, "--max")) || 8,
+        maxVisuals: Number(flag(args, "--max-visuals")) || 40,
+      });
+      for (const v of visuals) console.error(`  ${v.kind.padEnd(8)} ${v.id.padEnd(36)} ${v.page}`);
+      console.error(`wrote ${visuals.length} visuals to ${join(config.dir!, "visuals.json")}`);
+    } finally {
+      stop();
+    }
+    break;
+  }
   case "serve": {
     const pack = flag(args, "--pack");
     const addr = positional(args.slice(1)) || ":8787";
@@ -241,7 +329,12 @@ async function startPack(h: ReturnType<typeof defaultHarness>, dir: string, addr
     maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220,
   });
   console.error(`agent ${hosted.url}`);
-  console.error(`  pack    ${runtime.config.id}  ${runtime.pages.length} pages  ${runtime.chunks.length} chunks`);
+  const visualN = runtime.visualVectors?.size ?? 0;
+  const visualT = runtime.config.visuals?.length ?? 0;
+  console.error(
+    `  pack    ${runtime.config.id}  ${runtime.pages.length} pages  ${runtime.chunks.length} chunks` +
+      (visualT ? `  ${visualN}/${visualT} visuals` : ""),
+  );
   console.error(`  model   ${modelName}${modelName === "echo" ? " — OPENAI_API_KEY missing, replies echo" : ""}`);
   console.error(`  human   ${hosted.url}/`);
   console.error(`  widget  ${hosted.url}/widget.js`);

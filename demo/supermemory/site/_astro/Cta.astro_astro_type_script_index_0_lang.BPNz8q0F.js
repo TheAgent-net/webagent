@@ -1,0 +1,1 @@
+globalThis.process??={},globalThis.process.env??={};import"./arrive.t4U3iK69.js";

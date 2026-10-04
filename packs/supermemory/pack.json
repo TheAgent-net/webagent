@@ -1,0 +1,156 @@
+{
+  "id": "supermemory",
+  "origin": "https://supermemory.com",
+  "docs": {
+    "origin": "https://supermemory.ai/docs",
+    "llmsTxt": "https://supermemory.ai/docs/llms.txt"
+  },
+  "brand": {
+    "name": "supermemory",
+    "tagline": "Memory and continual learning for agents.",
+    "colors": {
+      "ink": "#0a0a0a",
+      "paper": "#ffffff",
+      "muted": "#6b6b6b",
+      "line": "#e8e8e8",
+      "wash": "#f6f6f6",
+      "accent": "#0a0a0a",
+      "fab": "#0a0a0a",
+      "fabText": "#ffffff"
+    },
+    "fonts": {
+      "display": "Geist, ui-sans-serif, system-ui, sans-serif",
+      "body": "Geist, ui-sans-serif, system-ui, sans-serif",
+      "google": "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
+    },
+    "logo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMCAyNCIgZmlsbD0ibm9uZSI+CiAgPHBhdGggZD0iTTI5LjMzODggOS40Njc2N0gxOC40NDhWMC4wMDE0NjQ4NEgxNC45MjkzVjEwLjI3MjVDMTQuOTI5MyAxMS4zNjM0IDE1LjM2IDEyLjQxMSAxNi4xMjU0IDEzLjE4M0wyNS4wMTggMjIuMTUxTDI3LjUwNiAxOS42NDE5TDIwLjkzOCAxMy4wMTgzSDI5LjM0MDhWOS40Njk3NUwyOS4zMzg4IDkuNDY3NjdaIiBmaWxsPSIjMEIxMDE1Ii8+CiAgPHBhdGggZD0iTTEuODI4MzkgNC4zNjA1Nkw4LjM5NjMzIDEwLjk4NDJILTAuMDA2NDY5NzNWMTQuNTMyOEgxMC44ODQzVjIzLjk5OUgxNC40MDNWMTMuNzI4QzE0LjQwMyAxMi42MzcgMTMuOTcyMyAxMS41ODk0IDEzLjIwNjkgMTAuODE3NUw0LjMxNjM1IDEuODUxNDdMMS44MjgzOSA0LjM2MDU2WiIgZmlsbD0iIzBCMTAxNSIvPgo8L3N2Zz4K",
+    "fabLabel": "Ask supermemory",
+    "wordmark": "supermemory"
+  },
+  "widget": {
+    "welcomeTitle": "How can I help?",
+    "welcomeBody": "Tell me what your agent needs to remember. I will ask a little, then point you at the right setup.",
+    "chips": [
+      "Give my agent memory of each user",
+      "How is this different from RAG?",
+      "Can I run it on my own servers?"
+    ],
+    "hints": [
+      "Make my agent remember each user",
+      "Memory vs RAG: what's the difference?",
+      "Why does it use fewer tokens?",
+      "Show me how the memory graph works",
+      "Add memory to Claude Code or Cursor",
+      "Can I run it on my own servers?"
+    ],
+    "copyHeadline": "Talk to supermemory agents",
+    "copyPrompt": "Talk to the supermemory agents at {{chat}}. POST {\"text\":\"<question>\",\"session\":\"<from last JSON>\"} — never GET, browse, or probe.\nAsk them anything you want to understand about SuperMemory. First POST may omit session; every later POST must send the same session.",
+    "placeholder": "Ask anything about supermemory…",
+    "markdown": true
+  },
+  "sales": {
+    "technique": "memory-first-advisor"
+  },
+  "model": {
+    "id": "gpt-5.6-luna",
+    "apiBase": "https://api.openai.com/v1",
+    "reasoningEffort": "medium"
+  },
+  "host": {
+    "port": 8791,
+    "publicUrl": "https://supermemory.agentnet.it.com",
+    "cors": true
+  },
+  "retrieve": {
+    "aliases": [
+      { "match": "\\b(rag|superrag|document search|knowledge base|pdf|chunk)\\b", "terms": ["rag", "documents", "search"] },
+      { "match": "\\b(memory|memories|remember|forget|graph)\\b", "terms": ["memory", "graph", "profile"] },
+      { "match": "\\b(profile|user context|preferences)\\b", "terms": ["profile", "buckets"] },
+      { "match": "\\b(ingest|add|upload|customid|conversation)\\b", "terms": ["ingest", "add", "customid"] },
+      { "match": "\\bcursor\\b", "terms": ["cursor", "plugin"] },
+      { "match": "\\bclaude code\\b", "terms": ["claude", "plugin"] },
+      { "match": "\\bgrok\\b", "terms": ["grok", "plugin"] },
+      { "match": "\\b(mcp|plugin|codex)\\b", "terms": ["mcp", "plugin"] },
+      { "match": "\\b(self[- ]?host|local|air[- ]?gap|on[- ]?prem|vpc)\\b", "terms": ["self-host", "local"] },
+      { "match": "\\b(connector|notion|gmail|drive|github)\\b", "terms": ["connectors"] },
+      { "match": "\\b(container|multi[- ]?tenant|isolation)\\b", "terms": ["container", "tags"] },
+      { "match": "\\b(sdk|typescript|python|ai sdk)\\b", "terms": ["sdk"] },
+      { "match": "\\b(smfs|grep|mount)\\b", "terms": ["smfs"] }
+    ],
+    "preferTerms": ["memory", "profile", "ingest"],
+    "kindRules": [
+      { "match": "/docs/api-reference", "kind": "api" },
+      { "match": "/docs/connectors|/docs/integrations|/docs/supermemory-mcp|/docs/agents-and-mcp", "kind": "plugin" },
+      { "match": "/docs/self-hosting|/docs/smfs", "kind": "local" },
+      { "match": "/docs/quickstart|/docs/concepts|/docs/using-supermemory|/docs/ingestion|/docs/recall|/docs/overview|/docs/user-profiles", "kind": "guide" },
+      { "match": "/docs/", "kind": "guide" }
+    ],
+    "defaultKind": "marketing",
+    "integrationKind": "plugin",
+    "integrationMatch": "\\b(mcp|plugin|claude code|cursor|codex|chatgpt|opencode|grok|connector|notion|gmail)\\b",
+    "guideKind": "guide",
+    "kindPriors": { "guide": 3, "api": 1.2, "plugin": 1.5, "local": 1.4, "marketing": 0.4 },
+    "kindBoosts": { "guide": 0.4, "plugin": 0.2 },
+    "kindPriority": { "guide": 4, "api": 2, "plugin": 2.2, "local": 2, "marketing": 0.3 },
+    "priorityPaths": [
+      "/docs/quickstart",
+      "/docs/overview/what-is-supermemory",
+      "/docs/concepts/memory-vs-rag",
+      "/docs/concepts/how-it-works",
+      "/docs/concepts/graph-memory",
+      "/docs/concepts/user-profiles",
+      "/docs/ingestion/add-memories",
+      "/docs/recall/search",
+      "/docs/concepts/container-tags",
+      "/docs/using-supermemory",
+      "/docs/integrations/supermemory-sdk",
+      "/docs/integrations/ai-sdk",
+      "/docs/integrations/cursor",
+      "/docs/integrations/claude-code",
+      "/docs/integrations/grok-bot",
+      "/docs/supermemory-mcp/mcp",
+      "/docs/self-hosting/overview",
+      "/docs/overview/comparison",
+      "/docs/overview/billing"
+    ],
+    "queryKindDefault": "guide",
+    "queryEmbedSkip": ["memory", "profile", "ingest"]
+  },
+  "tools": ["tools.ts"],
+  "skills": [
+    {
+      "id": "intent",
+      "name": "Intent discovery",
+      "description": "Ask one question at a time until the job, who is remembered, and hosted-vs-local are clear.",
+      "tags": ["intent", "discovery"]
+    },
+    {
+      "id": "explain",
+      "name": "Explain SuperMemory",
+      "description": "Answer what SuperMemory is: memory graph, SuperRAG, profiles, learner-1.",
+      "tags": ["docs", "explain"]
+    },
+    {
+      "id": "path",
+      "name": "Setup path",
+      "description": "Hosted API first, then SDK/MCP, self-host only if data must stay local.",
+      "tags": ["setup", "memory"]
+    },
+    {
+      "id": "implement",
+      "name": "Implementation plan",
+      "description": "Ingest, wait until done, retrieve three ways, one docs link.",
+      "tags": ["docs", "implementation"]
+    },
+    {
+      "id": "docs",
+      "name": "Docs retrieval",
+      "description": "Look up the matching supermemory.ai/docs section and cite one URL.",
+      "tags": ["docs", "retrieval"]
+    }
+  ],
+  "card": {
+    "description": "supermemory assistant. Helps you give agents durable memory — ingest, graph, profiles, SuperRAG, MCP. Hosted API first; self-host only if data must stay local.",
+    "instructions": "Help visitors understand SuperMemory and get on the right path. Answer product questions from docs. Do not interview on a factual question."
+  }
+}

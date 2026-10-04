@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { compilePolicy, DEFAULT_POLICY } from "../retrieve/policy.ts";
 import type { RetrievePolicy } from "../retrieve/types.ts";
+import type { Visual } from "../site/visual.ts";
 import type { AgentPackConfig } from "./types.ts";
 
 export function resolvePackDir(input: string): string {
@@ -17,6 +18,9 @@ export function loadPackConfig(dir: string): AgentPackConfig {
   const root = resolvePackDir(dir);
   const raw = JSON.parse(readFileSync(join(root, "pack.json"), "utf8")) as AgentPackConfig;
   if (!raw.id || !raw.origin || !raw.brand) throw new Error("pack.json missing id, origin, or brand");
+  raw.dir = root;
+  const visuals = join(root, "visuals.json");
+  if (existsSync(visuals)) raw.visuals = JSON.parse(readFileSync(visuals, "utf8")) as Visual[];
   return raw;
 }
 
@@ -36,10 +40,18 @@ export function defaultInstruction(config?: AgentPackConfig): string {
   const name = config?.brand.name || "this site";
   const origin = config?.origin || "";
   return [
-    `You are the public assistant for ${name}${origin ? " (" + origin + ")" : ""}.`,
-    "Help visitors using retrieved docs. Answer from crawled pages only.",
-    "If you do not know, say so. Do not invent prices, seats, or policies.",
-    "Call docs_lookup when you need a quote or URL. No product-specific interview unless the visitor asks to get set up.",
-    "Keep replies short. One link when you cite a page.",
+    `You are the assistant on the ${name} website${origin ? " (" + origin + ")" : ""}. You help one visitor understand ${name} and get started.`,
+    "",
+    "## How to work",
+    "- A question about the product: call docs_lookup, then answer from what it returns. Do not interview.",
+    "- A visitor who wants to get set up: ask one question at a time until you know what they need, then give 3-5 numbered steps.",
+    "- A greeting with no question: one short sentence on how you help, then one open question about what they want to do.",
+    "- Never ask again for something the visitor already said.",
+    "",
+    "## Grounding",
+    "- Use only docs_lookup results. Never guess. Never invent prices, numbers, customers, or features.",
+    "- Answer with what is known. If they need an exact fact you do not have, offer to connect them with the team.",
+    "- At most one link per reply, and only a link that docs_lookup returned. No tool names, no JSON.",
+    "- Keep replies under 170 words.",
   ].join("\n");
 }

@@ -1,5 +1,6 @@
 import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
+import { REPLY_SHAPE } from "../pack/attach.ts";
 import { attachPack } from "../site/attach.ts";
 import type { Tool } from "../tools.ts";
 import { companyInstruction } from "./prompt.ts";
@@ -7,7 +8,8 @@ import type { CompanyPack, FormWalk } from "./types.ts";
 
 /** Bind a crawled company pack: site lookup, site flows, and form walks. */
 export function attachCompany(h: Harness, pack: CompanyPack, opts?: { model?: string }): Run {
-  const run = attachPack(h, pack.site, { model: opts?.model, instruction: companyInstruction(pack) });
+  /* Same reply rules as every pack agent: answer first, explain, no talk about sources. */
+  const run = attachPack(h, pack.site, { model: opts?.model, instruction: companyInstruction(pack) + "\n\n" + REPLY_SHAPE });
   const walk = walkFormTool(pack.forms);
   const brief = companyBriefTool(pack);
   h.addTool(walk);
