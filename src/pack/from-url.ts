@@ -7,6 +7,7 @@ import { DEFAULT_POLICY } from "../retrieve/policy.ts";
 import { brandFromPages, defaultWidget, extractBrand } from "./brand.ts";
 import { captureVisuals } from "../site/visual.ts";
 import { defaultInstruction } from "./load.ts";
+import { starterCases } from "./tune.ts";
 import type { PageShot } from "../site/types.ts";
 import type { AgentPackConfig } from "./types.ts";
 
@@ -71,6 +72,10 @@ export async function fromUrl(start: string, opts: FromUrlOpts = {}): Promise<{ 
   mkdirSync(out, { recursive: true });
   writeFileSync(join(out, "pack.json"), JSON.stringify(config, null, 2) + "\n");
   writeFileSync(join(out, "instruction.md"), defaultInstruction(config) + "\n");
+  writeFileSync(
+    join(out, "evals.json"),
+    JSON.stringify(starterCases(config.brand.name, pages.map((p) => new URL(p.url).pathname)), null, 2) + "\n",
+  );
   writeFileSync(
     join(out, "pages.json"),
     JSON.stringify(

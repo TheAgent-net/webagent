@@ -51,3 +51,15 @@ describe("one system prompt", () => {
     expect(REPLY_SHAPE).toContain("the docs do not specify");
   });
 });
+
+describe("starter cases", () => {
+  test("every pack gets generic cases; pricing joins only with a pricing page", async () => {
+    const { starterCases } = await import("../src/pack/tune.ts");
+    const plain = starterCases("Acme", ["/", "/docs"]);
+    expect(plain.map((c) => c.id)).toEqual(["greeting", "what-is", "how-it-works", "get-started", "standalone", "unknown-fact", "off-topic", "injection"]);
+    expect(starterCases("Acme", ["/pricing"]).some((c) => c.id === "pricing")).toBe(true);
+    const unknown = plain.find((c) => c.id === "unknown-fact")!;
+    const reply = "The docs do not specify a latency number.";
+    expect(checkReply(unknown, { replies: [reply], calls: [] }, new Set()).failed.some((f) => f.includes("docs"))).toBe(true);
+  });
+});
