@@ -316,7 +316,11 @@ switch (args[0]) {
     const added = tenants.sync();
     const addr = positional(args.slice(1)) || ":8787";
     const port = Number(addr.replace(/^.*:/, "")) || 8787;
-    const served = serveCloud(tenants, { port, routes: [adminRoute(tenants)] });
+    const { frontRoute } = await import("./host/front.ts");
+    const front = frontRoute(store, {
+      skip: (req) => !!tenants.forDomain((req.headers.get("x-forwarded-host") || req.headers.get("host") || "").split(",")[0]!.trim()),
+    });
+    const served = serveCloud(tenants, { port, routes: [adminRoute(tenants), front] });
     /* Analytics: refresh agent IP ranges daily. Score idle agent chats every 5 minutes. */
     const { startRanges } = await import("./host/verify.ts");
     const { startScoring } = await import("./host/score.ts");

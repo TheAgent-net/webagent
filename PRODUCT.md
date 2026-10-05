@@ -30,6 +30,8 @@ Success: a company installs one script tag in an afternoon, then sees agent traf
 
 ## Positioning
 
+Main message: agentnet gives every visitor the best personalised experience, people and AI agents alike.
+
 - One agent answers humans and machines from the same knowledge.
 - Answers render the site's real elements in place (tables, charts, diagrams), chosen by meaning.
 - Agent analytics separates intelligent agents from bots without changes to the customer's site: signed requests (Web Bot Auth), published IP ranges, in-page agent-browser signals, and conversation scoring.
@@ -50,7 +52,8 @@ Success: a company installs one script tag in an afternoon, then sees agent traf
 ## Brand Commitments
 
 - Name: **agentnet** (lowercase).
-- Voice: plain, exact, calm. No hype words. No contractions in product strings.
+- Voice: cheerful, warm, and plain. Friendly, never hype. No contractions in product strings.
+- The website must feel cheerful (user-confirmed). It must not read as austere, dark-infra, or editorial-serious.
 
 ## Evidence on Hand
 
