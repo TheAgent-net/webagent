@@ -23,6 +23,8 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent csp <site-url> [--cloud <public-url>]  check if the site CSP lets the widget load");
   console.error("  webagent score [--tenant <id>]  label idle agent chats: intelligent, script, unclear (--db --idle <min> --no-judge)");
   console.error("  webagent cdn pull --tenant <id> pull one day of CDN counts (settings.cdn, read-only token)");
+  console.error("  webagent onboard <url> --id <id> [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs dir]");
+  console.error("  webagent refresh --tenant <id>  fetch the site again, rebuild changed pages, reload");
   console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
@@ -318,6 +320,12 @@ switch (args[0]) {
     const { startScoring } = await import("./host/score.ts");
     startRanges();
     startScoring(store, () => tenants.list().map((t) => t.id));
+    const hours = Number(process.env.WEBAGENT_REFRESH_HOURS) || 0;
+    if (hours > 0) {
+      const { startRefresh } = await import("./pack/refresh.ts");
+      startRefresh(tenants, hours * 3600_000);
+      console.error(`  refresh every ${hours} h`);
+    }
     console.error(`cloud ${served.url}`);
     if (added.length) console.error("  added   " + added.join(", "));
     for (const t of tenants.list()) {
@@ -406,6 +414,51 @@ switch (args[0]) {
     break;
   }
   /* ---- Analytics verbs. End ---- */
+  case "onboard": {
+    const url = args[1];
+    const id = flag(args, "--id");
+    if (!url || url.startsWith("-") || !id) {
+      console.error("usage: webagent onboard <url> --id <id> [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs packs] [--db file]");
+      process.exit(2);
+    }
+    const { openStore } = await import("./store/sqlite.ts");
+    const { onboard, getReport } = await import("./pack/onboard.ts");
+    const list = (v?: string) => (v ? v.split(",").map((x) => x.trim()).filter(Boolean) : []);
+    const store = openStore(flag(args, "--db"));
+    try {
+      const done = await onboard(url, {
+        id,
+        store,
+        name: flag(args, "--name"),
+        domains: list(flag(args, "--domain")),
+        origins: list(flag(args, "--origin")),
+        packs: flag(args, "--packs") || "packs",
+        visuals: !args.includes("--no-visuals"),
+        maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 80,
+      });
+      console.log(getReport(done));
+    } finally {
+      store.close();
+    }
+    break;
+  }
+  case "refresh": {
+    const id = flag(args, "--tenant");
+    if (!id) {
+      console.error("usage: webagent refresh --tenant <id> [--db file] [--no-visuals]");
+      process.exit(2);
+    }
+    const { openStore } = await import("./store/sqlite.ts");
+    const { Tenants } = await import("./host/tenant.ts");
+    const { refreshTenant } = await import("./pack/refresh.ts");
+    const store = openStore(flag(args, "--db"));
+    try {
+      await refreshTenant(new Tenants(store), id, { visuals: args.includes("--no-visuals") ? false : undefined });
+    } finally {
+      store.close();
+    }
+    break;
+  }
   case "serve": {
     const pack = flag(args, "--pack");
     const addr = positional(args.slice(1)) || ":8787";
