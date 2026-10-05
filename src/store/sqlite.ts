@@ -77,16 +77,26 @@ export class SqliteStore implements Store {
   constructor(private readonly db: Database) {
     db.exec("pragma journal_mode = wal;");
     db.exec(SCHEMA);
+    addColumn(db, "tenants", "org", "text");
   }
 
   putTenant(t: Tenant): void {
     this.db
       .query(
-        `insert into tenants (id, name, pack, domains, origins, settings, created) values (?, ?, ?, ?, ?, ?, ?)
+        `insert into tenants (id, name, pack, domains, origins, settings, created, org) values (?, ?, ?, ?, ?, ?, ?, ?)
          on conflict (id) do update set name = excluded.name, pack = excluded.pack, domains = excluded.domains,
-         origins = excluded.origins, settings = excluded.settings`,
+         origins = excluded.origins, settings = excluded.settings, org = excluded.org`,
       )
-      .run(t.id, t.name, t.pack, JSON.stringify(t.domains), JSON.stringify(t.origins), JSON.stringify(t.settings), t.created);
+      .run(
+        t.id,
+        t.name,
+        t.pack,
+        JSON.stringify(t.domains),
+        JSON.stringify(t.origins),
+        JSON.stringify(t.settings),
+        t.created,
+        t.org ?? null,
+      );
   }
 
   getTenant(id: string): Tenant | undefined {
@@ -148,23 +158,18 @@ export class SqliteStore implements Store {
   }
 
   listConversations(tenant: string, f: ConversationFilter = {}): Conversation[] {
-    const where = ["tenant = ?"];
-    const vals: (string | number)[] = [tenant];
-    if (f.kind) (where.push("kind = ?"), vals.push(f.kind));
-    if (f.label) (where.push("label = ?"), vals.push(f.label));
-    if (f.channel) (where.push("channel = ?"), vals.push(f.channel));
-    if (f.handoff !== undefined) (where.push("handoff = ?"), vals.push(f.handoff ? 1 : 0));
-    if (f.since) (where.push("updated >= ?"), vals.push(f.since));
-    if (f.text) {
-      where.push("id in (select conversation from turns where said like ? or reply like ?)");
-      const like = "%" + f.text.replace(/[%_]/g, "") + "%";
-      vals.push(like, like);
-    }
+    const [where, vals] = conversationWhere(tenant, f);
     vals.push(Math.min(f.limit ?? 50, 500), f.offset ?? 0);
     const rows = this.db
-      .query(`select * from conversations where ${where.join(" and ")} order by updated desc limit ? offset ?`)
+      .query(`select * from conversations where ${where} order by updated desc limit ? offset ?`)
       .all(...vals) as Row[];
     return rows.map(conversationFrom);
+  }
+
+  countMatches(tenant: string, f: ConversationFilter = {}): number {
+    const [where, vals] = conversationWhere(tenant, f);
+    const row = this.db.query(`select count(*) as n from conversations where ${where}`).get(...vals) as Row | null;
+    return Number(row?.n ?? 0);
   }
 
   countConversations(tenant: string, by: ConversationGroup, since = 0): Count[] {
@@ -410,6 +415,28 @@ function eventColumn(by: EventGroup): string {
   return by === "kind" ? "kind" : by === "family" ? "family" : by === "path" ? "path" : "type";
 }
 
+function conversationWhere(tenant: string, f: ConversationFilter): [string, (string | number)[]] {
+  const where = ["tenant = ?"];
+  const vals: (string | number)[] = [tenant];
+  if (f.kind) (where.push("kind = ?"), vals.push(f.kind));
+  if (f.label) (where.push("label = ?"), vals.push(f.label));
+  if (f.channel) (where.push("channel = ?"), vals.push(f.channel));
+  if (f.handoff !== undefined) (where.push("handoff = ?"), vals.push(f.handoff ? 1 : 0));
+  if (f.since) (where.push("updated >= ?"), vals.push(f.since));
+  if (f.text) {
+    where.push("id in (select conversation from turns where said like ? or reply like ?)");
+    const like = "%" + f.text.replace(/[%_]/g, "") + "%";
+    vals.push(like, like);
+  }
+  return [where.join(" and "), vals];
+}
+
+/** Add a column to an old table when the column is missing. */
+function addColumn(db: Database, table: string, column: string, type: string): void {
+  const columns = db.query(`pragma table_info(${table})`).all() as Row[];
+  if (!columns.some((c) => c.name === column)) db.exec(`alter table ${table} add column ${column} ${type}`);
+}
+
 function eventWhere(tenant: string, f: EventSum): [string, (string | number)[]] {
   const where = ["tenant = ?", "at >= ?"];
   const vals: (string | number)[] = [tenant, f.since ?? 0];
@@ -428,6 +455,7 @@ function tenantFrom(r: Row): Tenant {
     origins: JSON.parse(String(r.origins)) as string[],
     settings: JSON.parse(String(r.settings)) as Record<string, unknown>,
     created: Number(r.created),
+    ...(r.org == null ? {} : { org: String(r.org) }),
   };
 }
 

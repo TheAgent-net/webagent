@@ -1,2 +1,3 @@
-export { adminRoute, type AdminOpts } from "./route.ts";
-export { hashKey, listKeys, matchKey, mintKey, type KeyRecord } from "./auth.ts";
+export { apiRoute, API_BASE, type ApiOpts } from "./api.ts";
+export { Platform, canRead, canWrite, type User, type Membership, type Role } from "./auth.ts";
+export { Builds, type Build, type BuildStatus } from "./build.ts";

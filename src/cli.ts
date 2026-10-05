@@ -18,14 +18,13 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent tune --pack <dir>      GEPA: tune the pack instruction on evals.json");
   console.error("  webagent serve [addr]           generic host, no pack");
   console.error("  webagent cloud [addr]           host every tenant (--packs <dir> --db <file>)");
-  console.error("  webagent tenant add <id> --pack <dir> [--domain a,b] [--origin https://x]");
+  console.error("  webagent tenant add <id> --pack <dir> [--org <orgId>] [--domain a,b] [--origin https://x]");
   console.error("  webagent tenant list            list tenants in the store");
   console.error("  webagent csp <site-url> [--cloud <public-url>]  check if the site CSP lets the widget load");
   console.error("  webagent score [--tenant <id>]  label idle agent chats: intelligent, script, unclear (--db --idle <min> --no-judge)");
   console.error("  webagent cdn pull --tenant <id> pull one day of CDN counts (settings.cdn, read-only token)");
-  console.error("  webagent onboard <url> --id <id> [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs dir]");
+  console.error("  webagent onboard <url> --id <id> [--org <orgId>] [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs dir]");
   console.error("  webagent refresh --tenant <id>  fetch the site again, rebuild changed pages, reload");
-  console.error("  webagent tenant key <id>        make an admin key for /admin (shown once)");
   console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
@@ -310,9 +309,10 @@ switch (args[0]) {
     const { openStore } = await import("./store/sqlite.ts");
     const { Tenants } = await import("./host/tenant.ts");
     const { serveCloud } = await import("./host/cloud.ts");
-    const { adminRoute } = await import("./admin/index.ts");
+    const { apiRoute, API_BASE } = await import("./admin/index.ts");
     const store = openStore(flag(args, "--db"));
-    const tenants = new Tenants(store, { packs: flag(args, "--packs") || "packs" });
+    const packs = flag(args, "--packs") || "packs";
+    const tenants = new Tenants(store, { packs });
     const added = tenants.sync();
     const addr = positional(args.slice(1)) || ":8787";
     const port = Number(addr.replace(/^.*:/, "")) || 8787;
@@ -320,7 +320,7 @@ switch (args[0]) {
     const front = frontRoute(store, {
       skip: (req) => !!tenants.forDomain((req.headers.get("x-forwarded-host") || req.headers.get("host") || "").split(",")[0]!.trim()),
     });
-    const served = serveCloud(tenants, { port, routes: [adminRoute(tenants), front] });
+    const served = serveCloud(tenants, { port, routes: [apiRoute(tenants, { packs }), front] });
     /* Analytics: refresh agent IP ranges daily. Score idle agent chats every 5 minutes. */
     const { startRanges } = await import("./host/verify.ts");
     const { startScoring } = await import("./host/score.ts");
@@ -333,7 +333,7 @@ switch (args[0]) {
       console.error(`  refresh every ${hours} h`);
     }
     console.error(`cloud ${served.url}`);
-    console.error(`  admin   ${served.url}/admin` + (process.env.WEBAGENT_ADMIN_KEY ? "" : "  (set WEBAGENT_ADMIN_KEY for the super admin)"));
+    console.error(`  api     ${served.url}${API_BASE}  (dashboard login: ${process.env.AGENTNET_PLATFORM_URL || "http://platform:8000"}/auth/me)`);
     if (added.length) console.error("  added   " + added.join(", "));
     for (const t of tenants.list()) {
       console.error(`  ${t.id.padEnd(14)} ${served.url}/t/${t.id}/widget.js` + (t.domains.length ? "  " + t.domains.join(", ") : ""));
@@ -361,11 +361,16 @@ switch (args[0]) {
       const id = args[2];
       const pack = flag(args, "--pack");
       if (!id || !/^[a-z0-9][a-z0-9_-]{0,62}$/.test(id) || !pack || !existsSync(join(pack, "pack.json"))) {
-        console.error("usage: webagent tenant add <id> --pack <dir with pack.json> [--domain a,b] [--origin https://x]");
+        console.error("usage: webagent tenant add <id> --pack <dir with pack.json> [--org <orgId>] [--domain a,b] [--origin https://x]");
         process.exit(2);
       }
       const list = (v?: string) => (v ? v.split(",").map((x) => x.trim()).filter(Boolean) : []);
       const old = store.getTenant(id);
+      const org = flag(args, "--org") || old?.org;
+      if (org !== undefined && !/^[A-Za-z0-9_-]{1,64}$/.test(org)) {
+        console.error("bad --org: use A-Z, a-z, 0-9, - and _ (at most 64 characters)");
+        process.exit(2);
+      }
       const { resolve } = await import("node:path");
       store.putTenant({
         id,
@@ -375,22 +380,13 @@ switch (args[0]) {
         origins: list(flag(args, "--origin")).length ? list(flag(args, "--origin")) : old?.origins ?? [],
         settings: old?.settings ?? {},
         created: old?.created ?? Date.now(),
+        ...(org ? { org } : {}),
       });
       console.error((old ? "updated " : "added ") + id);
-    } else if (verb === "key") {
-      const id = args[2];
-      const tenant = id ? store.getTenant(id) : undefined;
-      if (!tenant) {
-        console.error("usage: webagent tenant key <id> [--label name]  (the tenant must exist)");
-        process.exit(2);
-      }
-      const { mintKey, listKeys } = await import("./admin/index.ts");
-      const { key, record } = mintKey(tenant.id, flag(args, "--label") || "admin");
-      store.putTenant({ ...tenant, settings: { ...tenant.settings, adminKeys: [...listKeys(tenant), record] } });
-      console.error("admin key for " + tenant.id + " (shown once, store it now):");
-      console.log(key);
     } else {
-      for (const t of store.listTenants()) console.log([t.id, t.name, t.pack, t.domains.join(","), t.origins.join(",")].join("\t"));
+      for (const t of store.listTenants()) {
+        console.log([t.id, t.name, t.org ?? "", t.pack, t.domains.join(","), t.origins.join(",")].join("\t"));
+      }
     }
     store.close();
     break;
@@ -437,7 +433,7 @@ switch (args[0]) {
     const url = args[1];
     const id = flag(args, "--id");
     if (!url || url.startsWith("-") || !id) {
-      console.error("usage: webagent onboard <url> --id <id> [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs packs] [--db file]");
+      console.error("usage: webagent onboard <url> --id <id> [--org <orgId>] [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs packs] [--db file]");
       process.exit(2);
     }
     const { openStore } = await import("./store/sqlite.ts");
@@ -451,6 +447,7 @@ switch (args[0]) {
         name: flag(args, "--name"),
         domains: list(flag(args, "--domain")),
         origins: list(flag(args, "--origin")),
+        org: flag(args, "--org"),
         packs: flag(args, "--packs") || "packs",
         visuals: !args.includes("--no-visuals"),
         maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 80,

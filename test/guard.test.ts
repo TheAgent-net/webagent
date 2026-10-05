@@ -241,13 +241,15 @@ describe("handoff", () => {
     expect(isEmail("nope@")).toBe(false);
     expect(isEmail("a@b.c<script>")).toBe(false);
     expect(cutNote("x".repeat(5000))!.length).toBe(1000);
-    expect(getTranscriptUrl("http://cloud.test/t/acme", "acme", "acme:w1")).toBe(
-      "http://cloud.test/admin/t/acme/c/acme%3Aw1",
+    expect(getTranscriptUrl("acme", "acme:w1", "org1")).toBe(
+      "https://app.agentnet.market/orgs/org1/webagent/sites/acme/conversations/w1",
     );
+    expect(getTranscriptUrl("acme", "acme:w1")).toBe("https://app.agentnet.market/");
   });
 
   test("detected, stored, and sent to the webhook and Slack", async () => {
     const { store, sent, fetch } = setup({
+      org: "org1",
       settings: { handoff: { webhook: "https://hooks.acme.test/in", slack: "https://hooks.slack.test/x" } },
     });
     const res = await fetch(post("/t/acme/chat", { text: "Can I talk to a human?", session: "w66666666" }));
@@ -268,7 +270,7 @@ describe("handoff", () => {
       type: "handoff",
       conversation: "acme:w66666666",
       email: "jo@acme.test",
-      transcript: "http://cloud.test/admin/t/acme/c/acme%3Aw66666666",
+      transcript: "https://app.agentnet.market/orgs/org1/webagent/sites/acme/conversations/w66666666",
     });
     const slack = sent.find((s) => s.url === "https://hooks.slack.test/x")!;
     expect(String(slack.body.text)).toContain("jo@acme.test");

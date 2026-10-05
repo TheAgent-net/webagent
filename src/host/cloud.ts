@@ -3,7 +3,7 @@
  *
  * - `/t/<id>/…` goes to tenant `<id>`. Every single-pack route works under this prefix.
  * - A request whose host name is a tenant domain goes to that tenant with no prefix.
- * - `routes` runs first. Use it for `/admin` and other service pages.
+ * - `routes` runs first. Use it for the dashboard API (`/webagent/api`), the product site, and other service routes.
  */
 import { corsPreflight, withCors } from "./cors.ts";
 import { publicUrl } from "./host.ts";

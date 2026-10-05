@@ -23,6 +23,8 @@ export interface Tenant {
   /** Free settings: handoff target, caps, and so on. */
   settings: Record<string, unknown>;
   created: number;
+  /** Agent-net org id that owns this site. The dashboard API checks membership in this org. */
+  org?: string;
 }
 
 /** One chat session. Id is `<tenant>:<session>`. */
@@ -133,6 +135,8 @@ export interface Store {
   updateConversation(id: string, patch: Partial<Omit<Conversation, "id" | "tenant" | "session">>): void;
   listConversations(tenant: string, filter?: ConversationFilter): Conversation[];
   countConversations(tenant: string, by: ConversationGroup, since?: number): Count[];
+  /** Count the conversations that match the filter. `limit` and `offset` do not apply. */
+  countMatches(tenant: string, filter?: ConversationFilter): number;
 
   addTurn(turn: Turn): number;
   listTurns(conversation: string): Turn[];

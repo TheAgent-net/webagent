@@ -17,6 +17,8 @@ import { starterCases } from "./tune.ts";
 import type { AgentPackConfig } from "./types.ts";
 
 export const TENANT_ID = /^[a-z0-9][a-z0-9_-]{0,62}$/;
+/** Agent-net org id. */
+export const ORG_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 export interface OnboardOpts {
   id: string;
@@ -27,6 +29,8 @@ export interface OnboardOpts {
   domains?: string[];
   /** Page origins that may embed the widget. Empty means any. */
   origins?: string[];
+  /** Agent-net org id that owns the site. Default: the org of the old tenant row. */
+  org?: string;
   /** Folder that holds one pack per tenant. Default: `packs`. */
   packs?: string;
   /** Capture visuals. Default: on when Chromium is found. */
@@ -61,6 +65,7 @@ export interface Onboarded {
 
 export async function onboard(url: string, opts: OnboardOpts): Promise<Onboarded> {
   if (!TENANT_ID.test(opts.id)) throw new Error("bad tenant id: use a-z, 0-9, - and _ (at most 63 characters)");
+  if (opts.org !== undefined && !ORG_ID.test(opts.org)) throw new Error("bad org id: use A-Z, a-z, 0-9, - and _ (at most 64 characters)");
   const log = opts.log ?? ((line: string) => console.error(line));
   const dir = resolve(opts.packs || "packs", opts.id);
   let visuals = opts.visuals ?? true;
@@ -93,6 +98,8 @@ export async function onboard(url: string, opts: OnboardOpts): Promise<Onboarded
     settings: { ...(old?.settings ?? {}), source: url },
     created: old?.created ?? Date.now(),
   };
+  const org = opts.org || old?.org;
+  if (org) tenant.org = org;
   opts.store.putTenant(tenant);
 
   const publicUrl = (opts.publicUrl || process.env.WEBAGENT_PUBLIC_URL || "http://127.0.0.1:8787").replace(/\/+$/, "");
@@ -152,6 +159,7 @@ export function getReport(done: Onboarded): string {
   return [
     `onboarded ${done.tenant.id} (${done.tenant.name}): ${done.pages} pages, ${done.visuals} visuals`,
     `  pack     ${done.dir}`,
+    ...(done.tenant.org ? [`  org      ${done.tenant.org}`] : []),
     ...(done.tenant.domains.length ? [`  domains  ${done.tenant.domains.join(", ")}`] : []),
     "",
     "preview",
@@ -171,7 +179,7 @@ export function getReport(done: Onboarded): string {
   ].join("\n");
 }
 
-function hasChrome(): boolean {
+export function hasChrome(): boolean {
   try {
     getChrome();
     return true;

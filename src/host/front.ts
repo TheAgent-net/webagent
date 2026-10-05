@@ -3,6 +3,7 @@
  *
  * - Static files from the `web/` folder (`/`, `/options/<name>/`, assets).
  * - `POST /access {site, email}`: a request to get an agent. Stored as a traffic event on tenant `_site`.
+ * - A landing site on another origin may post to `/access` when `WEBAGENT_SITE_ORIGINS` lists that origin.
  */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
@@ -36,18 +37,51 @@ export interface FrontOpts {
   perMinute?: number;
   /** True when the request belongs to a tenant (a custom domain). The site then steps aside. */
   skip?: (req: Request) => boolean;
+  /** Origins that may post to `/access` from a browser. Default: `WEBAGENT_SITE_ORIGINS` (comma list). */
+  siteOrigins?: string[];
 }
 
 export function frontRoute(store: Store, opts: FrontOpts = {}): Route {
   const root = resolve(opts.dir ?? "web");
   const limiter = new Limiter();
   const perMinute = opts.perMinute ?? 5;
+  const siteOrigins = opts.siteOrigins ?? listSiteOrigins();
   return async (req, url) => {
     if (opts.skip?.(req)) return null;
-    if (url.pathname === "/access") return addAccess(req, store, limiter, perMinute);
+    if (url.pathname === "/access") {
+      const cors = getCors(req, siteOrigins);
+      if (req.method === "OPTIONS") {
+        return new Response(null, { status: cors ? 204 : 403, headers: cors ?? { Vary: "Origin" } });
+      }
+      const res = await addAccess(req, store, limiter, perMinute);
+      res.headers.set("Vary", "Origin");
+      for (const [k, v] of Object.entries(cors ?? {})) res.headers.set(k, v);
+      return res;
+    }
     if (req.method !== "GET" && req.method !== "HEAD") return null;
-    if (url.pathname.startsWith("/t/") || url.pathname.startsWith("/admin")) return null;
+    if (url.pathname.startsWith("/t/") || url.pathname.startsWith("/admin") || url.pathname.startsWith("/webagent/")) return null;
     return serveFile(root, url.pathname);
+  };
+}
+
+/** Read the landing site origins from `WEBAGENT_SITE_ORIGINS`. */
+export function listSiteOrigins(text = process.env.WEBAGENT_SITE_ORIGINS ?? ""): string[] {
+  return text
+    .split(",")
+    .map((o) => o.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+}
+
+/** CORS headers for `/access` when the request origin is a listed site origin. */
+function getCors(req: Request, origins: string[]): Record<string, string> | undefined {
+  const origin = req.headers.get("origin");
+  if (!origin || !origins.includes(origin)) return undefined;
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
   };
 }
 

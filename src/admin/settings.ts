@@ -1,138 +1,160 @@
 /**
- * Settings: the install snippets and the tenant settings form.
+ * Settings: the install snippets and the site settings for the dashboard API.
  */
+import { isEmail } from "../host/handoff.ts";
 import type { Store, Tenant } from "../store/store.ts";
-import { listKeys } from "./auth.ts";
-import { icon } from "./icon.ts";
-import { empty, html, note, raw, table, when, type Raw, type View } from "./page.ts";
 
 export interface Handoff {
-  email?: string;
-  webhook?: string;
-  slack?: string;
+  email: string;
+  webhook: string;
+  slack: string;
+}
+
+export interface Settings {
+  install: { scriptTag: string; llmsLine: string; csp: string[] };
+  domains: string[];
+  origins: string[];
+  handoff: Handoff;
+  /** Most turns in one month. `0` means no cap. */
+  cap: number;
+  paused: boolean;
 }
 
 const HOST_NAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
-const EMAIL = /^[^\s@<>"']{1,64}@[a-z0-9.-]{1,253}\.[a-z]{2,}$/i;
+const FIELDS = new Set(["domains", "origins", "handoff", "cap", "paused"]);
+const HANDOFF_FIELDS = new Set(["email", "webhook", "slack"]);
+const LIST_CAP = 50;
+const CAP_TOP = 100_000_000;
 
-function lines(text: string): string[] {
-  return [...new Set(text.split(/[\s,]+/).map((x) => x.trim()).filter(Boolean))];
+/** The settings of one site. `ours` is the public origin of this service. */
+export function getSettings(tenant: Tenant, ours: string): Settings {
+  const raw = (tenant.settings.handoff ?? {}) as Record<string, unknown>;
+  const text = (v: unknown) => (typeof v === "string" ? v : "");
+  const cap = Number(tenant.settings.cap);
+  return {
+    install: {
+      scriptTag: `<script src="${ours}/t/${tenant.id}/widget.js" async></script>`,
+      llmsLine: `- [Talk to the ${tenant.name} agent](${ours}/t/${tenant.id}/chat): POST JSON {text, session}`,
+      csp: [`script-src ${ours}`, `connect-src ${ours}`, `img-src ${ours}`, `font-src ${ours}`, "style-src 'unsafe-inline'"],
+    },
+    domains: tenant.domains,
+    origins: tenant.origins,
+    handoff: { email: text(raw.email), webhook: text(raw.webhook), slack: text(raw.slack) },
+    cap: Number.isInteger(cap) && cap > 0 ? cap : 0,
+    paused: tenant.settings.paused === true,
+  };
 }
 
-function httpsUrl(text: string): boolean {
+/**
+ * Check a settings body and make the new tenant.
+ * - The body is any subset of `domains`, `origins`, `handoff`, `cap`, `paused`. Other keys are errors.
+ * - An empty handoff text clears that target.
+ * When there are errors, the tenant does not change.
+ */
+export function readSettings(store: Store, tenant: Tenant, body: unknown): { tenant: Tenant; errors: string[] } {
+  const errors: string[] = [];
+  if (!body || typeof body !== "object" || Array.isArray(body)) return { tenant, errors: ["Send a JSON object."] };
+  const b = body as Record<string, unknown>;
+  for (const k of Object.keys(b)) if (!FIELDS.has(k)) errors.push("Unknown field: " + k.slice(0, 40) + ".");
+  const next: Tenant = { ...tenant, settings: { ...tenant.settings } };
+
+  if ("origins" in b) {
+    const list = readList(b.origins, "origins", errors);
+    const origins: string[] = [];
+    for (const o of list) {
+      const origin = readOrigin(o);
+      if (origin) origins.push(origin);
+      else errors.push("Origin is not valid: " + o.slice(0, 200) + ". Use the form https://www.example.com.");
+    }
+    next.origins = [...new Set(origins)];
+  }
+
+  if ("domains" in b) {
+    const domains: string[] = [];
+    for (const raw of readList(b.domains, "domains", errors)) {
+      const d = raw.trim().toLowerCase();
+      if (!HOST_NAME.test(d)) errors.push("Domain is not valid: " + raw.slice(0, 200) + ".");
+      else {
+        const owner = store.findTenant(d);
+        if (owner && owner.id !== tenant.id) errors.push("Domain " + d + " belongs to a different site.");
+        else domains.push(d);
+      }
+    }
+    next.domains = [...new Set(domains)];
+  }
+
+  if ("handoff" in b) {
+    const h = b.handoff;
+    if (!h || typeof h !== "object" || Array.isArray(h)) errors.push("Handoff must be an object.");
+    else {
+      const old = (tenant.settings.handoff ?? {}) as Record<string, unknown>;
+      const out: Record<string, string> = {};
+      for (const k of HANDOFF_FIELDS) if (typeof old[k] === "string" && old[k]) out[k] = old[k] as string;
+      for (const [k, v] of Object.entries(h as Record<string, unknown>)) {
+        if (!HANDOFF_FIELDS.has(k)) {
+          errors.push("Unknown handoff field: " + k.slice(0, 40) + ".");
+          continue;
+        }
+        if (typeof v !== "string") {
+          errors.push("Handoff " + k + " must be text.");
+          continue;
+        }
+        const value = v.trim();
+        if (!value) delete out[k];
+        else if (k === "email" && !isEmail(value)) errors.push("Handoff email is not valid.");
+        else if (k !== "email" && !isHttps(value)) errors.push("Handoff " + k + " must be an https URL.");
+        else out[k] = value;
+      }
+      if (Object.keys(out).length) next.settings.handoff = out;
+      else delete next.settings.handoff;
+    }
+  }
+
+  if ("cap" in b) {
+    const cap = b.cap;
+    if (typeof cap !== "number" || !Number.isInteger(cap) || cap < 0 || cap > CAP_TOP) {
+      errors.push("Cap must be a whole number from 0 to " + CAP_TOP + ".");
+    } else if (cap === 0) delete next.settings.cap;
+    else next.settings.cap = cap;
+  }
+
+  if ("paused" in b) {
+    if (typeof b.paused !== "boolean") errors.push("Paused must be true or false.");
+    else next.settings.paused = b.paused;
+  }
+
+  return errors.length ? { tenant, errors } : { tenant: next, errors };
+}
+
+function readList(value: unknown, name: string, errors: string[]): string[] {
+  if (!Array.isArray(value) || value.some((v) => typeof v !== "string")) {
+    errors.push(name[0]!.toUpperCase() + name.slice(1) + " must be a list of text.");
+    return [];
+  }
+  if (value.length > LIST_CAP) {
+    errors.push(name[0]!.toUpperCase() + name.slice(1) + " can have at most " + LIST_CAP + " items.");
+    return [];
+  }
+  return (value as string[]).map((v) => v.trim()).filter(Boolean);
+}
+
+/** The origin of an http(s) origin text, or undefined. A path, a query, or a user name is not valid. */
+function readOrigin(text: string): string | undefined {
   try {
     const u = new URL(text);
-    return u.protocol === "https:" && !u.username && !u.password;
+    if (u.protocol !== "https:" && u.protocol !== "http:") return undefined;
+    if (u.origin !== text.toLowerCase().replace(/\/+$/, "")) return undefined;
+    return u.origin;
+  } catch {
+    return undefined;
+  }
+}
+
+function isHttps(text: string): boolean {
+  try {
+    const u = new URL(text);
+    return u.protocol === "https:" && !u.username && !u.password && text.length <= 2000;
   } catch {
     return false;
   }
-}
-
-/** Check the form and make the new tenant. Errors keep the old tenant. */
-export function readSettings(store: Store, tenant: Tenant, form: FormData): { tenant: Tenant; errors: string[] } {
-  const errors: string[] = [];
-  const get = (k: string) => String(form.get(k) ?? "").trim();
-
-  const name = get("name").slice(0, 120) || tenant.name;
-  const origins: string[] = [];
-  for (const o of lines(get("origins"))) {
-    try {
-      const u = new URL(o);
-      if ((u.protocol !== "https:" && u.protocol !== "http:") || u.origin !== o.toLowerCase().replace(/\/+$/, "")) throw new Error();
-      origins.push(u.origin);
-    } catch {
-      errors.push("Origin is not valid: " + o + ". Use the form https://www.example.com.");
-    }
-  }
-  const domains: string[] = [];
-  for (const d of lines(get("domains").toLowerCase())) {
-    if (!HOST_NAME.test(d)) errors.push("Domain is not valid: " + d + ".");
-    else {
-      const owner = store.findTenant(d);
-      if (owner && owner.id !== tenant.id) errors.push("Domain " + d + " belongs to a different site.");
-      else domains.push(d);
-    }
-  }
-  const handoff: Handoff = {};
-  const email = get("handoff_email");
-  if (email && EMAIL.test(email)) handoff.email = email;
-  else if (email) errors.push("Handoff email is not valid.");
-  const webhook = get("handoff_webhook");
-  if (webhook && httpsUrl(webhook)) handoff.webhook = webhook;
-  else if (webhook) errors.push("Handoff webhook must be an https URL.");
-  const slack = get("handoff_slack");
-  if (slack) {
-    if (httpsUrl(slack) || /^#[a-z0-9_-]{1,80}$/.test(slack)) handoff.slack = slack;
-    else errors.push("Slack target must be an https webhook URL or a #channel name.");
-  }
-  const capText = get("cap");
-  let cap: number | undefined;
-  if (capText) {
-    cap = Number(capText);
-    if (!Number.isInteger(cap) || cap < 0 || cap > 100_000_000) errors.push("Monthly cap must be a whole number of 0 or more.");
-  }
-  const paused = form.get("paused") === "on";
-
-  if (errors.length) return { tenant, errors };
-  const settings: Record<string, unknown> = { ...tenant.settings, paused };
-  if (Object.keys(handoff).length) settings.handoff = handoff;
-  else delete settings.handoff;
-  if (cap !== undefined) settings.cap = cap;
-  else delete settings.cap;
-  return { tenant: { ...tenant, name, origins, domains, settings }, errors };
-}
-
-export function settingsPage(view: View, notice?: { ok?: string; errors?: string[] }): Raw {
-  const { tenant, ours, base, csrf } = view;
-  const handoff = (tenant.settings.handoff ?? {}) as Handoff;
-  const cap = typeof tenant.settings.cap === "number" ? String(tenant.settings.cap) : "";
-  const tag = `<script src="${ours}/t/${tenant.id}/widget.js" async></script>`;
-  const llms = `- [Talk to our agent](${ours}/t/${tenant.id}/chat): POST {"text": "your question"} and get a reply. MCP: ${ours}/t/${tenant.id}/mcp`;
-  const csp = [
-    `script-src ${ours}`,
-    `connect-src ${ours}`,
-    `img-src ${ours} data:`,
-    `font-src ${ours}`,
-    `style-src ${ours} 'unsafe-inline'`,
-  ].join("\n");
-  const keys = listKeys(tenant);
-
-  return html`
-<div class="head"><div><h1>Install and settings</h1><p class="sub">${tenant.name} · <span class="mono">${tenant.id}</span></p></div>
-  <form method="post" action="${base}/reload" data-busy><input type="hidden" name="csrf" value="${csrf}"><button class="ghost" data-busy-text="Reloading">${icon("reload")}<span>Reload agent</span></button></form></div>
-${notice?.ok ? note(notice.ok, "good") : ""}
-${notice?.errors?.length ? note(html`Nothing was saved. Fix these values and save again.${notice.errors.map((e) => html`<br>${e}`)}`, "bad") : ""}
-<div class="grid">
-<section class="card" aria-labelledby="tag-h"><h2 id="tag-h">1. Add the script tag</h2>
-  <p class="small">Put this line before <span class="mono">&lt;/body&gt;</span> on every page.</p>
-  <pre class="code" id="snip-tag">${tag}</pre><button class="ghost" type="button" data-copy="snip-tag">${icon("copy")}<span>Copy script tag</span></button>
-  <h2 style="margin-top:20px">2. Add these CSP lines</h2>
-  <p class="small">Add our origin to each directive of your Content-Security-Policy. Skip this step if your site has no CSP.</p>
-  <pre class="code" id="snip-csp">${csp}</pre><button class="ghost" type="button" data-copy="snip-csp">${icon("copy")}<span>Copy CSP lines</span></button>
-  <h2 style="margin-top:20px">3. Optional: point agents to your agent</h2>
-  <p class="small">Add this line to <span class="mono">/llms.txt</span> on your site.</p>
-  <pre class="code" id="snip-llms">${llms}</pre><button class="ghost" type="button" data-copy="snip-llms">${icon("copy")}<span>Copy llms.txt line</span></button>
-</section>
-<section class="card" aria-labelledby="set-h"><h2 id="set-h">Settings</h2>
-<form method="post" action="${base}/settings" data-busy>
-  <input type="hidden" name="csrf" value="${csrf}">
-  <div class="field"><label for="s-name">Name</label><input id="s-name" type="text" name="name" value="${tenant.name}" maxlength="120"></div>
-  <div class="field"><label for="s-origins">Allowed origins (one for each line)</label>
-    <textarea id="s-origins" name="origins" placeholder="https://www.example.com">${tenant.origins.join("\n")}</textarea>
-    <span class="small muted">Pages on these origins can show the widget. Empty means any origin.</span></div>
-  <div class="field"><label for="s-domains">Custom domains (one for each line)</label>
-    <textarea id="s-domains" name="domains" placeholder="agent.example.com">${tenant.domains.join("\n")}</textarea></div>
-  <div class="field"><label for="s-email">Handoff email</label><input id="s-email" type="email" name="handoff_email" value="${handoff.email ?? ""}"></div>
-  <div class="field"><label for="s-webhook">Handoff webhook (https)</label><input id="s-webhook" type="url" name="handoff_webhook" value="${handoff.webhook ?? ""}"></div>
-  <div class="field"><label for="s-slack">Handoff Slack (webhook URL or #channel)</label><input id="s-slack" type="text" name="handoff_slack" value="${handoff.slack ?? ""}"></div>
-  <div class="field"><label for="s-cap">Monthly cap (conversations)</label><input id="s-cap" type="number" min="0" step="1" name="cap" value="${cap}" placeholder="No cap"></div>
-  <div class="field"><label class="check"><input type="checkbox" name="paused"${tenant.settings.paused ? raw(" checked") : ""}> Pause the agent</label></div>
-  <button data-busy-text="Saving">${icon("done")}<span>Save settings</span></button>
-</form>
-</section>
-</div>
-<section class="card" aria-labelledby="key-h"><h2 id="key-h">Admin keys</h2>
-  <p class="lead">Make a key with <span class="mono">webagent tenant key ${tenant.id}</span>. We keep only a hash.</p>
-  ${keys.length ? table(["Label", "Made"], keys.map((k) => [k.label, html`<span class="num small">${when(k.created)}</span>`])) : empty("No tenant keys yet.")}
-</section>`;
 }

@@ -185,7 +185,7 @@ async function addFeedback(req: Request, scope: Scope): Promise<Response> {
 }
 
 /** `POST /handoff {session, email, note?}`: store the request and tell the team. Do not wait for the team. */
-async function addHandoff(req: Request, scope: Scope, base: string): Promise<Response> {
+async function addHandoff(req: Request, scope: Scope): Promise<Response> {
   const body = (await req.json().catch(() => ({}))) as { session?: unknown; email?: unknown; note?: unknown };
   const email = typeof body.email === "string" ? body.email.trim() : "";
   if (!isEmail(email)) return Response.json({ error: "bad_email", reason: "Send a valid email." }, { status: 400 });
@@ -200,7 +200,7 @@ async function addHandoff(req: Request, scope: Scope, base: string): Promise<Res
     conversation: found,
     email,
     note,
-    transcript: getTranscriptUrl(base, scope.tenant, found),
+    transcript: getTranscriptUrl(scope.tenant, found, scope.row?.org),
     at,
   };
   void sendHandoff(getTarget(scope.row?.settings), notice, scope.outbound ?? fetch);
@@ -402,7 +402,7 @@ async function route(
     });
   }
   if (url.pathname === "/feedback" && req.method === "POST") return addFeedback(req, scope);
-  if (url.pathname === "/handoff" && req.method === "POST") return addHandoff(req, scope, base);
+  if (url.pathname === "/handoff" && req.method === "POST") return addHandoff(req, scope);
   if (url.pathname === "/" && req.method === "GET") {
     if (wantsAgentCard(url) || kind === "machine") return card();
     const cloned = packClonePage(pack, url, base);

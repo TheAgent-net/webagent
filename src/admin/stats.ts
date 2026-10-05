@@ -1,5 +1,5 @@
 /**
- * Stats: numbers for the admin pages. Read the store only. Write nothing.
+ * Stats: numbers for the dashboard API. Read the store only. Write nothing.
  */
 import type { Conversation, ConversationSum, Store, Tenant, VisitorKind } from "../store/store.ts";
 
@@ -72,7 +72,20 @@ export function listFamilies(store: Store, tenant: string, since: number): Famil
   return [...rows.values()].sort((a, b) => b.requests + b.conversations - (a.requests + a.conversations));
 }
 
+export const DAY_MS = 86_400_000;
+
+/** Every UTC day from `since` to `now`, as `YYYY-MM-DD`. Oldest first. */
+export function listDays(since: number, now: number): string[] {
+  const out: string[] = [];
+  const end = Math.floor(now / DAY_MS);
+  for (let d = Math.floor(since / DAY_MS); d <= end; d++) out.push(new Date(d * DAY_MS).toISOString().slice(0, 10));
+  return out;
+}
+
+export type StepId = "script" | "csp" | "handoff" | "conversation" | "cdn";
+
 export interface Step {
+  id: StepId;
   label: string;
   done: boolean;
   hint: string;
@@ -93,11 +106,11 @@ export function listSteps(store: Store, tenant: Tenant, ours: string): Step[] {
   const first = store.sumConversations(tenant.id, 0).total > 0;
   const cdn = store.sumEvents(tenant.id, { type: "cdn" }) > 0 || !!tenant.settings.cdn;
   return [
-    { label: "Script tag seen", done: beacons > 0 || loads, hint: "Add the script tag to your site." },
-    { label: "CSP OK", done: beacons > 0, hint: "A widget beacon reached us. Add the CSP lines if this stays pending." },
-    { label: "Handoff set", done: hasHandoff, hint: "Add an email, a webhook, or a Slack target in Settings." },
-    { label: "First conversation", done: first, hint: "Ask the widget one question on your site." },
-    { label: "CDN connected", done: cdn, hint: "Connect Cloudflare (read-only) to see agents on every page." },
+    { id: "script", label: "Script tag seen", done: beacons > 0 || loads, hint: "Add the script tag to your site." },
+    { id: "csp", label: "CSP OK", done: beacons > 0, hint: "A widget beacon reached us. Add the CSP lines if this stays pending." },
+    { id: "handoff", label: "Handoff set", done: hasHandoff, hint: "Add an email, a webhook, or a Slack target in Settings." },
+    { id: "conversation", label: "First conversation", done: first, hint: "Ask the widget one question on your site." },
+    { id: "cdn", label: "CDN connected", done: cdn, hint: "Connect Cloudflare (read-only) to see agents on every page." },
   ];
 }
 

@@ -16,7 +16,7 @@ One service hosts the webagent for many companies. Each company is a **tenant**.
    ▼
  bun src/cli.ts cloud :8790   deploy/cloud.service
    │
-   ├─ service routes (/admin, /health)
+   ├─ service routes (/webagent/api, product site, /access, /health)
    ├─ /t/<id>/…  ──────────────┐
    ├─ custom domain → tenant ──┤
    │                           ▼
@@ -51,17 +51,44 @@ Every route of a single pack host works under `/t/<id>`. A custom domain gets th
 | `GET /t/<id>/visuals/…` | Captured site visuals. |
 | `GET /health` | Service health and tenant count. |
 
+## Service routes
+
+| Route | Purpose |
+| --- | --- |
+| `/webagent/api/…` | Dashboard JSON API for the Agent-net admin dashboard. See [dashboard-api.md](dashboard-api.md). Code: `src/admin/api.ts`. |
+| `POST /access` | Product site form: `{site, email}`. Origins in `WEBAGENT_SITE_ORIGINS` get CORS, so a landing site on another host can post. |
+| `/`, `/options/…` | Product site files from `web/`. |
+
+The service does not serve an HTML dashboard. `/admin` is `404`.
+
+## Dashboard login
+
+The dashboard is part of the Agent-net admin dashboard (`app.agentnet.market`). nginx there sends `/webagent/` to this service, so the `agentnet_session` cookie reaches it.
+
+1. The service reads the `agentnet_session` cookie.
+2. It sends the cookie to `GET {AGENTNET_PLATFORM_URL}/auth/me`. The timeout is 3 s.
+3. It keeps the answer for 30 s. The cache key is a SHA-256 hash of the cookie. Logs never contain a cookie.
+4. A member with an `active` membership in the org reads. An `owner` or `admin` writes.
+5. A write must send `Content-Type: application/json`. When the request has an `Origin` header, it must be in `WEBAGENT_DASHBOARD_ORIGINS`.
+
+Each tenant belongs to one org (`tenants.org`). Set it with `--org <orgId>` on `onboard` or `tenant add`. A tenant with no org does not show in the dashboard.
+
+For operations, `Authorization: Bearer <WEBAGENT_ADMIN_KEY>` reads every org. It cannot write.
+
 ## Store tables
 
 The store is SQLite. The file is `WEBAGENT_DB`. See `src/store/sqlite.ts`.
 
 | Table | Holds |
 | --- | --- |
-| `tenants` | Id, name, pack folder, custom domains, allowed origins, settings (JSON). |
+| `tenants` | Id, name, pack folder, custom domains, allowed origins, settings (JSON), Agent-net org id. |
 | `conversations` | One row per chat session: channel, visitor kind, agent family, label, handoff. |
 | `turns` | One row per question and reply, with reply time. |
 | `events` | Traffic signals. The IP is a salted hash. The raw IP is never stored. |
 | `feedback` | Up and down votes with an optional note. |
+| `handoffs` | Handoff requests: email and note. |
+
+The service adds the `tenants.org` column to an old database when it opens it.
 
 The refresh job writes its last result to `tenants.settings.refresh`.
 
@@ -116,8 +143,10 @@ Put these in `/opt/webagent-cloud/.env.cloud`. Do not commit this file. Do not p
 | `OPENAI_API_KEY` | Model replies and embeddings. Without it, replies echo. | unset |
 | `WEBAGENT_PUBLIC_URL` | Public base URL, for example `https://cloud.agentnet.it.com`. Used in snippets and links. | from the request |
 | `WEBAGENT_DB` | SQLite file. | `data/webagent.db` |
-| `WEBAGENT_ADMIN_KEY` | Key for the `/admin` dashboard. | unset |
-| `WEBAGENT_SESSION_SECRET` | Signs dashboard sessions. Use a long random value. | unset |
+| `AGENTNET_PLATFORM_URL` | Agent-net platform. The dashboard API checks the session at `/auth/me`. | `http://platform:8000` |
+| `WEBAGENT_ADMIN_KEY` | Super admin bearer for the dashboard API. Reads every org. Operations only. Use a long random value. | unset (off) |
+| `WEBAGENT_DASHBOARD_ORIGINS` | Comma list of origins that may write to the dashboard API. The first one is the base of handoff links. | `https://app.agentnet.market` |
+| `WEBAGENT_SITE_ORIGINS` | Comma list of landing site origins that may `POST /access` from a browser (CORS). | unset |
 | `WEBAGENT_IP_SALT` | Salt for the IP hash in `events`. Use a long random value. | `webagent` |
 | `SUPERMEMORY_API_KEY` | Key for the Supermemory provider. | unset |
 | `WEBAGENT_REFRESH_HOURS` | Hours between refresh passes. `0` is off. | `0` |
@@ -131,21 +160,22 @@ Put these in `/opt/webagent-cloud/.env.cloud`. Do not commit this file. Do not p
 Onboard does all steps in one command:
 
 ```sh
-bun src/cli.ts onboard https://acme.com --id acme \
+bun src/cli.ts onboard https://acme.com --id acme --org <orgId> \
   --name "Acme" --domain agent.acme.com --origin https://acme.com \
   --packs /opt/webagent-cloud/packs --db /opt/webagent-cloud/data/webagent.db
 ```
 
 1. It builds the pack in `packs/acme`: brand, hints, `content.json`, `evals.json`.
 2. It captures visuals when Chromium is available. Add `--no-visuals` to skip.
-3. It adds the tenant to the store.
+3. It adds the tenant to the store, in the Agent-net org `--org`.
 4. It prints the preview URL, the script tag, the CSP lines, the `llms.txt` line, and the company checklist.
 
 The running service opens the new tenant on its first request. You do not need a restart.
 
 Other commands:
 
-- `bun src/cli.ts tenant add <id> --pack <dir> [--domain a,b] [--origin https://x]` adds a pack you built yourself.
+- `bun src/cli.ts tenant add <id> --pack <dir> [--org <orgId>] [--domain a,b] [--origin https://x]` adds a pack you built yourself. Run it again with `--org` to move an old tenant into an org.
+- An org owner or admin can also add a site from the dashboard: `POST /webagent/api/orgs/{orgId}/sites`. The build runs in the service.
 - `bun src/cli.ts tenant list` lists the tenants.
 - The service adds each folder in `--packs` that has a `pack.json` when it starts.
 

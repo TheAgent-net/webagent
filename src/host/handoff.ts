@@ -8,6 +8,7 @@
  * Every outbound call has a timeout. A failed call logs a warning and never throws.
  * Logs never contain the email or the note.
  */
+import { listOrigins } from "../admin/auth.ts";
 
 /** Phrases where the agent offers the team. */
 const OFFER = [
@@ -84,7 +85,7 @@ export interface Notice {
   conversation: string;
   email: string;
   note?: string;
-  /** Admin link to the full chat. */
+  /** Dashboard link to the full chat. */
   transcript: string;
   at: number;
 }
@@ -92,11 +93,26 @@ export interface Notice {
 /** Most time for one outbound call. */
 const TIMEOUT_MS = 5000;
 
-/** Admin link for one conversation: `{service}/admin/t/<tenant>/c/<conversation>`. */
-export function getTranscriptUrl(base: string, tenant: string, conversation: string): string {
-  const env = process.env.WEBAGENT_PUBLIC_URL?.replace(/\/+$/, "");
-  const service = env || base.replace(/\/+$/, "").replace(/\/t\/[a-z0-9][a-z0-9_-]{0,62}$/, "");
-  return service + "/admin/t/" + encodeURIComponent(tenant) + "/c/" + encodeURIComponent(conversation);
+/**
+ * Dashboard link for one conversation.
+ * - The base is the first origin in `WEBAGENT_DASHBOARD_ORIGINS`.
+ * - With an org: `{dashboard}/orgs/<org>/webagent/sites/<tenant>/conversations/<session>`.
+ * - With no org: the dashboard home.
+ * `conversation` is `<tenant>:<session>`.
+ */
+export function getTranscriptUrl(tenant: string, conversation: string, org?: string): string {
+  const dashboard = listOrigins()[0] ?? "https://app.agentnet.market";
+  if (!org) return dashboard + "/";
+  const session = conversation.startsWith(tenant + ":") ? conversation.slice(tenant.length + 1) : conversation;
+  return (
+    dashboard +
+    "/orgs/" +
+    encodeURIComponent(org) +
+    "/webagent/sites/" +
+    encodeURIComponent(tenant) +
+    "/conversations/" +
+    encodeURIComponent(session)
+  );
 }
 
 /**
