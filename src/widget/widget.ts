@@ -659,6 +659,66 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
     startHints();
     syncSend();
     showHash();
+    /* ---- Analytics beacon: one per page view. Start ---- */
+    /* Collect behavior signals. Send them once to BASE/collect. No keystroke values, no query strings. */
+    /* Skip all of it when the page sets window.webagentConsent = false. */
+    const beacon = () => {
+      if (window.webagentConsent === false || window.__waBeacon) return;
+      window.__waBeacon = true;
+      const t0 = Date.now();
+      const sig = { moves: 0, clicks: 0, bare: 0, untrusted: 0, keys: [], scrolls: [], focus: 0, blur: 0, hidden: 0 };
+      let path = 0;
+      let lastKey = 0;
+      let lastY = window.scrollY || 0;
+      let botd = null;
+      let sent = false;
+      const on = (el, name, fn) => el.addEventListener(name, fn, { passive: true, capture: true });
+      const clean = (u) => {
+        try { const x = new URL(u, location.href); return x.origin + x.pathname; } catch (e) { return ""; }
+      };
+      const flush = () => {
+        if (sent || window.webagentConsent === false) return;
+        sent = true;
+        const body = JSON.stringify({
+          v: 1, session, page: clean(location.href), ref: document.referrer ? clean(document.referrer) : "",
+          ms: Date.now() - t0, botd, webdriver: navigator.webdriver === true,
+          touch: (navigator.maxTouchPoints || 0) > 0,
+          view: [innerWidth, innerHeight, screen.width, screen.height, outerWidth, outerHeight],
+          moves: sig.moves, clicks: sig.clicks, bare: sig.bare, untrusted: sig.untrusted,
+          keys: sig.keys, scrolls: sig.scrolls, focus: sig.focus, blur: sig.blur, hidden: sig.hidden,
+        });
+        const to = BASE + "/collect";
+        try { if (navigator.sendBeacon && navigator.sendBeacon(to, new Blob([body], { type: "text/plain" }))) return; } catch (e) {}
+        try { fetch(to, { method: "POST", body, keepalive: true, headers: { "content-type": "text/plain" } }).catch(() => {}); } catch (e) {}
+      };
+      on(document, "mousemove", () => { sig.moves++; path++; });
+      on(document, "click", (e) => { sig.clicks++; if (!path) sig.bare++; if (!e.isTrusted) sig.untrusted++; path = 0; });
+      if (input) on(input, "keydown", () => {
+        const now = performance.now();
+        if (lastKey && sig.keys.length < 200) sig.keys.push(Math.round(now - lastKey));
+        lastKey = now;
+      });
+      on(window, "scroll", () => {
+        const y = window.scrollY || 0;
+        if (sig.scrolls.length < 100) sig.scrolls.push(Math.round(y - lastY));
+        lastY = y;
+      });
+      on(window, "focus", () => { sig.focus++; });
+      on(window, "blur", () => { sig.blur++; });
+      on(document, "visibilitychange", () => { if (document.visibilityState === "hidden") { sig.hidden++; flush(); } });
+      on(window, "pagehide", flush);
+      if (form) form.addEventListener("submit", flush);
+      try {
+        import(BASE + "/botd.js")
+          .then((m) => (m.load || m.default.load)({ monitoring: false }))
+          .then((d) => d.detect())
+          .then((r) => { botd = { bot: !!r.bot, kind: r.botKind || "" }; })
+          .catch(() => { botd = { bot: false, error: true }; });
+      } catch (e) {}
+      setTimeout(flush, 15000);
+    };
+    try { beacon(); } catch (e) {}
+    /* ---- Analytics beacon. End ---- */
     void FAB_OPEN;
   };
   const allowed = () => {

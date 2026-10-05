@@ -20,6 +20,8 @@ import { classifyVisitor, hashIp, type Visitor } from "./visitor.ts";
 import { asksHuman, cutNote, getTarget, isEmail, offersTeam, sendHandoff, getTranscriptUrl } from "./handoff.ts";
 import { getHold, getLimits, HOLD_TEXT, Limiter, refuseRate, type Limits, type Rule } from "./limit.ts";
 import { refuseOrigin, isAllowed } from "./origin.ts";
+import { serveBotd, checkSession, collect } from "./collect.ts";
+import { checkIp, hasSignature, proveVisitor } from "./verify.ts";
 
 /** Multi-tenant parts. All optional: a single-pack host works without them. */
 export interface HostExtra {
@@ -53,6 +55,8 @@ interface Scope {
   origins: string[];
   locked: boolean;
   outbound?: typeof fetch;
+  /** Analytics: signature proof that runs in the background. It never rejects. */
+  proof?: Promise<Visitor>;
 }
 
 export function publicUrl(req: Request, fallback: string): string {
@@ -92,6 +96,9 @@ export function host(
       locked: !!extra.locked,
       outbound: extra.outbound,
     };
+    /* Analytics: check IP ranges now (sync). Check signatures in the background. */
+    scope.visitor = checkIp(req, scope.visitor);
+    if (scope.store && hasSignature(req)) scope.proof = proveVisitor(req, scope.visitor);
     track(req, scope);
     const base = extra.base ? extra.base(req) : publicUrl(req, fallbackUrl);
     const refused = checkRequest(req, scope, base);
@@ -143,7 +150,7 @@ function checkRequest(req: Request, scope: Scope, base: string): Response | unde
 }
 
 /** Rate limit one chat session. Return the 429 reply, or undefined. */
-function checkSession(scope: Scope, session: string | undefined): Response | undefined {
+function limitSession(scope: Scope, session: string | undefined): Response | undefined {
   if (!session || !/^[\w-]{1,80}$/.test(session)) return undefined;
   const take = scope.limiter.take(scope.tenant + "|chatSession|" + session, scope.limits.chatSession);
   return take.ok ? undefined : refuseRate(take.wait);
@@ -219,22 +226,30 @@ function track(req: Request, scope: Scope): void {
   if (!scope.store) return;
   const url = new URL(req.url);
   if (url.pathname === "/live" || url.pathname === "/favicon.ico") return;
-  try {
-    scope.store.addEvent({
-      tenant: scope.tenant,
-      at: Date.now(),
-      type: "request",
-      kind: scope.visitor.kind,
-      family: scope.visitor.family,
-      verified: scope.visitor.verified,
-      path: url.pathname,
-      session: url.searchParams.get("session") || undefined,
-      ipHash: hashIp(req),
-      ua: scope.visitor.ua,
-    });
-  } catch (err) {
-    console.error("track failed:", err instanceof Error ? err.message : err);
-  }
+  if (url.pathname === "/collect" || url.pathname === "/botd.js") return;
+  const store = scope.store;
+  const at = Date.now();
+  const write = (visitor: Visitor) => {
+    try {
+      store.addEvent({
+        tenant: scope.tenant,
+        at,
+        type: "request",
+        kind: visitor.kind,
+        family: visitor.family,
+        verified: visitor.verified,
+        path: url.pathname,
+        session: url.searchParams.get("session") || undefined,
+        ipHash: hashIp(req),
+        ua: visitor.ua,
+      });
+    } catch (err) {
+      console.error("track failed:", err instanceof Error ? err.message : err);
+    }
+  };
+  /* Analytics: a signed request waits for its proof. The reply does not wait. */
+  if (scope.proof) void scope.proof.then(write);
+  else write(scope.visitor);
 }
 
 /** Say one message in a session and store the turn. */
@@ -266,6 +281,17 @@ async function talk(
         verified: !human && scope.visitor.verified,
         page: page?.slice(0, 500),
         at: t0,
+      });
+      /* Analytics: apply the beacon verdict and the signature proof. */
+      const store = scope.store;
+      if (channel === "widget") checkSession(store, scope.tenant, hit.id);
+      void scope.proof?.then((v) => {
+        if (!v.verified) return;
+        try {
+          store.updateConversation(id, { verified: true, family: v.family, ...(v.kind !== "human" ? { kind: v.kind } : {}) });
+        } catch {
+          /* the store can be closed */
+        }
       });
       turnId = scope.store.addTurn({
         conversation: id,
@@ -335,6 +361,9 @@ async function route(
     });
   }
   if (CARD_PATHS.has(url.pathname)) return card();
+  /* Analytics: widget beacon and the BotD script. */
+  if (url.pathname === "/collect" && req.method === "POST") return collect(req, scope);
+  if (url.pathname === "/botd.js" && req.method === "GET") return serveBotd();
   if (url.pathname === "/session" && (req.method === "POST" || req.method === "GET")) {
     const hit = sessions.open();
     return Response.json({ session: hit.id, runId: hit.room.run.id });
@@ -357,7 +386,7 @@ async function route(
     const text = String(body.text ?? "").trim();
     if (!text) return Response.json(chatHowToBody(base));
     const side = chatFrom(req, body);
-    const refused = getHoldReply(scope, side, body.session) ?? checkSession(scope, body.session);
+    const refused = getHoldReply(scope, side, body.session) ?? limitSession(scope, body.session);
     if (refused) return refused;
     const channel: Channel = body.channel === "widget" ? "widget" : "chat";
     const { hit, ex, turnId, handoff } = await talk(sessions, body.session, side, text, scope, channel, body.page);
@@ -393,7 +422,7 @@ async function route(
         );
       }
       if (body.text) {
-        const refused = getHoldReply(scope, "machine", body.session) ?? checkSession(scope, body.session);
+        const refused = getHoldReply(scope, "machine", body.session) ?? limitSession(scope, body.session);
         if (refused) return refused;
         const { hit, ex, turnId, handoff } = await talk(sessions, body.session, "machine", body.text, scope, "chat");
         return Response.json({ ...ex, session: hit.id, runId: hit.room.run.id, turnId, handoff });

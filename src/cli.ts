@@ -21,6 +21,8 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent tenant add <id> --pack <dir> [--domain a,b] [--origin https://x]");
   console.error("  webagent tenant list            list tenants in the store");
   console.error("  webagent csp <site-url> [--cloud <public-url>]  check if the site CSP lets the widget load");
+  console.error("  webagent score [--tenant <id>]  label idle agent chats: intelligent, script, unclear (--db --idle <min> --no-judge)");
+  console.error("  webagent cdn pull --tenant <id> pull one day of CDN counts (settings.cdn, read-only token)");
   console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
@@ -311,6 +313,11 @@ switch (args[0]) {
     const addr = positional(args.slice(1)) || ":8787";
     const port = Number(addr.replace(/^.*:/, "")) || 8787;
     const served = serveCloud(tenants, { port });
+    /* Analytics: refresh agent IP ranges daily. Score idle agent chats every 5 minutes. */
+    const { startRanges } = await import("./host/verify.ts");
+    const { startScoring } = await import("./host/score.ts");
+    startRanges();
+    startScoring(store, () => tenants.list().map((t) => t.id));
     console.error(`cloud ${served.url}`);
     if (added.length) console.error("  added   " + added.join(", "));
     for (const t of tenants.list()) {
@@ -361,6 +368,44 @@ switch (args[0]) {
     store.close();
     break;
   }
+  /* ---- Analytics verbs. Start ---- */
+  case "score": {
+    const { openStore } = await import("./store/sqlite.ts");
+    const { scoreConversations } = await import("./host/score.ts");
+    const store = openStore(flag(args, "--db"));
+    const one = flag(args, "--tenant");
+    const idle = flag(args, "--idle");
+    for (const id of one ? [one] : store.listTenants().map((t) => t.id)) {
+      const done = await scoreConversations(store, id, {
+        idleMinutes: idle === undefined ? undefined : Number(idle),
+        judge: args.includes("--no-judge") ? false : {},
+      });
+      for (const s of done) console.log([s.id, s.label, s.score.toFixed(2), s.reason ?? ""].join("\t"));
+      console.error(`${id}: ${done.length} scored`);
+    }
+    store.close();
+    break;
+  }
+  case "cdn": {
+    const id = flag(args, "--tenant");
+    if (args[1] !== "pull" || !id) {
+      console.error("usage: webagent cdn pull --tenant <id> [--db <file>]");
+      process.exit(2);
+    }
+    const { openStore } = await import("./store/sqlite.ts");
+    const { pullCdn } = await import("./host/cdn.ts");
+    const store = openStore(flag(args, "--db"));
+    try {
+      const out = await pullCdn(store, id);
+      console.error(out.skipped ? `${id}: window already pulled` : `${id}: ${out.stored} rows stored`);
+    } catch (err) {
+      console.error("cdn pull failed:", err instanceof Error ? err.message : err);
+      process.exitCode = 1;
+    }
+    store.close();
+    break;
+  }
+  /* ---- Analytics verbs. End ---- */
   case "serve": {
     const pack = flag(args, "--pack");
     const addr = positional(args.slice(1)) || ":8787";
