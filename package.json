@@ -17,7 +17,10 @@
     "pair": "bun experiment/run.ts"
   },
   "dependencies": {
-    "@cursor/sdk": "^1.0.30"
+    "@cursor/sdk": "^1.0.30",
+    "@fingerprintjs/botd": "^2.0.0",
+    "isbot": "^5.2.2",
+    "web-bot-auth": "^0.2.0"
   },
   "engines": {
     "bun": ">=1.1.0"

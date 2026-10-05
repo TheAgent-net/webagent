@@ -17,6 +17,8 @@ import { conversationId, type Channel, type Store } from "../store/store.ts";
 import { Room } from "./room.ts";
 import { Sessions } from "./sessions.ts";
 import { classifyVisitor, hashIp, type Visitor } from "./visitor.ts";
+import { serveBotd, checkSession, collect } from "./collect.ts";
+import { checkIp, hasSignature, proveVisitor } from "./verify.ts";
 
 /** Multi-tenant parts. All optional: a single-pack host works without them. */
 export interface HostExtra {
@@ -31,6 +33,8 @@ interface Scope {
   store?: Store;
   tenant: string;
   visitor: Visitor;
+  /** Analytics: signature proof that runs in the background. It never rejects. */
+  proof?: Promise<Visitor>;
 }
 
 export function publicUrl(req: Request, fallback: string): string {
@@ -58,6 +62,9 @@ export function host(
   return async (req: Request) => {
     if (req.method === "OPTIONS") return corsPreflight();
     const scope: Scope = { store: extra.store, tenant, visitor: classifyVisitor(req) };
+    /* Analytics: check IP ranges now (sync). Check signatures in the background. */
+    scope.visitor = checkIp(req, scope.visitor);
+    if (scope.store && hasSignature(req)) scope.proof = proveVisitor(req, scope.visitor);
     track(req, scope);
     return withCors(await route(req, harness, bag, fallbackUrl, meta, api, pack, scope, extra.base));
   };
@@ -68,22 +75,30 @@ function track(req: Request, scope: Scope): void {
   if (!scope.store) return;
   const url = new URL(req.url);
   if (url.pathname === "/live" || url.pathname === "/favicon.ico") return;
-  try {
-    scope.store.addEvent({
-      tenant: scope.tenant,
-      at: Date.now(),
-      type: "request",
-      kind: scope.visitor.kind,
-      family: scope.visitor.family,
-      verified: scope.visitor.verified,
-      path: url.pathname,
-      session: url.searchParams.get("session") || undefined,
-      ipHash: hashIp(req),
-      ua: scope.visitor.ua,
-    });
-  } catch (err) {
-    console.error("track failed:", err instanceof Error ? err.message : err);
-  }
+  if (url.pathname === "/collect" || url.pathname === "/botd.js") return;
+  const store = scope.store;
+  const at = Date.now();
+  const write = (visitor: Visitor) => {
+    try {
+      store.addEvent({
+        tenant: scope.tenant,
+        at,
+        type: "request",
+        kind: visitor.kind,
+        family: visitor.family,
+        verified: visitor.verified,
+        path: url.pathname,
+        session: url.searchParams.get("session") || undefined,
+        ipHash: hashIp(req),
+        ua: visitor.ua,
+      });
+    } catch (err) {
+      console.error("track failed:", err instanceof Error ? err.message : err);
+    }
+  };
+  /* Analytics: a signed request waits for its proof. The reply does not wait. */
+  if (scope.proof) void scope.proof.then(write);
+  else write(scope.visitor);
 }
 
 /** Say one message in a session and store the turn. */
@@ -113,6 +128,17 @@ async function talk(
         verified: !human && scope.visitor.verified,
         page: page?.slice(0, 500),
         at: t0,
+      });
+      /* Analytics: apply the beacon verdict and the signature proof. */
+      const store = scope.store;
+      if (channel === "widget") checkSession(store, scope.tenant, hit.id);
+      void scope.proof?.then((v) => {
+        if (!v.verified) return;
+        try {
+          store.updateConversation(id, { verified: true, family: v.family, ...(v.kind !== "human" ? { kind: v.kind } : {}) });
+        } catch {
+          /* the store can be closed */
+        }
       });
       scope.store.addTurn({
         conversation: id,
@@ -180,6 +206,9 @@ async function route(
     });
   }
   if (CARD_PATHS.has(url.pathname)) return card();
+  /* Analytics: widget beacon and the BotD script. */
+  if (url.pathname === "/collect" && req.method === "POST") return collect(req, scope);
+  if (url.pathname === "/botd.js" && req.method === "GET") return serveBotd();
   if (url.pathname === "/session" && (req.method === "POST" || req.method === "GET")) {
     const hit = sessions.open();
     return Response.json({ session: hit.id, runId: hit.room.run.id });
