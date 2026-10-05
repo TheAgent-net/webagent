@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agentnet: one agent for every visitor</title>
+<meta name="description" content="agentnet adds one agent to your website. It answers every person and every AI agent with what fits them, from your own pages.">
+<meta name="theme-color" content="#ffffff">
+<link rel="preload" href="fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23D43D1E'/%3E%3Cpath d='M9 13.5a4.5 4.5 0 0 1 4.5-4.5h5a4.5 4.5 0 0 1 4.5 4.5v2a4.5 4.5 0 0 1-4.5 4.5H15l-4 3v-3.6A4.5 4.5 0 0 1 9 15.5z' fill='white'/%3E%3C/svg%3E">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-row">
+    <a class="brand" href="#top" aria-label="agentnet home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M9 13.5a4.5 4.5 0 0 1 4.5-4.5h5a4.5 4.5 0 0 1 4.5 4.5v2a4.5 4.5 0 0 1-4.5 4.5H15l-4 3v-3.6A4.5 4.5 0 0 1 9 15.5z"/></svg>
+      <span>agentnet</span>
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="#agents">For agents</a>
+      <a href="#analytics">Analytics</a>
+      <a href="#install">Install</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="nav-signin" href="/admin">Sign in</a>
+      <a class="button button-small" href="#get">Get your agent</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- Hero -->
+<section class="hero" id="top" aria-labelledby="hero-title">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <h1 id="hero-title">Every visitor gets an answer made for them.</h1>
+      <p class="lede">agentnet adds one agent to your website. It answers every person and every AI agent with what fits them, from your own pages.</p>
+    </div>
+
+    <form class="access" id="get" data-access novalidate aria-label="Get your agent">
+      <div class="field">
+        <label for="site-1">Your website</label>
+        <input id="site-1" name="site" type="text" inputmode="url" autocomplete="url" placeholder="acme.com" spellcheck="false" required aria-describedby="site-1-error">
+        <p class="field-error" id="site-1-error" hidden></p>
+      </div>
+      <div class="field">
+        <label for="email-1">Work email</label>
+        <input id="email-1" name="email" type="email" autocomplete="email" placeholder="you@acme.com" spellcheck="false" required aria-describedby="email-1-error">
+        <p class="field-error" id="email-1-error" hidden></p>
+      </div>
+      <button class="button button-large" type="submit"><span class="button-label">Get your agent</span></button>
+      <p class="form-note">Free preview. We build it from your public pages.</p>
+      <div class="form-status" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+
+  <!-- Product demo -->
+  <div class="wrap">
+    <figure class="demo" data-demo aria-label="Example: the agentnet widget answers Maya on Acme Docs, and a verified ChatGPT agent asks the same through POST /chat.">
+      <div class="window">
+        <div class="window-bar">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="address">
+            <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5.25a2.5 2.5 0 0 1 5 0V7"/></svg>
+            docs.acme.example/pricing
+          </span>
+          <span class="tag">Example</span>
+        </div>
+        <div class="window-body">
+          <div class="docs" aria-hidden="true">
+            <div class="docs-side">
+              <p class="docs-logo">Acme Docs</p>
+              <ul>
+                <li>Quickstart</li>
+                <li>Projects</li>
+                <li>Workspaces</li>
+                <li>API reference</li>
+                <li class="is-current">Pricing</li>
+                <li>Security</li>
+              </ul>
+            </div>
+            <div class="docs-main">
+              <p class="docs-crumb">Docs / Account</p>
+              <p class="docs-title">Pricing</p>
+              <p class="docs-text">Acme bills per seat each month. Every plan includes unlimited projects. Change or cancel your plan at any time from Settings.</p>
+              <p class="docs-sub">Plans</p>
+              <p class="docs-text">Starter suits one or two people. Team adds shared workspaces and roles. Business adds single sign-on, audit logs, and a support contract.</p>
+              <p class="docs-sub">Billing</p>
+              <p class="docs-text">We send one invoice each month. Seats you add part way through the month are billed for the days you use.</p>
+            </div>
+          </div>
+
+          <div class="widget">
+            <div class="widget-head">
+              <span class="widget-avatar" aria-hidden="true">A</span>
+              <span>
+                <strong>Ask Acme Docs</strong>
+                <small>Answers from acme docs</small>
+              </span>
+            </div>
+            <div class="widget-log">
+              <p class="bubble bubble-user"><span class="who">Maya</span>Which plan fits a team of five?</p>
+              <div class="bubble bubble-agent">
+                <p class="answer" data-stream><strong>Team fits a team of five.</strong> It costs $12 per seat, so $60 a month, and adds shared workspaces.</p>
+                <table class="plan-table" data-rows>
+                  <caption class="sr-only">Acme plans (example)</caption>
+                  <thead><tr><th scope="col">Plan</th><th scope="col">Seats</th><th scope="col">Per seat</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">Starter</th><td>1 to 2</td><td>$0</td></tr>
+                    <tr class="is-pick"><th scope="row">Team <span class="pick">Best fit</span></th><td>3 to 20</td><td>$12</td></tr>
+                    <tr><th scope="row">Business</th><td>21+</td><td>$24</td></tr>
+                  </tbody>
+                </table>
+                <p class="source">From <span>acme docs / pricing</span></p>
+                <div class="chips" aria-hidden="true">
+                  <span class="chip">Explain more</span>
+                  <span class="chip">Talk to a person</span>
+                </div>
+              </div>
+            </div>
+            <div class="widget-input" aria-hidden="true">Ask a question<span class="send"><svg viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="term" aria-label="Example agent request and reply">
+        <div class="term-bar">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="term-title">ChatGPT agent</span>
+          <span class="verified"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.75 13.25 4v3.75c0 3-2.25 5.4-5.25 6.5-3-1.1-5.25-3.5-5.25-6.5V4z"/><path d="m5.6 8 1.7 1.7 3.1-3.3"/></svg>Verified</span>
+        </div>
+<pre class="term-body" data-term><code><span class="t-dim"># signed request, Web Bot Auth</span>
+<span class="t-verb">POST</span> /t/acme/chat
+{
+  <span class="t-key">"text"</span>: <span class="t-str">"Compare plans for a five-person team"</span>
+}
+<span class="t-reply">
+<span class="t-ok">200 OK</span>
+{
+  <span class="t-key">"lastText"</span>: <span class="t-str">"Team fits a team of five."</span>,
+  <span class="t-key">"session"</span>: <span class="t-str">"s_7Kq2"</span>,
+  <span class="t-key">"visuals"</span>: [{
+    <span class="t-key">"type"</span>: <span class="t-str">"table"</span>,
+    <span class="t-key">"source"</span>: <span class="t-str">"/pricing#plans"</span>
+  }]
+}</span></code></pre>
+      </div>
+      <figcaption class="demo-caption">
+        <span>Example. One agent, two visitors: Maya in the widget, a ChatGPT agent over <code>POST /chat</code>.</span>
+        <button class="replay" type="button" data-replay hidden>
+          <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.75 8a5.25 5.25 0 1 0 1.6-3.8"/><path d="M2.75 2.5v2.75H5.5"/></svg>
+          Play again
+        </button>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section how" id="how" aria-labelledby="how-title">
+  <div class="wrap">
+    <h2 id="how-title" class="section-title">One agent. Every kind of visitor.</h2>
+    <p class="section-lede">agentnet reads your pages once. Then it serves each visitor in the form that fits them.</p>
+
+    <div class="how-grid">
+      <article class="how-item">
+        <div class="how-visual how-people" aria-hidden="true">
+          <p class="mini-q">How do I rotate an API key?</p>
+          <p class="mini-a"><strong>Open Settings, then Keys.</strong> Select Rotate.</p>
+          <div class="mini-steps"><span>Settings</span><svg viewBox="0 0 16 16"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg><span>Keys</span><svg viewBox="0 0 16 16"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg><span class="on">Rotate</span></div>
+        </div>
+        <h3>For people</h3>
+        <p>Short answers. The first two lines answer the question, and your own tables, charts, and diagrams appear in the chat.</p>
+      </article>
+
+      <article class="how-item">
+        <div class="how-visual how-agents" aria-hidden="true">
+          <code>/llms.txt</code>
+          <code>/.well-known/agent-card.json</code>
+          <code>POST /chat</code>
+          <code>MCP: ask</code>
+        </div>
+        <h3>For AI agents</h3>
+        <p>A front door made for machines. Agents read your files, then ask in JSON or through MCP.</p>
+      </article>
+
+      <article class="how-item">
+        <div class="how-visual how-you" aria-hidden="true">
+          <div class="mini-row"><span>Conversations</span><b>412</b></div>
+          <div class="mini-row"><span>Real AI agents</span><b class="accent">129</b></div>
+          <div class="mini-row"><span>Open questions</span><b>7</b></div>
+          <p class="mini-note">Example data</p>
+        </div>
+        <h3>For you</h3>
+        <p>Read every conversation. See how many real AI agents came, apart from crawlers and scripts.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- Made for each visitor -->
+<section class="section compare" aria-labelledby="compare-title">
+  <div class="wrap">
+    <h2 id="compare-title" class="section-title">Made for each visitor.</h2>
+    <p class="section-lede">Maya asks one question. Here are two ways to answer it.</p>
+
+    <div class="compare-grid">
+      <div class="compare-card compare-old">
+        <p class="compare-label">A generic chatbot</p>
+        <p class="compare-q">Which plan fits a team of five?</p>
+        <div class="wall">
+          <p>Great question! Acme offers several plans designed to meet the needs of teams of every size. Our Starter plan is a wonderful way to begin and is ideal for individuals or very small teams who want to explore the core features of Acme. As your team grows, you may want to consider upgrading to a plan with more collaboration features. The Team plan includes shared workspaces, roles and permissions, and priority email support, and is billed per seat each month. For larger organizations with advanced security needs, the Business plan adds single sign-on, audit logs, and a dedicated support contract. Pricing may vary depending on the number of seats and your billing cycle. To decide which plan is right for you, think about how many people will use Acme, what features you need today, and how you expect your needs to change over time. You can also visit our pricing page or contact our sales team for more information about</p>
+        </div>
+      </div>
+
+      <div class="compare-card compare-new">
+        <p class="compare-label"><svg class="brand-mark brand-mark-small" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M9 13.5a4.5 4.5 0 0 1 4.5-4.5h5a4.5 4.5 0 0 1 4.5 4.5v2a4.5 4.5 0 0 1-4.5 4.5H15l-4 3v-3.6A4.5 4.5 0 0 1 9 15.5z"/></svg>agentnet</p>
+        <p class="compare-q">Which plan fits a team of five?</p>
+        <p class="answer"><strong>Team fits a team of five.</strong> It costs $12 per seat, so $60 a month, and adds shared workspaces.</p>
+        <table class="plan-table">
+          <caption class="sr-only">Acme plans (example)</caption>
+          <thead><tr><th scope="col">Plan</th><th scope="col">Seats</th><th scope="col">Per seat</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Starter</th><td>1 to 2</td><td>$0</td></tr>
+            <tr class="is-pick"><th scope="row">Team <span class="pick">Best fit</span></th><td>3 to 20</td><td>$12</td></tr>
+            <tr><th scope="row">Business</th><td>21+</td><td>$24</td></tr>
+          </tbody>
+        </table>
+        <div class="chips" aria-hidden="true"><span class="chip">Explain more</span><span class="chip">Talk to a person</span></div>
+      </div>
+    </div>
+    <p class="caption">Same question. One answer is made for the person asking. <span class="tag tag-inline">Example</span></p>
+  </div>
+</section>
+
+<!-- For agents -->
+<section class="section agents" id="agents" aria-labelledby="agents-title">
+  <div class="wrap agents-grid">
+    <div class="agents-copy">
+      <h2 id="agents-title" class="section-title">A front door for AI agents.</h2>
+      <p class="section-lede">Assistants and agent browsers act for real people. Give them a clean way in, with the same truth your visitors get.</p>
+      <ul class="facts">
+        <li>
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3.5" width="14" height="13" rx="2.5"/><path d="m7 8.5 2 1.75-2 1.75M10.75 12h2.5"/></svg>
+          <span><strong>MCP and llms.txt.</strong> Agents connect over MCP with one <code>ask</code> tool, or read <code>/llms.txt</code> and your agent card first.</span>
+        </li>
+        <li>
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5 16.25 5v4.5c0 3.6-2.7 6.4-6.25 7.75C6.45 15.9 3.75 13.1 3.75 9.5V5z"/><path d="m7.25 10 2 2 3.75-4"/></svg>
+          <span><strong>Verified, not guessed.</strong> We check signed requests (Web Bot Auth, RFC 9421) and published IP ranges.</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="code-card">
+      <div class="code-head">
+        <span>Request</span>
+        <span class="tag tag-dark">Example</span>
+      </div>
+<pre class="code"><code><span class="t-verb">curl</span> -X POST https://agentnet.it.com/t/acme/chat \
+  -H <span class="t-str">"content-type: application/json"</span> \
+  -d <span class="t-str">'{"text": "Compare plans for a five-person team"}'</span></code></pre>
+      <div class="code-head code-head-split"><span>Reply</span><span class="t-ok">200 OK</span></div>
+<pre class="code"><code>{
+  <span class="t-key">"lastText"</span>: <span class="t-str">"Team fits a team of five. It costs $60 a month."</span>,
+  <span class="t-key">"session"</span>: <span class="t-str">"s_7Kq2"</span>,
+  <span class="t-key">"visuals"</span>: [
+    { <span class="t-key">"type"</span>: <span class="t-str">"table"</span>, <span class="t-key">"source"</span>: <span class="t-str">"/pricing#plans"</span> }
+  ]
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- Analytics -->
+<section class="section analytics" id="analytics" aria-labelledby="analytics-title">
+  <div class="wrap">
+    <h2 id="analytics-title" class="section-title">See who came, and who was real.</h2>
+    <p class="section-lede">Read every conversation in one dashboard. Count the AI agents that really talked to you, apart from crawlers and scripts.</p>
+
+    <div class="dash">
+      <div class="dash-bar">
+        <span class="dash-title">Agent traffic</span>
+        <span class="dash-range">Last 30 days</span>
+        <span class="tag">Example data</span>
+      </div>
+      <div class="dash-body">
+        <div class="funnel">
+          <h3 class="dash-h">Agent funnel</h3>
+          <ol class="funnel-list">
+            <li style="--share: 1">
+              <span class="f-label">Agents seen</span>
+              <span class="f-track"><span class="f-bar"></span></span>
+              <span class="f-num">129</span>
+              <span class="f-pct">100%</span>
+            </li>
+            <li style="--share: .597">
+              <span class="f-label">Read llms.txt or agent card</span>
+              <span class="f-track"><span class="f-bar"></span></span>
+              <span class="f-num">77</span>
+              <span class="f-pct">60%</span>
+            </li>
+            <li style="--share: .535">
+              <span class="f-label">Talked</span>
+              <span class="f-track"><span class="f-bar"></span></span>
+              <span class="f-num">69</span>
+              <span class="f-pct">53%</span>
+            </li>
+            <li style="--share: .248">
+              <span class="f-label">Intelligent multi-turn</span>
+              <span class="f-track"><span class="f-bar"></span></span>
+              <span class="f-num">32</span>
+              <span class="f-pct">25%</span>
+            </li>
+          </ol>
+          <p class="dash-foot">Crawlers and scripts are counted apart and left out of this funnel.</p>
+        </div>
+
+        <div class="families">
+          <h3 class="dash-h">Agent families</h3>
+          <table class="family-table">
+            <caption class="sr-only">Agents seen by family (example data)</caption>
+            <thead><tr><th scope="col">Family</th><th scope="col">Seen</th><th scope="col">Verified</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">ChatGPT</th><td>46</td><td><span class="yes"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.75 8.25 2.75 2.75 5.75-6"/></svg>Signed</span></td></tr>
+              <tr><th scope="row">Claude</th><td>38</td><td><span class="yes"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.75 8.25 2.75 2.75 5.75-6"/></svg>Signed</span></td></tr>
+              <tr><th scope="row">Perplexity</th><td>24</td><td><span class="yes"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.75 8.25 2.75 2.75 5.75-6"/></svg>IP range</span></td></tr>
+              <tr><th scope="row">Agent browsers</th><td>21</td><td><span class="maybe">In-page signals</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Install -->
+<section class="section install" id="install" aria-labelledby="install-title">
+  <div class="wrap install-grid">
+    <div>
+      <h2 id="install-title" class="section-title">Live in one afternoon.</h2>
+      <p class="section-lede">No rebuild. No new pages. One tag does the work.</p>
+    </div>
+    <ol class="steps">
+      <li>
+        <span class="step-num" aria-hidden="true">1</span>
+        <div>
+          <h3>Give us your URL.</h3>
+          <p>We build your agent from your pages.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-num" aria-hidden="true">2</span>
+        <div>
+          <h3>Review it in a preview.</h3>
+          <p>Ask it hard questions before anyone else does.</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-num" aria-hidden="true">3</span>
+        <div class="step-wide">
+          <h3>Paste one tag.</h3>
+          <p>Put it before the closing body tag. No other change to your site is needed.</p>
+          <div class="snippet">
+            <code id="snippet-code">&lt;script src="https://agentnet.it.com/t/your-site/widget.js" async&gt;&lt;/script&gt;</code>
+            <button class="copy" type="button" data-copy="#snippet-code">
+              <svg class="icon icon-copy" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.75"/><path d="M10.5 3.5v-.25A1.25 1.25 0 0 0 9.25 2h-6A1.25 1.25 0 0 0 2 3.25v6a1.25 1.25 0 0 0 1.25 1.25h.25"/></svg>
+              <svg class="icon icon-done" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.75 8.25 2.75 2.75 5.75-6"/></svg>
+              <span class="copy-label">Copy</span>
+            </button>
+          </div>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- Trust -->
+<section class="section trust" aria-labelledby="trust-title">
+  <div class="wrap trust-grid">
+    <h2 id="trust-title" class="section-title">Simple rules. You stay in charge.</h2>
+    <ul class="trust-list">
+      <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5 16.25 5v4.5c0 3.6-2.7 6.4-6.25 7.75C6.45 15.9 3.75 13.1 3.75 9.5V5z"/></svg>Raw IP addresses are never stored.</li>
+      <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.75h6l3.75 3.75v10a.75.75 0 0 1-.75.75h-9a.75.75 0 0 1-.75-.75V3.5a.75.75 0 0 1 .75-.75z"/><path d="M11.25 2.75V6.5H15M7.5 10.5h5M7.5 13.5h3.5"/></svg>Answers come only from your own pages.</li>
+      <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M8 7v6M12 7v6"/></svg>You set rate limits and a monthly cap. Pause any time.</li>
+      <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="7" r="3.25"/><path d="M3.75 16.75a6.25 6.25 0 0 1 12.5 0"/></svg>Visitors can ask for a person on your team.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Close -->
+<section class="close" aria-labelledby="close-title">
+  <div class="wrap close-grid">
+    <div>
+      <h2 id="close-title" class="close-title">Give every visitor a better answer.</h2>
+      <p class="close-text">Tell us your site. We will send you a preview of your agent.</p>
+      <a class="live-link" href="https://supermemory.agentnet.it.com/">See a live agent on a developer docs site<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg></a>
+    </div>
+    <form class="access access-close" data-access novalidate aria-label="Get your agent">
+      <div class="field">
+        <label for="site-2">Your website</label>
+        <input id="site-2" name="site" type="text" inputmode="url" autocomplete="url" placeholder="acme.com" spellcheck="false" required aria-describedby="site-2-error">
+        <p class="field-error" id="site-2-error" hidden></p>
+      </div>
+      <div class="field">
+        <label for="email-2">Work email</label>
+        <input id="email-2" name="email" type="email" autocomplete="email" placeholder="you@acme.com" spellcheck="false" required aria-describedby="email-2-error">
+        <p class="field-error" id="email-2-error" hidden></p>
+      </div>
+      <button class="button button-large" type="submit"><span class="button-label">Get your agent</span></button>
+      <div class="form-status" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-row">
+    <a class="brand brand-foot" href="#top" aria-label="agentnet home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M9 13.5a4.5 4.5 0 0 1 4.5-4.5h5a4.5 4.5 0 0 1 4.5 4.5v2a4.5 4.5 0 0 1-4.5 4.5H15l-4 3v-3.6A4.5 4.5 0 0 1 9 15.5z"/></svg>
+      <span>agentnet</span>
+    </a>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="#how">How it works</a>
+      <a href="#agents">For agents</a>
+      <a href="#analytics">Analytics</a>
+      <a href="#install">Install</a>
+      <a href="/llms.txt">llms.txt</a>
+      <a href="/admin">Sign in</a>
+    </nav>
+    <p class="copyright">© 2026 agentnet</p>
+  </div>
+</footer>
+
+<script src="site.js" defer></script>
+</body>
+</html>

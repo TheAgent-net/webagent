@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agentnet: every visitor gets an answer made for them</title>
+<meta name="description" content="agentnet adds one agent to your website. It answers every person and every AI agent with what fits them, from your own pages.">
+<meta name="theme-color" content="#2E4BFF">
+<link rel="preload" href="fonts/gabarito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script>
+  // Start the hero motion only when the visitor allows motion.
+  // If site.js does not run, show all content after a short time.
+  (function () {
+    var root = document.documentElement;
+    root.classList.add("js");
+    if (window.matchMedia && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      root.classList.add("motion");
+      window.setTimeout(function () {
+        if (!root.classList.contains("motion-started")) root.classList.remove("motion");
+      }, 2500);
+    }
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="ground ground--cobalt">
+  <header class="nav wrap">
+    <a class="brand" href="./" aria-label="agentnet home">
+      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 5h18a5 5 0 0 1 5 5v9a5 5 0 0 1-5 5H15l-6.5 5v-5H7a5 5 0 0 1-5-5v-9a5 5 0 0 1 5-5Z" fill="var(--sun)"/><circle cx="11" cy="14.5" r="2" fill="var(--ink)"/><circle cx="21" cy="14.5" r="2" fill="var(--ink)"/></svg>
+      <span>agentnet</span>
+    </a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="#agents">For agents</a>
+      <a href="#analytics">Analytics</a>
+      <a href="#install">Install</a>
+    </nav>
+    <div class="nav__end">
+      <a class="nav__signin" href="/admin">Sign in</a>
+      <a class="btn btn--sun btn--small" href="#get">Get your agent</a>
+    </div>
+  </header>
+
+  <section class="hero wrap" aria-labelledby="hero-title">
+    <div class="hero__copy">
+      <h1 id="hero-title" class="hero__title">
+        <span class="sr-only">Hi, Maya. </span>
+        <span class="greet" aria-hidden="true" data-greet>Hi, <span class="greet__name" data-name>Maya</span><span class="greet__caret" data-caret></span>.</span>
+        <span class="hero__line">Every visitor gets an answer made for them.</span>
+      </h1>
+      <p class="hero__lede">agentnet adds one agent to your website. It answers every person and every AI agent with what fits them, from your own pages.</p>
+
+      <form class="access" id="get" action="/access" method="post" novalidate data-access>
+        <div class="pill">
+          <div class="pill__field">
+            <label for="site-hero">Your website</label>
+            <input id="site-hero" name="site" type="text" inputmode="url" autocomplete="url" placeholder="acme.dev" spellcheck="false" autocapitalize="off" required>
+          </div>
+          <div class="pill__field">
+            <label for="email-hero">Work email</label>
+            <input id="email-hero" name="email" type="email" autocomplete="email" placeholder="maya@acme.dev" spellcheck="false" required>
+          </div>
+          <button class="btn btn--sun pill__send" type="submit"><span data-label>Get your agent</span></button>
+        </div>
+        <div class="reply" role="status" aria-live="polite" data-reply></div>
+      </form>
+    </div>
+
+    <figure class="thread" aria-label="Example: one thread on the Acme Docs site">
+      <figcaption class="thread__head">
+        <span class="avatar avatar--site" aria-hidden="true">A</span>
+        <span class="thread__site">Acme Docs</span>
+        <span class="tag tag--on-cobalt">Example</span>
+      </figcaption>
+      <ol class="msgs" data-thread>
+        <li class="msg msg--person">
+          <p class="msg__who">Maya</p>
+          <div class="bubble">Which plan fits a team of five?</div>
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        </li>
+        <li class="msg msg--site">
+          <p class="msg__who">Acme Docs agent</p>
+          <div class="bubble bubble--rich">
+            <p>The Team plan fits best. It covers up to 10&nbsp;seats and shared spaces for your docs.</p>
+            <table class="plans">
+              <caption class="sr-only">Plans from the Acme Docs pricing page</caption>
+              <thead><tr><th scope="col">Plan</th><th scope="col">Seats</th><th scope="col">Shared spaces</th></tr></thead>
+              <tbody>
+                <tr style="--i:0"><th scope="row">Starter</th><td>1 to 3</td><td>No</td></tr>
+                <tr style="--i:1" class="is-fit"><th scope="row">Team</th><td>Up to 10</td><td>Yes</td></tr>
+                <tr style="--i:2"><th scope="row">Business</th><td>11 or more</td><td>Yes</td></tr>
+              </tbody>
+            </table>
+            <p class="chips" aria-hidden="true"><span>Explain more</span><span>Ask a person</span></p>
+            <span class="sticker sticker--mint sticker--maya">made for Maya</span>
+          </div>
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        </li>
+        <li class="msg msg--agent">
+          <p class="msg__who">ChatGPT agent
+            <span class="sticker sticker--white sticker--verified"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="var(--mint)"/><path d="m6.4 10.3 2.4 2.4 4.8-5" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>verified agent</span>
+          </p>
+          <div class="bubble bubble--code"><code><b>POST /chat</b>
+{"text": "Compare plans for a five-person team"}</code></div>
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        </li>
+        <li class="msg msg--site">
+          <div class="bubble bubble--code"><code>{
+  <b>"lastText"</b>: "The Team plan fits.",
+  <b>"session"</b>: "ses_4f9a2c",
+  <b>"visuals"</b>: [{ "type": "table" }]
+}</code></div>
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        </li>
+      </ol>
+    </figure>
+  </section>
+</div>
+
+<main id="main" class="talk">
+
+  <section class="part" id="how" aria-labelledby="how-title" style="--node: var(--cobalt)">
+    <div class="wrap">
+      <h2 id="how-title" class="part__title">One agent. Every visitor answered.</h2>
+      <div class="how">
+        <div class="how__row">
+          <div class="how__text">
+            <h3>For people</h3>
+            <p>People get the answer in the first two lines. Your own tables and charts show inside the chat. A visitor can ask to explain more, or ask for a person on your team.</p>
+          </div>
+          <div class="mini" aria-label="Example exchange with a person">
+            <div class="mini__row mini__row--end"><span class="bubble bubble--sun">Do you support SSO?</span></div>
+            <div class="mini__row">
+              <div class="bubble bubble--white">
+                <p>Yes. SSO comes with the Business plan.</p>
+                <p class="chips chips--light" aria-hidden="true"><span>Explain more</span><span>Ask a person</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="how__row">
+          <div class="how__text">
+            <h3>For AI agents</h3>
+            <p>Agents get a front door: <code>llms.txt</code>, an agent card, <code>POST /chat</code>, and MCP. JSON goes in, and JSON comes out.</p>
+          </div>
+          <div class="mini" aria-label="Example exchange with an AI agent">
+            <div class="mini__row mini__row--end"><span class="bubble bubble--pink bubble--mono"><code>GET /.well-known/agent-card.json</code></span></div>
+            <div class="mini__row">
+              <div class="bubble bubble--white bubble--mono"><code>{ <b>"name"</b>: "Acme Docs agent", <b>"skills"</b>: ["ask"] }</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="how__row">
+          <div class="how__text">
+            <h3>For you</h3>
+            <p>You read every conversation in one dashboard. You also see how many real AI agents came, apart from crawlers and scripts.</p>
+          </div>
+          <div class="mini" aria-label="Example exchange with the site owner">
+            <div class="mini__row mini__row--end"><span class="bubble bubble--cobalt">What happened today?</span></div>
+            <div class="mini__row">
+              <div class="bubble bubble--white">
+                <ul class="feed">
+                  <li><span class="dot dot--sun" aria-hidden="true"></span>Maya asked which plan fits five people.</li>
+                  <li><span class="dot dot--pink" aria-hidden="true"></span>A verified Claude agent compared plans.</li>
+                  <li><span class="dot dot--cobalt" aria-hidden="true"></span>One question had no answer in your pages.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="made" aria-labelledby="made-title" style="--node: var(--sun)">
+    <div class="wrap">
+      <h2 id="made-title" class="part__title">Made for each visitor.</h2>
+      <p class="part__lede">Maya asks the same question on two sites. Read both replies.</p>
+      <figure class="compare">
+        <div class="compare__pair">
+          <section class="pane pane--generic" aria-label="A generic chatbot">
+            <header class="pane__head"><span class="avatar avatar--grey" aria-hidden="true"></span>A generic chatbot</header>
+            <div class="mini__row mini__row--end"><span class="bubble bubble--sun">Which plan fits a team of five?</span></div>
+            <div class="mini__row">
+              <div class="bubble bubble--grey">
+                <p>Thank you for your question! We offer a range of plans for teams of every size. Our Starter plan is a great place to begin for individuals and small groups, and it includes core editing features. As your team grows, you may want to consider our Team plan, which adds collaboration features, shared spaces, and more seats. For larger groups, the Business plan offers advanced security options such as SSO, audit logs, and priority support. Plan limits can change over time, so we recommend that you visit our pricing page or contact our sales team for the most accurate and current information about which plan is right for you. Is there anything else I can help you with today?</p>
+              </div>
+            </div>
+          </section>
+          <section class="pane pane--made" aria-label="agentnet">
+            <header class="pane__head"><span class="avatar avatar--site" aria-hidden="true">A</span>agentnet on Acme Docs</header>
+            <div class="mini__row mini__row--end"><span class="bubble bubble--sun">Which plan fits a team of five?</span></div>
+            <div class="mini__row">
+              <div class="bubble bubble--white bubble--rich">
+                <p>The Team plan fits best. It covers up to 10&nbsp;seats and shared spaces for your docs.</p>
+                <table class="plans">
+                  <caption class="sr-only">Plans from the Acme Docs pricing page</caption>
+                  <thead><tr><th scope="col">Plan</th><th scope="col">Seats</th><th scope="col">Shared spaces</th></tr></thead>
+                  <tbody>
+                    <tr><th scope="row">Starter</th><td>1 to 3</td><td>No</td></tr>
+                    <tr class="is-fit"><th scope="row">Team</th><td>Up to 10</td><td>Yes</td></tr>
+                    <tr><th scope="row">Business</th><td>11 or more</td><td>Yes</td></tr>
+                  </tbody>
+                </table>
+                <p class="chips chips--light" aria-hidden="true"><span>Explain more</span><span>Ask a person</span></p>
+              </div>
+            </div>
+          </section>
+        </div>
+        <figcaption class="compare__cap">Same question. One answer is made for the person asking. <span class="tag">Example</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="part" id="agents" aria-labelledby="agents-title" style="--node: var(--pink)">
+    <div class="wrap split">
+      <div class="split__text">
+        <h2 id="agents-title" class="part__title">A front door for AI&nbsp;agents.</h2>
+        <p>An agent sends JSON and gets JSON back. The reply carries the answer, a session to continue, and the page elements to show.</p>
+        <ul class="facts">
+          <li>Agents can also call MCP with one <code>ask</code> tool, or read your <code>llms.txt</code>.</li>
+          <li>Signed agents are verified with Web Bot Auth signatures and published IP ranges.</li>
+        </ul>
+      </div>
+      <div class="code-thread" aria-label="Example request and reply">
+        <div class="mini__row mini__row--end">
+          <div class="bubble bubble--pink bubble--block"><pre><code>curl -X POST \
+  https://agentnet.it.com/t/acme/chat \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Compare plans for a five-person team"}'</code></pre></div>
+        </div>
+        <div class="mini__row">
+          <div class="bubble bubble--white bubble--block"><pre><code>{
+  <b>"lastText"</b>: "The Team plan fits. It covers up to 10 seats.",
+  <b>"session"</b>: "ses_4f9a2c",
+  <b>"visuals"</b>: [
+    { <b>"type"</b>: "table", <b>"source"</b>: "/pricing#plans" }
+  ]
+}</code></pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="analytics" aria-labelledby="analytics-title" style="--node: var(--cobalt)">
+    <div class="wrap split split--wide">
+      <div class="split__text">
+        <h2 id="analytics-title" class="part__title">See which agents came, and which were real.</h2>
+        <p>Your dashboard counts AI agents apart from crawlers and scripts. You see how far each one got, from the first visit to a real conversation.</p>
+      </div>
+      <div class="dash-thread">
+        <div class="mini__row mini__row--end"><span class="bubble bubble--cobalt">How many real agents came this week?</span></div>
+        <div class="mini__row">
+          <div class="dash" role="group" aria-label="Dashboard excerpt with example data">
+            <header class="dash__head">
+              <span class="dash__title">Agent traffic, last 7 days</span>
+              <span class="tag">Example data</span>
+            </header>
+            <ol class="funnel">
+              <li style="--w: 100%"><span class="funnel__label">Agents seen</span><span class="funnel__bar" aria-hidden="true"></span><span class="funnel__num">129</span></li>
+              <li style="--w: 59.7%"><span class="funnel__label">Read llms.txt or agent card</span><span class="funnel__bar" aria-hidden="true"></span><span class="funnel__num">77</span></li>
+              <li style="--w: 53.5%"><span class="funnel__label">Talked</span><span class="funnel__bar" aria-hidden="true"></span><span class="funnel__num">69</span></li>
+              <li style="--w: 24.8%" class="is-key"><span class="funnel__label">Intelligent multi-turn</span><span class="funnel__bar" aria-hidden="true"></span><span class="funnel__num">32</span></li>
+            </ol>
+            <div class="families">
+              <h3 class="families__title">Agent families</h3>
+              <ul>
+                <li>ChatGPT</li>
+                <li>Claude</li>
+                <li>Perplexity</li>
+                <li>Agent browsers</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="install" aria-labelledby="install-title" style="--node: var(--cobalt)">
+    <div class="wrap">
+      <h2 id="install-title" class="part__title">Live in one afternoon.</h2>
+      <ol class="steps">
+        <li class="step">
+          <span class="step__num" aria-hidden="true">1</span>
+          <div>
+            <h3>Give us your URL.</h3>
+            <p>We build your agent from your pages.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step__num" aria-hidden="true">2</span>
+          <div>
+            <h3>Review it in a preview.</h3>
+            <p>Ask it your hardest questions before anyone else does.</p>
+          </div>
+        </li>
+        <li class="step step--tag">
+          <span class="step__num" aria-hidden="true">3</span>
+          <div class="step__body">
+            <h3>Paste one tag.</h3>
+            <p>No other change to your site is needed.</p>
+            <div class="snippet">
+              <pre><code id="tag-code">&lt;script src="https://agentnet.it.com/t/your-site/widget.js" async&gt;&lt;/script&gt;</code></pre>
+              <button class="copy" type="button" data-copy="#tag-code" aria-describedby="copy-note">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6.5" y="6.5" width="10" height="10" rx="2.5"/><path d="M13.5 4.5v-.5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 4v7A1.5 1.5 0 0 0 5 12.5h.5"/></svg>
+                <span data-copy-label>Copy</span>
+              </button>
+              <span id="copy-note" class="sr-only" role="status" aria-live="polite" data-copy-note></span>
+            </div>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="part part--last" id="trust" aria-labelledby="trust-title" style="--node: var(--mint)">
+    <div class="wrap">
+      <h2 id="trust-title" class="part__title">Short facts you can hold us&nbsp;to.</h2>
+      <ul class="trust">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--mint)"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Raw IP addresses are never stored.</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--mint)"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Answers come only from your own pages.</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--mint)"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>You set rate limits and a monthly cap. You can pause any time.</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--mint)"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Visitors can ask for a person on your team.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<div class="ground ground--cobalt">
+  <section class="close wrap" aria-labelledby="close-title">
+    <h2 id="close-title" class="close__title">Give every visitor their own answer.</h2>
+    <p class="close__lede">Tell us your site. We will build your agent and send you a preview.</p>
+    <form class="access access--close" action="/access" method="post" novalidate data-access>
+      <div class="pill">
+        <div class="pill__field">
+          <label for="site-close">Your website</label>
+          <input id="site-close" name="site" type="text" inputmode="url" autocomplete="url" placeholder="acme.dev" spellcheck="false" autocapitalize="off" required>
+        </div>
+        <div class="pill__field">
+          <label for="email-close">Work email</label>
+          <input id="email-close" name="email" type="email" autocomplete="email" placeholder="maya@acme.dev" spellcheck="false" required>
+        </div>
+        <button class="btn btn--sun pill__send" type="submit"><span data-label>Get your agent</span></button>
+      </div>
+      <div class="reply" role="status" aria-live="polite" data-reply></div>
+    </form>
+    <a class="live" href="https://supermemory.agentnet.it.com/">See a live agent on a developer docs site<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5"/></svg></a>
+  </section>
+
+  <footer class="foot wrap">
+    <a class="brand brand--small" href="./" aria-label="agentnet home">
+      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 5h18a5 5 0 0 1 5 5v9a5 5 0 0 1-5 5H15l-6.5 5v-5H7a5 5 0 0 1-5-5v-9a5 5 0 0 1 5-5Z" fill="var(--sun)"/><circle cx="11" cy="14.5" r="2" fill="var(--ink)"/><circle cx="21" cy="14.5" r="2" fill="var(--ink)"/></svg>
+      <span>agentnet</span>
+    </a>
+    <nav class="foot__links" aria-label="Footer">
+      <a href="#how">How it works</a>
+      <a href="#agents">For agents</a>
+      <a href="#install">Install</a>
+      <a href="/admin">Sign in</a>
+    </nav>
+    <p class="foot__copy">© 2026 agentnet</p>
+  </footer>
+</div>
+
+<script src="site.js" defer></script>
+</body>
+</html>
