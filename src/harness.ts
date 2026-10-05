@@ -2,7 +2,7 @@ import { cursorModel } from "./cursor.ts";
 import { echoModel, ModelShelf, openaiModel, type Model, type ModelInfo } from "./models.ts";
 import { Run, type CreateOpts, type Explain } from "./run.ts";
 import { Scheduler } from "./scheduler.ts";
-import { STATE_NAME, type RunState } from "./state.ts";
+import { CANCELLED, STATE_NAME, STOPPED, type RunState } from "./state.ts";
 import { ToolShelf, type Tool, type ToolInfo } from "./tools.ts";
 
 let seq = 0;
@@ -68,6 +68,14 @@ export class Harness {
 
   get(id: string): Run | undefined {
     return this.runs.get(id);
+  }
+
+  /** Stop one run and drop it from the registry. Return false when the id is unknown. */
+  remove(id: string): boolean {
+    const run = this.runs.get(id);
+    if (!run) return false;
+    if (run.state !== STOPPED && run.state !== CANCELLED) run.stop();
+    return this.runs.delete(id);
   }
 
   listRuns(filter?: { state?: string }): Explain[] {

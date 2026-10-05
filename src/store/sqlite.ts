@@ -10,6 +10,7 @@ import type {
   EventFilter,
   EventGroup,
   Feedback,
+  Handoff,
   Store,
   Tenant,
   TrafficEvent,
@@ -46,6 +47,12 @@ create table if not exists feedback (
   turn integer, vote integer not null, note text, at integer not null
 );
 create index if not exists feedback_tenant on feedback (tenant, at);
+create table if not exists handoffs (
+  id integer primary key autoincrement, tenant text not null, conversation text not null,
+  email text not null, note text, at integer not null
+);
+create index if not exists handoffs_tenant on handoffs (tenant, at);
+create index if not exists turns_at on turns (at);
 `;
 
 const DAY = "strftime('%Y-%m-%d', at / 1000, 'unixepoch')";
@@ -275,6 +282,38 @@ export class SqliteStore implements Store {
 
   close(): void {
     this.db.close();
+  }
+
+  /* Guard and handoff methods. */
+  countTurns(tenant: string, since: number): number {
+    const row = this.db
+      .query(
+        `select count(*) as n from turns where at >= ? and conversation in
+         (select id from conversations where tenant = ? and updated >= ?)`,
+      )
+      .get(since, tenant, since) as Row | null;
+    return Number(row?.n ?? 0);
+  }
+
+  addHandoff(h: Handoff): number {
+    const res = this.db
+      .query("insert into handoffs (tenant, conversation, email, note, at) values (?, ?, ?, ?, ?)")
+      .run(h.tenant, h.conversation, h.email, h.note ?? null, h.at);
+    this.db.query("update conversations set handoff = 1 where id = ?").run(h.conversation);
+    return Number(res.lastInsertRowid);
+  }
+
+  listHandoffs(tenant: string, since = 0): Handoff[] {
+    return (
+      this.db.query("select * from handoffs where tenant = ? and at >= ? order by at desc").all(tenant, since) as Row[]
+    ).map((r) => ({
+      id: Number(r.id),
+      tenant: String(r.tenant),
+      conversation: String(r.conversation),
+      email: String(r.email),
+      note: (r.note as string | null) ?? undefined,
+      at: Number(r.at),
+    }));
   }
 }
 

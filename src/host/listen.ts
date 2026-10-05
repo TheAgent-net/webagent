@@ -4,6 +4,7 @@ import type { AgentPackConfig } from "../pack/types.ts";
 import type { AgentCardMeta } from "./card.ts";
 import type { Store } from "../store/store.ts";
 import { host, restoreFrom } from "./host.ts";
+import type { Limiter } from "./limit.ts";
 import { tapFetch, type Hop } from "./hop.ts";
 import { Room, type Finish } from "./room.ts";
 import { Sessions } from "./sessions.ts";
@@ -28,6 +29,18 @@ export interface ListenOpts {
   tenant?: string;
   /** Public base URL for one request. Overrides `publicUrl` (multi-tenant routing). */
   base?: (req: Request) => string;
+
+  /* Guard options. See `HostExtra`. */
+  /** Page origins that may call from a browser. Empty means any. */
+  origins?: string[];
+  /** Hide the generic intake routes. The cloud sets it. */
+  locked?: boolean;
+  /** Fetch for outbound handoff calls. */
+  outbound?: typeof fetch;
+  /** Rate limiter shared by every mount (the cloud passes one so a tenant reload keeps its buckets). */
+  limiter?: Limiter;
+  /** Most chat rooms in memory. Default `WEBAGENT_ROOM_CAP` or 512. */
+  roomCap?: number;
 }
 
 /** One agent mounted as a fetch handler, without a server. */
@@ -41,11 +54,15 @@ export interface Mounted {
 export function mount(harness: Harness, opts: ListenOpts = {}, fallbackUrl = "http://127.0.0.1:8787"): Mounted {
   const room = new Room(harness, { model: opts.model ?? "echo", run: opts.run, finish: opts.finish });
   const tenant = opts.tenant || "default";
-  const sessions = new Sessions(harness, room, opts.store ? restoreFrom(opts.store, tenant) : undefined);
+  const sessions = new Sessions(harness, room, opts.store ? restoreFrom(opts.store, tenant) : undefined, opts.roomCap);
   const fetch = host(harness, room, fallbackUrl, opts.card, sessions, opts.pack, {
     store: opts.store,
     tenant,
     base: opts.base,
+    origins: opts.origins,
+    locked: opts.locked,
+    outbound: opts.outbound,
+    limiter: opts.limiter,
   });
   return { room, sessions, fetch };
 }

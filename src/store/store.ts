@@ -145,8 +145,25 @@ export interface Store {
   listFeedback(tenant: string, since?: number): Feedback[];
 
   close(): void;
+
+  /* Guard and handoff methods. */
+  /** Count turns of one tenant since a time (for the monthly cap). */
+  countTurns(tenant: string, since: number): number;
+  /** Store one handoff request and mark the conversation. Return the row id. */
+  addHandoff(handoff: Handoff): number;
+  listHandoffs(tenant: string, since?: number): Handoff[];
 }
 
 export function conversationId(tenant: string, session: string): string {
   return tenant + ":" + session;
+}
+
+/** A visitor asks the team to follow up. The email is the only contact data we keep. */
+export interface Handoff {
+  id?: number;
+  tenant: string;
+  conversation: string;
+  email: string;
+  note?: string;
+  at: number;
 }

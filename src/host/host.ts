@@ -13,10 +13,13 @@ import { agentCard, CARD_PATHS, connectPrompt, linkHeader, type AgentCardMeta } 
 import { corsPreflight, withCors } from "./cors.ts";
 import { clientKind, wantsAgentCard } from "./detect.ts";
 import { chatPage } from "./page.ts";
-import { conversationId, type Channel, type Store } from "../store/store.ts";
+import { conversationId, type Channel, type Store, type Tenant } from "../store/store.ts";
 import { Room } from "./room.ts";
 import { Sessions } from "./sessions.ts";
 import { classifyVisitor, hashIp, type Visitor } from "./visitor.ts";
+import { asksHuman, cutNote, getTarget, isEmail, offersTeam, sendHandoff, getTranscriptUrl } from "./handoff.ts";
+import { getHold, getLimits, HOLD_TEXT, Limiter, refuseRate, type Limits, type Rule } from "./limit.ts";
+import { refuseOrigin, isAllowed } from "./origin.ts";
 
 /** Multi-tenant parts. All optional: a single-pack host works without them. */
 export interface HostExtra {
@@ -25,12 +28,31 @@ export interface HostExtra {
   tenant?: string;
   /** Public base URL for this request (for example `https://agent.example.com/t/acme`). */
   base?: (req: Request) => string;
+
+  /* Guard options. */
+  /** Page origins that may call from a browser when the store has no tenant row. Empty means any. */
+  origins?: string[];
+  /** Hide the generic intake routes (`/runs`, `/models`, `/health`, `/sites`). The cloud sets it. Keep `/mcp`. */
+  locked?: boolean;
+  /** Rate limiter. Default: one limiter for this host. */
+  limiter?: Limiter;
+  /** Fetch for outbound handoff calls. Tests pass a fake. */
+  outbound?: typeof fetch;
 }
 
 interface Scope {
   store?: Store;
   tenant: string;
   visitor: Visitor;
+  /* Guard fields. */
+  /** Stored tenant row, read once per request so settings changes apply at once. */
+  row?: Tenant;
+  limits: Limits;
+  limiter: Limiter;
+  /** Allowed page origins. Empty means any. */
+  origins: string[];
+  locked: boolean;
+  outbound?: typeof fetch;
 }
 
 export function publicUrl(req: Request, fallback: string): string {
@@ -55,13 +77,142 @@ export function host(
   const api = intake(harness);
   const bag = sessions ?? new Sessions(harness, room);
   const tenant = extra.tenant || "default";
+  const limiter = extra.limiter ?? new Limiter();
   return async (req: Request) => {
     if (req.method === "OPTIONS") return corsPreflight();
-    const scope: Scope = { store: extra.store, tenant, visitor: classifyVisitor(req) };
+    const row = readTenant(extra.store, tenant);
+    const scope: Scope = {
+      store: extra.store,
+      tenant,
+      visitor: classifyVisitor(req),
+      row,
+      limits: getLimits(row),
+      limiter,
+      origins: row?.origins ?? extra.origins ?? [],
+      locked: !!extra.locked,
+      outbound: extra.outbound,
+    };
     track(req, scope);
+    const base = extra.base ? extra.base(req) : publicUrl(req, fallbackUrl);
+    const refused = checkRequest(req, scope, base);
+    if (refused) return withCors(refused);
     return withCors(await route(req, harness, bag, fallbackUrl, meta, api, pack, scope, extra.base));
   };
 }
+
+/* ---- Guard: origin allowlist, rate limits, pause, and cap. ---- */
+
+function readTenant(store: Store | undefined, id: string): Tenant | undefined {
+  if (!store) return undefined;
+  try {
+    return store.getTenant(id);
+  } catch {
+    return undefined;
+  }
+}
+
+/** Paths that a browser page calls with a body. They obey the origin allowlist. */
+const BROWSER_PATHS = new Set(["/chat", "/feedback", "/handoff", "/collect"]);
+
+/** Path to the rate rule keyed by hashed IP. */
+const IP_RULES: Record<string, Rule> = {
+  "/chat": "chatIp",
+  "/": "chatIp",
+  "/mcp": "mcp",
+  "/collect": "collect",
+  "/feedback": "feedback",
+  "/handoff": "handoff",
+};
+
+/** Refuse a request before it reaches a route. Return undefined to let it through. */
+function checkRequest(req: Request, scope: Scope, base: string): Response | undefined {
+  if (req.method !== "POST") return undefined;
+  const path = new URL(req.url).pathname;
+  if (BROWSER_PATHS.has(path) && !isAllowed(req.headers.get("origin"), scope.origins, base)) return refuseOrigin();
+  const rule = IP_RULES[path];
+  const ip = rule ? hashIp(req) : undefined;
+  if (rule && ip) {
+    const take = scope.limiter.take(scope.tenant + "|" + rule + "|" + ip, scope.limits[rule]);
+    if (!take.ok) return refuseRate(take.wait);
+  }
+  if (path === "/mcp") {
+    const hold = getHold(scope.row, scope.store);
+    if (hold) return Response.json({ error: "unavailable", reason: hold, lastText: HOLD_TEXT[hold] }, { status: 503 });
+  }
+  return undefined;
+}
+
+/** Rate limit one chat session. Return the 429 reply, or undefined. */
+function checkSession(scope: Scope, session: string | undefined): Response | undefined {
+  if (!session || !/^[\w-]{1,80}$/.test(session)) return undefined;
+  const take = scope.limiter.take(scope.tenant + "|chatSession|" + session, scope.limits.chatSession);
+  return take.ok ? undefined : refuseRate(take.wait);
+}
+
+/** The fixed reply when the tenant is paused or over its monthly cap. No model call. */
+function getHoldReply(scope: Scope, side: "human" | "machine", session: string | undefined): Response | undefined {
+  const hold = getHold(scope.row, scope.store);
+  if (!hold) return undefined;
+  const lastText = HOLD_TEXT[hold];
+  if (side === "human") return Response.json({ lastText, hold, session });
+  return Response.json({ error: "unavailable", reason: hold, lastText }, { status: 503 });
+}
+
+/** `POST /feedback {session, turn?, vote, note?}`: one vote on one reply. */
+async function addFeedback(req: Request, scope: Scope): Promise<Response> {
+  const body = (await req.json().catch(() => ({}))) as { session?: unknown; turn?: unknown; vote?: unknown; note?: unknown };
+  const vote = body.vote === 1 || body.vote === "up" ? 1 : body.vote === -1 || body.vote === "down" ? -1 : 0;
+  if (!vote) return Response.json({ error: "bad_vote", reason: "Send vote 1 or -1." }, { status: 400 });
+  const found = findConversation(scope, body.session);
+  if (found instanceof Response) return found;
+  let turn: number | undefined;
+  if (body.turn !== undefined && body.turn !== null) {
+    turn = Number(body.turn);
+    if (!Number.isInteger(turn) || !scope.store!.listTurns(found).some((t) => t.id === turn)) {
+      return Response.json({ error: "bad_turn", reason: "Unknown turn for this session." }, { status: 400 });
+    }
+  }
+  scope.store!.addFeedback({ tenant: scope.tenant, conversation: found, turn, vote, note: cutNote(body.note), at: Date.now() });
+  return Response.json({ ok: true });
+}
+
+/** `POST /handoff {session, email, note?}`: store the request and tell the team. Do not wait for the team. */
+async function addHandoff(req: Request, scope: Scope, base: string): Promise<Response> {
+  const body = (await req.json().catch(() => ({}))) as { session?: unknown; email?: unknown; note?: unknown };
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  if (!isEmail(email)) return Response.json({ error: "bad_email", reason: "Send a valid email." }, { status: 400 });
+  const found = findConversation(scope, body.session);
+  if (found instanceof Response) return found;
+  const note = cutNote(body.note);
+  const at = Date.now();
+  scope.store!.addHandoff({ tenant: scope.tenant, conversation: found, email, note, at });
+  const notice = {
+    tenant: scope.tenant,
+    brand: scope.row?.name || scope.tenant,
+    conversation: found,
+    email,
+    note,
+    transcript: getTranscriptUrl(base, scope.tenant, found),
+    at,
+  };
+  void sendHandoff(getTarget(scope.row?.settings), notice, scope.outbound ?? fetch);
+  return Response.json({ ok: true });
+}
+
+/** Conversation id for a session, or an error reply. */
+function findConversation(scope: Scope, session: unknown): string | Response {
+  if (!scope.store) return Response.json({ error: "no_store", reason: "This host keeps no chats." }, { status: 501 });
+  if (typeof session !== "string" || !/^[\w-]{1,80}$/.test(session)) {
+    return Response.json({ error: "bad_session", reason: "Send the session from the chat reply." }, { status: 400 });
+  }
+  const id = conversationId(scope.tenant, session);
+  if (!scope.store.getConversation(id)) {
+    return Response.json({ error: "unknown_session", reason: "No chat has this session." }, { status: 404 });
+  }
+  return id;
+}
+
+/* ---- End guard. ---- */
 
 /** Log one request as a traffic event. Skip the live stream and preflight noise. */
 function track(req: Request, scope: Scope): void {
@@ -99,6 +250,8 @@ async function talk(
   const hit = sessions.open(session);
   const t0 = Date.now();
   const ex = await hit.room.say(side, text);
+  const handoff = offersTeam(ex.lastText || "") || asksHuman(text);
+  let turnId: number | undefined;
   if (scope.store) {
     try {
       const id = conversationId(scope.tenant, hit.id);
@@ -114,7 +267,7 @@ async function talk(
         page: page?.slice(0, 500),
         at: t0,
       });
-      scope.store.addTurn({
+      turnId = scope.store.addTurn({
         conversation: id,
         at: t0,
         from: side,
@@ -123,11 +276,13 @@ async function talk(
         visual: /\[\[show:([\w-]+)\]\]/.exec(ex.lastText || "")?.[1],
         ms: Date.now() - t0,
       });
+      if (handoff) scope.store.updateConversation(id, { handoff: true });
     } catch (err) {
       console.error("store turn failed:", err instanceof Error ? err.message : err);
     }
   }
-  return { hit, ex };
+  /* The widget shows the handoff form only when a store can keep the request. */
+  return { hit, ex, turnId, handoff: handoff && !!scope.store };
 }
 
 /** Rebuild a stored conversation as context messages, so a chat survives a restart. */
@@ -174,7 +329,7 @@ async function route(
     if (file) return file;
   }
   if (url.pathname === "/widget.js") {
-    const js = widgetJs(base, lobby.run.id, pack ?? pagePack(meta));
+    const js = widgetJs(base, lobby.run.id, pack ?? pagePack(meta), scope.origins);
     return new Response(js, {
       headers: { "Content-Type": "application/javascript; charset=utf-8", "Cache-Control": "no-store" },
     });
@@ -202,16 +357,22 @@ async function route(
     const text = String(body.text ?? "").trim();
     if (!text) return Response.json(chatHowToBody(base));
     const side = chatFrom(req, body);
+    const refused = getHoldReply(scope, side, body.session) ?? checkSession(scope, body.session);
+    if (refused) return refused;
     const channel: Channel = body.channel === "widget" ? "widget" : "chat";
-    const { hit, ex } = await talk(sessions, body.session, side, text, scope, channel, body.page);
+    const { hit, ex, turnId, handoff } = await talk(sessions, body.session, side, text, scope, channel, body.page);
     return Response.json({
       ...ex,
       ...(side === "machine" ? machineReply(ex.lastText, base, pack) : {}),
       session: hit.id,
       runId: hit.room.run.id,
       company: pack?.brand.name || meta.name,
+      turnId,
+      handoff,
     });
   }
+  if (url.pathname === "/feedback" && req.method === "POST") return addFeedback(req, scope);
+  if (url.pathname === "/handoff" && req.method === "POST") return addHandoff(req, scope, base);
   if (url.pathname === "/" && req.method === "GET") {
     if (wantsAgentCard(url) || kind === "machine") return card();
     const cloned = packClonePage(pack, url, base);
@@ -232,8 +393,10 @@ async function route(
         );
       }
       if (body.text) {
-        const { hit, ex } = await talk(sessions, body.session, "machine", body.text, scope, "chat");
-        return Response.json({ ...ex, session: hit.id, runId: hit.room.run.id });
+        const refused = getHoldReply(scope, "machine", body.session) ?? checkSession(scope, body.session);
+        if (refused) return refused;
+        const { hit, ex, turnId, handoff } = await talk(sessions, body.session, "machine", body.text, scope, "chat");
+        return Response.json({ ...ex, session: hit.id, runId: hit.room.run.id, turnId, handoff });
       }
     } catch {
       /* fall through */
@@ -241,6 +404,8 @@ async function route(
   }
   const cloned = packClonePage(pack, url, base);
   if (cloned) return cloned;
+  /* Tenant mode: only MCP is public. Hide `/runs`, `/models`, `/health`, and `/sites`. */
+  if (scope.locked && url.pathname !== "/mcp") return new Response("not found", { status: 404 });
   return api(req);
 }
 

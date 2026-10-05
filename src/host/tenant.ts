@@ -6,6 +6,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { PackRuntime } from "../pack/types.ts";
 import type { Store, Tenant } from "../store/store.ts";
+import { Limiter } from "./limit.ts";
 import { mount, type ListenOpts, type Mounted } from "./listen.ts";
 
 export interface LiveTenant {
@@ -27,6 +28,8 @@ export interface TenantsOpts {
   /** Most tenants kept open at once. */
   cap?: number;
   open?: OpenTenant;
+  /** Fetch for outbound handoff calls. Tests pass a fake. */
+  outbound?: typeof fetch;
 }
 
 const ID_OK = /^[a-z0-9][a-z0-9_-]{0,62}$/;
@@ -35,6 +38,8 @@ export class Tenants {
   private readonly live = new Map<string, Promise<LiveTenant>>();
   private readonly cap: number;
   private readonly openOne: OpenTenant;
+  /** One rate limiter for every tenant. Keys carry the tenant id. */
+  private readonly limiter = new Limiter();
 
   constructor(
     readonly store: Store,
@@ -96,7 +101,16 @@ export class Tenants {
       tenant,
       runtime,
       opened: Date.now(),
-      mounted: mount(harness, { ...listen, store: this.store, tenant: tenant.id, base }),
+      mounted: mount(harness, {
+        ...listen,
+        store: this.store,
+        tenant: tenant.id,
+        base,
+        origins: tenant.origins,
+        locked: true,
+        outbound: this.opts.outbound,
+        limiter: this.limiter,
+      }),
     }));
     this.live.set(id, opening);
     opening.catch(() => this.live.delete(id));

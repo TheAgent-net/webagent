@@ -2,7 +2,8 @@ import { renderCopyPrompt } from "../pack/prompt.ts";
 import type { AgentPackConfig } from "../pack/types.ts";
 import { renderChatMarkdown } from "./md.ts";
 
-export function packWidget(publicUrl: string, runId: string, config: AgentPackConfig): string {
+/** `origins`: page origins that may mount the widget. Empty means any. */
+export function packWidget(publicUrl: string, runId: string, config: AgentPackConfig, origins: string[] = []): string {
   const prompt = renderCopyPrompt(config, publicUrl);
   const markup = widgetMarkup(publicUrl, runId, config);
   const fabOpen = config.brand.fabLabel;
@@ -39,6 +40,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
   const VISUALS = ${JSON.stringify(visuals)};
   const FONTS = ${JSON.stringify((config.visuals ?? []).some((v) => v.html) ? base + "/visuals/fonts.css" : "")};
   const BRAND = ${JSON.stringify(config.brand.wordmark || config.brand.name)};
+  const ORIGINS = ${JSON.stringify(origins.map(cleanOrigin).filter(Boolean))};
   const bind = () => {
     if (window.__waBound) return;
     const fab = document.getElementById("wa-fab");
@@ -434,6 +436,68 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       fig.appendChild(cap);
       return fig;
     };
+    /* Feedback: one quiet thumbs pair per answer card. The turn id comes from the /chat reply. */
+    const THUMB = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 11v9H4v-9h3zm0 0l4-7c1.4 0 2.3 1.1 2 2.4L12.4 10H18a2 2 0 0 1 2 2.3l-1.1 6A2 2 0 0 1 16.9 20H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+    const voteNode = (card) => {
+      const box = node("div", "wa-vote");
+      const pick = (vote, btn) => {
+        box.querySelectorAll("button").forEach((b) => { b.disabled = true; });
+        btn.setAttribute("aria-pressed", "true");
+        const turn = Number(card.dataset.turn) || undefined;
+        fetch(BASE + "/feedback", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ session, turn, vote }),
+        }).catch(() => {});
+      };
+      [[1, "Helpful"], [-1, "Not helpful"]].forEach(([vote, label]) => {
+        const b = node("button", "wa-thumb" + (vote < 0 ? " down" : ""));
+        b.type = "button";
+        b.title = label;
+        b.setAttribute("aria-label", label);
+        b.innerHTML = THUMB;
+        b.onclick = () => pick(vote, b);
+        box.appendChild(b);
+      });
+      return box;
+    };
+    /* Handoff: a small form in the card when the reply offers the team. */
+    const offerTeam = (card) => {
+      if (!card || card.querySelector(".wa-team")) return;
+      const box = node("form", "wa-team");
+      box.noValidate = true;
+      box.innerHTML =
+        '<label class="wa-team-row"><span>Email</span><input type="email" name="email" required autocomplete="email" placeholder="you@company.com" maxlength="254"/></label>' +
+        '<label class="wa-team-row"><span>Note</span><input type="text" name="note" maxlength="1000" placeholder="Optional"/></label>' +
+        '<p class="wa-team-fine">We share this chat with the ' + esc(BRAND) + ' team.</p>' +
+        '<div class="wa-team-go"><button class="wa-deeper" type="submit">Send to the team</button><span class="wa-team-say" role="status"></span></div>';
+      const say = box.querySelector(".wa-team-say");
+      box.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = String(box.elements.email.value || "").trim();
+        const note = String(box.elements.note.value || "").trim();
+        if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) { say.textContent = "Enter a valid email."; return; }
+        const go = box.querySelector("button");
+        go.disabled = true;
+        say.textContent = "";
+        try {
+          const res = await fetch(BASE + "/handoff", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ session, email, note }),
+          });
+          if (!res.ok) throw new Error("handoff");
+          box.innerHTML = '<p class="wa-team-fine">Thanks. The ' + esc(BRAND) + ' team will contact you by email.</p>';
+        } catch {
+          go.disabled = false;
+          say.textContent = "That did not work. Please try again.";
+        }
+      };
+      const acts = card.querySelector(".wa-acts");
+      if (acts) card.insertBefore(box, acts);
+      else card.appendChild(box);
+      keep();
+    };
     const SHOW = /\\[\\[show:([a-z0-9-]+)\\]\\]/gi;
     const fillCard = (card, raw) => {
       let shown = null;
@@ -473,19 +537,20 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
           card.appendChild(more);
         });
       }
+      const acts = node("div", "wa-acts");
       /* A real answer (not a question back) gets a way to go deeper. */
       if (lead && !/\\?\\s*$/.test(lead.trim())) {
-        const acts = node("div", "wa-acts");
         const more = node("button", "wa-deeper");
         more.type = "button";
         more.textContent = "Explain more";
         more.onclick = () => {
-          acts.remove();
+          more.remove();
           send("Explain that in more detail, with an example.");
         };
         acts.appendChild(more);
-        card.appendChild(acts);
       }
+      if (text) acts.appendChild(voteNode(card));
+      if (acts.firstChild) card.appendChild(acts);
       card.querySelectorAll("a.wa-md-link").forEach((a) => {
         try {
           const u = new URL(a.href);
@@ -521,6 +586,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       }
       openCard = null;
     };
+    let lastCard = null;
     const add = (cls, text) => {
       if (!log) return;
       if (cls === "human") {
@@ -530,6 +596,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       }
       const card = openCard || startTurn("");
       openCard = null;
+      lastCard = card;
       fillCard(card, text);
       const turn = card.parentElement;
       if (turn && log) log.scrollTop += turn.getBoundingClientRect().top - log.getBoundingClientRect().top - 26;
@@ -573,8 +640,10 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
           body: JSON.stringify({ text, session, channel: "widget", page: location.href }),
         });
         const body = await res.json().catch(() => ({}));
-        if (body.lastText && body.lastText !== lastAgent) { lastAgent = body.lastText; add("agent", body.lastText); }
+        if (body.lastText && (body.lastText !== lastAgent || openCard)) { lastAgent = body.lastText; add("agent", body.lastText); }
         else if (!res.ok) thinkOff();
+        if (lastCard && body.turnId) lastCard.dataset.turn = String(body.turnId);
+        if (lastCard && body.handoff) offerTeam(lastCard);
       } catch {
         thinkOff();
       } finally {
@@ -592,7 +661,18 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
     showHash();
     void FAB_OPEN;
   };
+  const allowed = () => {
+    if (!ORIGINS.length) return true;
+    const here = String(location.origin).toLowerCase();
+    let own = "";
+    try { own = new URL(BASE).origin.toLowerCase(); } catch {}
+    return here === own || ORIGINS.indexOf(here) >= 0;
+  };
   const mount = () => {
+    if (!allowed()) {
+      console.warn("webagent: this page origin may not use this agent.");
+      return;
+    }
     if (!document.getElementById("wa-fab")) {
       window.__waBound = false;
       const wrap = document.createElement("div");
@@ -607,8 +687,8 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
 </script>`;
 }
 
-export function widgetJs(publicUrl: string, runId: string, config: AgentPackConfig): string {
-  const html = packWidget(publicUrl, runId, config);
+export function widgetJs(publicUrl: string, runId: string, config: AgentPackConfig, origins: string[] = []): string {
+  const html = packWidget(publicUrl, runId, config, origins);
   const m = html.match(/<script>([\s\S]*)<\/script>/);
   return (m?.[1] || html).trim();
 }
@@ -825,6 +905,29 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     transition: background .16s ease;
   }
   .wa-deeper:hover { background: var(--wa-tint); }
+  .wa-acts { align-items: center; }
+  .wa-vote { margin-left: auto; display: flex; gap: 2px; }
+  .wa-thumb {
+    border: 0; background: transparent; color: var(--wa-soft); cursor: pointer;
+    width: 26px; height: 26px; border-radius: 999px; display: grid; place-items: center;
+    opacity: .55; transition: opacity .16s ease, background .16s ease;
+  }
+  .wa-thumb.down svg { transform: rotate(180deg); }
+  .wa-thumb:hover { opacity: 1; background: var(--wa-tint); }
+  .wa-thumb[aria-pressed="true"] { opacity: 1; color: var(--wa-on); }
+  .wa-thumb:disabled { cursor: default; }
+  .wa-team {
+    margin-top: 12px; padding: 12px; border: 1px solid var(--wa-edge); border-radius: 14px;
+    display: grid; gap: 8px; font: 13px/1.4 ${body};
+  }
+  .wa-team-row { display: grid; gap: 4px; color: var(--wa-soft); font-size: 12px; }
+  .wa-team-row input {
+    border: 1px solid var(--wa-edge); border-radius: 10px; padding: 8px 10px;
+    background: transparent; color: var(--wa-on); font: 14px/1.3 ${body};
+  }
+  .wa-team-fine { margin: 0; color: var(--wa-soft); font-size: 12px; }
+  .wa-team-go { display: flex; align-items: center; gap: 10px; }
+  .wa-team-say { color: var(--wa-soft); font-size: 12px; }
   .wa-visual figcaption {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 8px 2px 0;
@@ -1017,6 +1120,15 @@ function widgetMarkup(publicUrl: string, runId: string, config: AgentPackConfig)
     <span class="wa-run-id">${esc(runId)}</span>
   </div>
 </div>`;
+}
+
+/** Normalize one origin for the widget allowlist. */
+function cleanOrigin(value: string): string {
+  try {
+    return new URL(value).origin.toLowerCase();
+  } catch {
+    return value.trim().replace(/\/+$/, "").toLowerCase();
+  }
 }
 
 function esc(s: string): string {

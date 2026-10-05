@@ -20,6 +20,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent cloud [addr]           host every tenant (--packs <dir> --db <file>)");
   console.error("  webagent tenant add <id> --pack <dir> [--domain a,b] [--origin https://x]");
   console.error("  webagent tenant list            list tenants in the store");
+  console.error("  webagent csp <site-url> [--cloud <public-url>]  check if the site CSP lets the widget load");
   console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
@@ -317,6 +318,18 @@ switch (args[0]) {
     }
     await new Promise(() => {});
     break;
+  }
+  case "csp": {
+    const site = args[1];
+    const cloudUrl = flag(args, "--cloud") || process.env.WEBAGENT_PUBLIC_URL;
+    if (!site || !cloudUrl) {
+      console.error("usage: webagent csp <site-url> --cloud <public-url>  (or set WEBAGENT_PUBLIC_URL)");
+      process.exit(2);
+    }
+    const { checkCsp, formatCsp } = await import("./host/csp.ts");
+    const report = await checkCsp(site, cloudUrl);
+    console.log(formatCsp(report));
+    process.exit(report.ok ? 0 : 1);
   }
   case "tenant": {
     const { openStore } = await import("./store/sqlite.ts");
