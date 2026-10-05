@@ -96,7 +96,7 @@ const TIMEOUT_MS = 5000;
 /**
  * Dashboard link for one conversation.
  * - The base is the first origin in `WEBAGENT_DASHBOARD_ORIGINS`.
- * - With an org: `{dashboard}/orgs/<org>/webagent/sites/<tenant>/conversations/<session>`.
+ * - With an org: `{dashboard}/app/<org>/webagent/sites/<tenant>/conversations/<session>`.
  * - With no org: the dashboard home.
  * `conversation` is `<tenant>:<session>`.
  */
@@ -106,7 +106,7 @@ export function getTranscriptUrl(tenant: string, conversation: string, org?: str
   const session = conversation.startsWith(tenant + ":") ? conversation.slice(tenant.length + 1) : conversation;
   return (
     dashboard +
-    "/orgs/" +
+    "/app/" +
     encodeURIComponent(org) +
     "/webagent/sites/" +
     encodeURIComponent(tenant) +

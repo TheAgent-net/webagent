@@ -242,7 +242,7 @@ describe("handoff", () => {
     expect(isEmail("a@b.c<script>")).toBe(false);
     expect(cutNote("x".repeat(5000))!.length).toBe(1000);
     expect(getTranscriptUrl("acme", "acme:w1", "org1")).toBe(
-      "https://app.agentnet.market/orgs/org1/webagent/sites/acme/conversations/w1",
+      "https://app.agentnet.market/app/org1/webagent/sites/acme/conversations/w1",
     );
     expect(getTranscriptUrl("acme", "acme:w1")).toBe("https://app.agentnet.market/");
   });
@@ -270,7 +270,7 @@ describe("handoff", () => {
       type: "handoff",
       conversation: "acme:w66666666",
       email: "jo@acme.test",
-      transcript: "https://app.agentnet.market/orgs/org1/webagent/sites/acme/conversations/w66666666",
+      transcript: "https://app.agentnet.market/app/org1/webagent/sites/acme/conversations/w66666666",
     });
     const slack = sent.find((s) => s.url === "https://hooks.slack.test/x")!;
     expect(String(slack.body.text)).toContain("jo@acme.test");

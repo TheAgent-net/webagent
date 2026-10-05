@@ -160,6 +160,6 @@ A missing `visual`, `turn`, or `note` is `null`. An unknown session is `404 {"er
 
 A handoff notice (email, Slack, webhook) links to the chat in the dashboard:
 
-`{first origin of WEBAGENT_DASHBOARD_ORIGINS}/orgs/{orgId}/webagent/sites/{siteId}/conversations/{session}`
+`{first origin of WEBAGENT_DASHBOARD_ORIGINS}/app/{orgId}/webagent/sites/{siteId}/conversations/{session}`
 
 The dashboard must route this path. A site with no org links to the dashboard home.
