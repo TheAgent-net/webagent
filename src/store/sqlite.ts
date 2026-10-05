@@ -8,8 +8,12 @@ import type {
   ConversationGroup,
   Count,
   EventFilter,
+  ConversationSum,
+  DayCount,
   EventGroup,
+  EventSum,
   Feedback,
+  Question,
   Store,
   Tenant,
   TrafficEvent,
@@ -276,6 +280,105 @@ export class SqliteStore implements Store {
   close(): void {
     this.db.close();
   }
+
+  sumEvents(tenant: string, f: EventSum = {}): number {
+    const [where, vals] = eventWhere(tenant, f);
+    const value = f.distinct ? VISITOR_COUNT : "coalesce(sum(" + EVENT_N + "), 0)";
+    const row = this.db.query(`select ${value} as n from events where ${where}`).get(...vals) as Row | null;
+    return Number(row?.n ?? 0);
+  }
+
+  groupEvents(tenant: string, by: EventGroup | "page", f: EventSum = {}): Count[] {
+    const key = by === "day" ? DAY : by === "page" ? "coalesce(json_extract(data, '$.page'), '')" : `coalesce(${eventColumn(by)}, '')`;
+    const [where, vals] = eventWhere(tenant, f);
+    const value = f.distinct ? VISITOR_COUNT : "sum(" + EVENT_N + ")";
+    return this.db
+      .query(
+        `select ${key} as key, ${value} as n, sum(case when verified = 1 then ${EVENT_N} else 0 end) as verified
+         from events where ${where} group by key order by n desc`,
+      )
+      .all(...vals)
+      .map(countFrom);
+  }
+
+  listEventDays(tenant: string, by: "kind" | "family", f: EventSum = {}): DayCount[] {
+    const [where, vals] = eventWhere(tenant, f);
+    const value = f.distinct ? VISITOR_COUNT : "sum(" + EVENT_N + ")";
+    const column = by === "kind" ? "kind" : "family";
+    return (
+      this.db
+        .query(
+          `select ${DAY} as day, coalesce(${column}, '') as key, ${value} as n from events
+           where ${where} group by day, key order by day, key`,
+        )
+        .all(...vals) as Row[]
+    ).map((r) => ({ day: String(r.day), key: String(r.key), n: Number(r.n) }));
+  }
+
+  sumConversations(tenant: string, since = 0): ConversationSum {
+    const row = this.db
+      .query(
+        `select count(*) as total,
+           coalesce(sum(kind = 'human'), 0) as human,
+           coalesce(sum(kind != 'human'), 0) as agent,
+           coalesce(sum(label = 'intelligent'), 0) as intelligent,
+           coalesce(sum(label = 'intelligent' and turns >= 2), 0) as deep,
+           coalesce(sum(handoff), 0) as handoff,
+           coalesce(sum(verified), 0) as verified
+         from conversations where tenant = ? and started >= ?`,
+      )
+      .get(tenant, since) as Row;
+    return {
+      total: Number(row.total),
+      human: Number(row.human),
+      agent: Number(row.agent),
+      intelligent: Number(row.intelligent),
+      deep: Number(row.deep),
+      handoff: Number(row.handoff),
+      verified: Number(row.verified),
+    };
+  }
+
+  listConversationDays(tenant: string, since = 0): DayCount[] {
+    return (
+      this.db
+        .query(
+          `select ${DAY_UPDATED} as day, case when kind = 'human' then 'human' else 'agent' end as key, count(*) as n
+           from conversations where tenant = ? and started >= ? group by day, key order by day, key`,
+        )
+        .all(tenant, since) as Row[]
+    ).map((r) => ({ day: String(r.day), key: String(r.key), n: Number(r.n) }));
+  }
+
+  listQuestions(tenant: string, since = 0, limit = 2000): Question[] {
+    return (
+      this.db
+        .query(
+          `select t.conversation as conversation, t.said as said, t.at as at from turns t
+           join conversations c on c.id = t.conversation
+           where c.tenant = ? and t.at >= ? and t.said != '' order by t.at desc limit ?`,
+        )
+        .all(tenant, since, Math.min(limit, 10000)) as Row[]
+    ).map((r) => ({ conversation: String(r.conversation), said: String(r.said), at: Number(r.at) }));
+  }
+}
+
+/** Count that a CDN row adds. Other rows add 1. */
+const EVENT_N = "coalesce(cast(json_extract(data, '$.n') as integer), 1)";
+/** Distinct visitors. A row with no visitor mark counts once. */
+const VISITOR_COUNT = "count(distinct coalesce(ip_hash, session, ua, 'row' || id))";
+
+function eventColumn(by: EventGroup): string {
+  return by === "kind" ? "kind" : by === "family" ? "family" : by === "path" ? "path" : "type";
+}
+
+function eventWhere(tenant: string, f: EventSum): [string, (string | number)[]] {
+  const where = ["tenant = ?", "at >= ?"];
+  const vals: (string | number)[] = [tenant, f.since ?? 0];
+  if (f.type) (where.push("type = ?"), vals.push(f.type));
+  if (f.kinds?.length) (where.push(`kind in (${f.kinds.map(() => "?").join(", ")})`), vals.push(...f.kinds));
+  if (f.paths?.length) (where.push(`path in (${f.paths.map(() => "?").join(", ")})`), vals.push(...f.paths));
+  return [where.join(" and "), vals];
 }
 
 function tenantFrom(r: Row): Tenant {

@@ -145,8 +145,60 @@ export interface Store {
   listFeedback(tenant: string, since?: number): Feedback[];
 
   close(): void;
+
+  /** Add the events that match. A row counts `data.n` (CDN rows) or 1. With `distinct`, count distinct visitors. */
+  sumEvents(tenant: string, filter?: EventSum): number;
+  /** Group the events that match. `n` adds `data.n` or 1. Group `page` reads `data.page`. */
+  groupEvents(tenant: string, by: EventGroup | "page", filter?: EventSum): Count[];
+  /** Events per day and per key, oldest day first. */
+  listEventDays(tenant: string, by: "kind" | "family", filter?: EventSum): DayCount[];
+  /** Conversation totals for the overview. Uses the start time. */
+  sumConversations(tenant: string, since?: number): ConversationSum;
+  /** Conversations per day. The key is `human` or `agent`. Oldest day first. */
+  listConversationDays(tenant: string, since?: number): DayCount[];
+  /** What visitors said, newest first. */
+  listQuestions(tenant: string, since?: number, limit?: number): Question[];
 }
 
 export function conversationId(tenant: string, session: string): string {
   return tenant + ":" + session;
+}
+
+/** Filter for `sumEvents`, `groupEvents`, and `listEventDays`. */
+export interface EventSum {
+  since?: number;
+  type?: string;
+  /** Keep only these kinds. */
+  kinds?: VisitorKind[];
+  /** Keep only these paths. */
+  paths?: string[];
+  /** Count distinct visitors (IP hash, session, or user agent) instead of rows. */
+  distinct?: boolean;
+}
+
+/** One cell of a per-day count. `day` is `YYYY-MM-DD` in UTC. */
+export interface DayCount {
+  day: string;
+  key: string;
+  n: number;
+}
+
+export interface ConversationSum {
+  total: number;
+  human: number;
+  /** Every kind that is not `human`. */
+  agent: number;
+  /** Label `intelligent`. */
+  intelligent: number;
+  /** Label `intelligent` with two turns or more. */
+  deep: number;
+  handoff: number;
+  verified: number;
+}
+
+/** One thing a visitor said. */
+export interface Question {
+  conversation: string;
+  said: string;
+  at: number;
 }

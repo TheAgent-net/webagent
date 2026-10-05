@@ -20,6 +20,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent cloud [addr]           host every tenant (--packs <dir> --db <file>)");
   console.error("  webagent tenant add <id> --pack <dir> [--domain a,b] [--origin https://x]");
   console.error("  webagent tenant list            list tenants in the store");
+  console.error("  webagent tenant key <id>        make an admin key for /admin (shown once)");
   console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
@@ -304,13 +305,15 @@ switch (args[0]) {
     const { openStore } = await import("./store/sqlite.ts");
     const { Tenants } = await import("./host/tenant.ts");
     const { serveCloud } = await import("./host/cloud.ts");
+    const { adminRoute } = await import("./admin/index.ts");
     const store = openStore(flag(args, "--db"));
     const tenants = new Tenants(store, { packs: flag(args, "--packs") || "packs" });
     const added = tenants.sync();
     const addr = positional(args.slice(1)) || ":8787";
     const port = Number(addr.replace(/^.*:/, "")) || 8787;
-    const served = serveCloud(tenants, { port });
+    const served = serveCloud(tenants, { port, routes: [adminRoute(tenants)] });
     console.error(`cloud ${served.url}`);
+    console.error(`  admin   ${served.url}/admin` + (process.env.WEBAGENT_ADMIN_KEY ? "" : "  (set WEBAGENT_ADMIN_KEY for the super admin)"));
     if (added.length) console.error("  added   " + added.join(", "));
     for (const t of tenants.list()) {
       console.error(`  ${t.id.padEnd(14)} ${served.url}/t/${t.id}/widget.js` + (t.domains.length ? "  " + t.domains.join(", ") : ""));
@@ -342,6 +345,18 @@ switch (args[0]) {
         created: old?.created ?? Date.now(),
       });
       console.error((old ? "updated " : "added ") + id);
+    } else if (verb === "key") {
+      const id = args[2];
+      const tenant = id ? store.getTenant(id) : undefined;
+      if (!tenant) {
+        console.error("usage: webagent tenant key <id> [--label name]  (the tenant must exist)");
+        process.exit(2);
+      }
+      const { mintKey, listKeys } = await import("./admin/index.ts");
+      const { key, record } = mintKey(tenant.id, flag(args, "--label") || "admin");
+      store.putTenant({ ...tenant, settings: { ...tenant.settings, adminKeys: [...listKeys(tenant), record] } });
+      console.error("admin key for " + tenant.id + " (shown once, store it now):");
+      console.log(key);
     } else {
       for (const t of store.listTenants()) console.log([t.id, t.name, t.pack, t.domains.join(","), t.origins.join(",")].join("\t"));
     }
