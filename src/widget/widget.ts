@@ -542,7 +542,13 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
       if (el) setTimeout(() => spot(el, v.label), 500);
     };
     let lastAgent = "";
-    if (!window.__waSession) window.__waSession = "s" + Date.now();
+    if (!window.__waSession) {
+      const key = "wa-session:" + BASE;
+      let saved = "";
+      try { saved = sessionStorage.getItem(key) || ""; } catch {}
+      window.__waSession = /^[\\w-]{8,80}$/.test(saved) ? saved : "w" + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+      try { sessionStorage.setItem(key, window.__waSession); } catch {}
+    }
     const session = window.__waSession;
     if (!window.__waEs) window.__waEs = new EventSource(BASE + "/live?session=" + encodeURIComponent(session));
     window.__waEs.onmessage = (e) => {
@@ -564,7 +570,7 @@ export function packWidget(publicUrl: string, runId: string, config: AgentPackCo
         const res = await fetch(BASE + "/chat", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text, session }),
+          body: JSON.stringify({ text, session, channel: "widget", page: location.href }),
         });
         const body = await res.json().catch(() => ({}));
         if (body.lastText && body.lastText !== lastAgent) { lastAgent = body.lastText; add("agent", body.lastText); }

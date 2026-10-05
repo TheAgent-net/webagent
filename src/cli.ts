@@ -17,6 +17,9 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent capture --pack <dir>   save site visuals for the widget (Chromium)");
   console.error("  webagent tune --pack <dir>      GEPA: tune the pack instruction on evals.json");
   console.error("  webagent serve [addr]           generic host, no pack");
+  console.error("  webagent cloud [addr]           host every tenant (--packs <dir> --db <file>)");
+  console.error("  webagent tenant add <id> --pack <dir> [--domain a,b] [--origin https://x]");
+  console.error("  webagent tenant list            list tenants in the store");
   console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
@@ -295,6 +298,54 @@ switch (args[0]) {
     } finally {
       stop();
     }
+    break;
+  }
+  case "cloud": {
+    const { openStore } = await import("./store/sqlite.ts");
+    const { Tenants } = await import("./host/tenant.ts");
+    const { serveCloud } = await import("./host/cloud.ts");
+    const store = openStore(flag(args, "--db"));
+    const tenants = new Tenants(store, { packs: flag(args, "--packs") || "packs" });
+    const added = tenants.sync();
+    const addr = positional(args.slice(1)) || ":8787";
+    const port = Number(addr.replace(/^.*:/, "")) || 8787;
+    const served = serveCloud(tenants, { port });
+    console.error(`cloud ${served.url}`);
+    if (added.length) console.error("  added   " + added.join(", "));
+    for (const t of tenants.list()) {
+      console.error(`  ${t.id.padEnd(14)} ${served.url}/t/${t.id}/widget.js` + (t.domains.length ? "  " + t.domains.join(", ") : ""));
+    }
+    await new Promise(() => {});
+    break;
+  }
+  case "tenant": {
+    const { openStore } = await import("./store/sqlite.ts");
+    const store = openStore(flag(args, "--db"));
+    const verb = args[1];
+    if (verb === "add") {
+      const id = args[2];
+      const pack = flag(args, "--pack");
+      if (!id || !/^[a-z0-9][a-z0-9_-]{0,62}$/.test(id) || !pack || !existsSync(join(pack, "pack.json"))) {
+        console.error("usage: webagent tenant add <id> --pack <dir with pack.json> [--domain a,b] [--origin https://x]");
+        process.exit(2);
+      }
+      const list = (v?: string) => (v ? v.split(",").map((x) => x.trim()).filter(Boolean) : []);
+      const old = store.getTenant(id);
+      const { resolve } = await import("node:path");
+      store.putTenant({
+        id,
+        name: flag(args, "--name") || old?.name || id,
+        pack: resolve(pack),
+        domains: list(flag(args, "--domain")).length ? list(flag(args, "--domain")) : old?.domains ?? [],
+        origins: list(flag(args, "--origin")).length ? list(flag(args, "--origin")) : old?.origins ?? [],
+        settings: old?.settings ?? {},
+        created: old?.created ?? Date.now(),
+      });
+      console.error((old ? "updated " : "added ") + id);
+    } else {
+      for (const t of store.listTenants()) console.log([t.id, t.name, t.pack, t.domains.join(","), t.origins.join(",")].join("\t"));
+    }
+    store.close();
     break;
   }
   case "serve": {

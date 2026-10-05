@@ -2,6 +2,7 @@
  * One fresh Room per chat. The lobby run is a template (instruction, tools, pins).
  * User/assistant/tool turns are not copied.
  */
+import type { Message } from "../context.ts";
 import type { Harness } from "../harness.ts";
 import type { Tool } from "../tools.ts";
 import { Room } from "./room.ts";
@@ -15,9 +16,13 @@ export class Sessions {
   last: Room | undefined;
   private seq = 0;
 
+  /**
+   * @param restore Earlier messages for a session id that is not in memory (for example after a restart).
+   */
   constructor(
     private readonly harness: Harness,
     readonly lobby: Room,
+    private readonly restore?: (id: string) => Message[],
   ) {}
 
   /** Reuse id if this chat already exists; otherwise start a new context. */
@@ -26,6 +31,8 @@ export class Sessions {
     let room = this.rooms.get(sid);
     if (!room) {
       room = cloneRoom(this.harness, this.lobby);
+      const old = this.restore?.(sid);
+      if (old?.length) room.run.inject({ messages: old });
       this.rooms.set(sid, room);
       this.order.push(sid);
       this.evict();
