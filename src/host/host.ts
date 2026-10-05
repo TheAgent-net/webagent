@@ -21,6 +21,7 @@ import { asksHuman, cutNote, getTarget, isEmail, offersTeam, sendHandoff, getTra
 import { getHold, getLimits, HOLD_TEXT, Limiter, refuseRate, type Limits, type Rule } from "./limit.ts";
 import { refuseOrigin, isAllowed } from "./origin.ts";
 import { serveBotd, checkSession, collect } from "./collect.ts";
+import { askMcp } from "./ask.ts";
 import { checkIp, hasSignature, proveVisitor } from "./verify.ts";
 
 /** Multi-tenant parts. All optional: a single-pack host works without them. */
@@ -413,13 +414,12 @@ async function route(
     try {
       const body = JSON.parse(raw) as { method?: string; text?: string; session?: string };
       if (body.method) {
-        return api(
-          new Request(new URL("/mcp", req.url), {
-            method: "POST",
-            headers: req.headers,
-            body: raw,
-          }),
-        );
+        const inner = new Request(new URL("/mcp", req.url), {
+          method: "POST",
+          headers: req.headers,
+          body: raw,
+        });
+        return scope.locked ? publicMcp(scope, sessions, base, pack, meta)(inner) : api(inner);
       }
       if (body.text) {
         const refused = getHoldReply(scope, "machine", body.session) ?? limitSession(scope, body.session);
@@ -433,9 +433,21 @@ async function route(
   }
   const cloned = packClonePage(pack, url, base);
   if (cloned) return cloned;
-  /* Tenant mode: only MCP is public. Hide `/runs`, `/models`, `/health`, and `/sites`. */
+  /* Tenant mode: `/mcp` offers one `ask` tool, never raw harness control. */
+  if (scope.locked && url.pathname === "/mcp") return publicMcp(scope, sessions, base, pack, meta)(req);
+  /* Tenant mode: hide `/runs`, `/models`, `/health`, and `/sites`. */
   if (scope.locked && url.pathname !== "/mcp") return new Response("not found", { status: 404 });
   return api(req);
+}
+
+/** Tenant-mode MCP. Each `ask` call is one stored chat turn on channel `mcp`. */
+function publicMcp(scope: Scope, sessions: Sessions, base: string, pack: AgentPackConfig | undefined, meta: AgentCardMeta) {
+  return askMcp(pack?.brand.name || meta.name || "", async (text, session) => {
+    const refused = getHoldReply(scope, "machine", session) ?? limitSession(scope, session);
+    if (refused) return refused;
+    const { hit, ex } = await talk(sessions, session, "machine", text, scope, "mcp");
+    return { ...machineReply(ex.lastText, base, pack), session: hit.id };
+  });
 }
 
 function packClonePage(pack: AgentPackConfig | undefined, url: URL, widgetOrigin: string): Response | null {

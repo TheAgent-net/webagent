@@ -90,3 +90,30 @@ describe("visitor", () => {
     expect(classifyVisitor(req("Mozilla/5.0 Chrome/130", { accept: "text/html", "sec-fetch-dest": "document" })).kind).toBe("human");
   });
 });
+
+describe("tenant mcp", () => {
+  const rpcCall = (body: object, sid?: string) =>
+    new Request("http://cloud.test/t/acme/mcp", {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json", "user-agent": "mcp-client/1.0", ...(sid ? { "mcp-session-id": sid } : {}) },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, ...body }),
+    });
+
+  test("only the ask tool, and each call is a stored mcp turn", async () => {
+    const { store, fetch } = setup();
+    const init = await fetch(rpcCall({ method: "initialize", params: {} }));
+    const sid = init.headers.get("mcp-session-id")!;
+    expect(sid).toBeTruthy();
+    const list = (await (await fetch(rpcCall({ method: "tools/list" }, sid))).json()) as { result: { tools: { name: string }[] } };
+    expect(list.result.tools.map((t) => t.name)).toEqual(["ask"]);
+    const bad = (await (await fetch(rpcCall({ method: "tools/call", params: { name: "create", arguments: {} } }, sid))).json()) as { error?: object };
+    expect(bad.error).toBeTruthy();
+    const ask = (await (await fetch(rpcCall({ method: "tools/call", params: { name: "ask", arguments: { text: "what is this?" } } }, sid))).json()) as {
+      result: { structuredContent: { session: string } };
+    };
+    expect(ask.result.structuredContent.session).toBe(sid);
+    const c = store.getConversation("acme:" + sid)!;
+    expect(c.channel).toBe("mcp");
+    expect(c.turns).toBe(1);
+  });
+});
