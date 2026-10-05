@@ -38,6 +38,7 @@ Products sit on top. They do not plug providers into a menu.
 - [Features](#features)
 - [Install](#install)
 - [Quick start](#quick-start)
+- [Hosted cloud](#hosted-cloud)
 - [CLI](#cli)
 - [Architecture](#architecture)
 - [Controls](#controls)
@@ -145,6 +146,25 @@ const run = attachPack(h, job.pack, { model: "echo" });
 The pack has `flows`, `facts`, `instruction`, and `starterQuestions` for the public agent.
 
 `POST /sites` `{ url }` and `POST /sites/:id/auth` are the HTTP shape. MCP: `ingestSite`, `grantSiteAuth`, `getSitePack`.
+
+## Hosted cloud
+
+One service hosts the agent for many companies. Each company is a tenant at `/t/<id>/`, or on its own domain.
+
+```sh
+bun src/cli.ts onboard https://acme.com --id acme --domain agent.acme.com   # build the pack, add the tenant, print the snippets
+bun src/cli.ts cloud :8790 --packs packs --db data/webagent.db              # host every tenant
+bun src/cli.ts refresh --tenant acme                                         # fetch the site again, rebuild changed pages
+```
+
+The company pastes one tag: `<script src="{PUBLIC}/t/acme/widget.js" async></script>`.
+
+- [docs/cloud.md](docs/cloud.md): architecture, routes, store, jobs, env vars, deploy.
+- [docs/onboarding.md](docs/onboarding.md): the company checklist and snippets.
+- [docs/facts-sheet.md](docs/facts-sheet.md): the sheet the company fills.
+- [docs/legal/privacy.md](docs/legal/privacy.md) and [docs/legal/dpa.md](docs/legal/dpa.md): templates. Legal review is necessary.
+
+Set `"retrieval": {"provider": "supermemory"}` in `pack.json` to search with Supermemory. The key comes only from `SUPERMEMORY_API_KEY`.
 
 ## CLI
 

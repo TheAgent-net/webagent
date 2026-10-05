@@ -6,6 +6,7 @@ import { fillVectors, type EmbedFn } from "../retrieve/embed.ts";
 import { DEFAULT_POLICY } from "../retrieve/policy.ts";
 import { brandFromPages, defaultWidget, extractBrand } from "./brand.ts";
 import { captureVisuals } from "../site/visual.ts";
+import { saveContent } from "./content.ts";
 import { defaultInstruction } from "./load.ts";
 import { starterCases } from "./tune.ts";
 import type { PageShot } from "../site/types.ts";
@@ -30,7 +31,7 @@ export async function fromUrl(start: string, opts: FromUrlOpts = {}): Promise<{ 
   const max = opts.maxPages ?? 80;
 
   const state = await crawlSite(start, { maxPages: max, fetch: fetchFn });
-  const llmsPages = await tryLlms(origin, fetchFn);
+  const llmsPages = await getLlmsPages(origin, fetchFn);
   const pages = [...state.pages, ...llmsPages];
   const homeHtml = await getText(origin + "/", fetchFn);
   const brand = homeHtml
@@ -76,6 +77,7 @@ export async function fromUrl(start: string, opts: FromUrlOpts = {}): Promise<{ 
     join(out, "evals.json"),
     JSON.stringify(starterCases(config.brand.name, pages.map((p) => new URL(p.url).pathname)), null, 2) + "\n",
   );
+  saveContent(out, origin, pages);
   writeFileSync(
     join(out, "pages.json"),
     JSON.stringify(
@@ -111,7 +113,8 @@ export function starterHints(name: string, pages: PageShot[]): { chips: string[]
   return { chips, hints: [...chips, ...topics] };
 }
 
-async function tryLlms(origin: string, fetchFn: typeof fetch) {
+/** The site `llms.txt` as one page, when the site has one. */
+export async function getLlmsPages(origin: string, fetchFn: typeof fetch): Promise<PageShot[]> {
   const urls = [origin + "/llms.txt", origin.replace(/\/$/, "") + "/docs/llms.txt"];
   for (const url of urls) {
     const txt = await getText(url, fetchFn);

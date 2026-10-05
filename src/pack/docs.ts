@@ -1,7 +1,8 @@
 import { join } from "node:path";
 import { cosine, defaultQueryEmbed, fillVectors, type EmbedFn } from "../retrieve/embed.ts";
-import { expandQuery, searchHits, searchHitsHybrid } from "../retrieve/search.ts";
-import type { RetrievePolicy } from "../retrieve/types.ts";
+import { localProvider, selectProvider, type Passage, type RetrieveProvider } from "../retrieve/provider.ts";
+import { expandQuery } from "../retrieve/search.ts";
+import type { DocHit, RetrievePolicy } from "../retrieve/types.ts";
 import { describeVisual, findVisuals, type Visual } from "../site/visual.ts";
 import type { Tool } from "../tools.ts";
 import type { PackRuntime } from "./types.ts";
@@ -23,18 +24,32 @@ export function docsLookupTool(runtime: PackRuntime, hint?: string): Tool {
     async call(args) {
       const query = String(args.query ?? "").trim();
       const focus = typeof args.focus === "string" ? args.focus : undefined;
-      const hybrid = runtime.chunks.some((c) => c.vector?.length);
-      const embed = packEmbedder(runtime);
-      const corpus = { origin: runtime.config.origin, pages: runtime.pages, chunks: runtime.chunks };
-      const hits = hybrid
-        ? await searchHitsHybrid(corpus, query, embed, policy, { focus, limit: 4 })
-        : searchHits(corpus, query, policy, { focus, limit: 4 });
+      const provider = getProvider(runtime);
+      let source = provider.name;
+      let found: Passage[];
+      try {
+        found = await provider.search(query, 4, { focus });
+      } catch (err) {
+        /* A remote provider failed. Answer from the local chunks. */
+        console.error("retrieval " + provider.name + " failed, local search used: " + (err instanceof Error ? err.message : String(err)));
+        source = "local";
+        found = await packLocal(runtime).search(query, 4, { focus });
+      }
+      if (source === "local") source = runtime.chunks.some((c) => c.vector?.length) ? "hybrid" : "lexical";
+      const hits: DocHit[] = found.map((p) => ({
+        title: p.title,
+        url: p.url,
+        section: p.section ?? p.title,
+        kind: p.kind ?? "page",
+        snippet: p.text,
+        score: p.score,
+      }));
       const expanded = expandQuery(query, policy);
       return {
         query,
         expanded,
         hits,
-        source: hybrid ? "hybrid" : "lexical",
+        source,
         model: runtime.retrieval?.model,
         hint:
           hint ??
@@ -44,6 +59,28 @@ export function docsLookupTool(runtime: PackRuntime, hint?: string): Tool {
       };
     },
   };
+}
+
+/** The search provider for a pack. Choose it once from `config.retrieval`, then keep it on the runtime. */
+export function getProvider(runtime: PackRuntime, opts: { fetch?: typeof fetch; env?: Record<string, string | undefined> } = {}): RetrieveProvider {
+  if (runtime.provider) return runtime.provider;
+  runtime.provider = selectProvider({
+    id: runtime.config.id,
+    config: runtime.config.retrieval,
+    local: packLocal(runtime),
+    env: opts.env,
+    fetch: opts.fetch,
+  });
+  return runtime.provider;
+}
+
+/** Local BM25 plus embeddings over the runtime chunks. */
+export function packLocal(runtime: PackRuntime): RetrieveProvider {
+  return localProvider({
+    corpus: () => ({ origin: runtime.config.origin, pages: runtime.pages, chunks: runtime.chunks }),
+    policy: runtime.policy,
+    embed: () => packEmbedder(runtime),
+  });
 }
 
 /** Cosine floor for a visual to be a candidate. A judge makes the final call. */

@@ -1,3 +1,4 @@
+import type { RetrievalConfig, RetrieveProvider } from "../retrieve/provider.ts";
 import type { EmbedFn, DocChunk, RetrievalInfo, RetrievePolicy, RetrievePolicyJson } from "../retrieve/types.ts";
 import type { PageShot, SitePack } from "../site/types.ts";
 import type { Visual } from "../site/visual.ts";
@@ -87,6 +88,8 @@ export interface AgentPackConfig {
   model?: AgentModel;
   host?: AgentHostCfg;
   retrieve?: RetrievePolicyJson;
+  /** Where `docs_lookup` searches. Default: local BM25 plus embeddings. */
+  retrieval?: RetrievalConfig;
   tools?: string[];
   skills?: AgentSkill[];
   card?: AgentCardCfg;
@@ -108,6 +111,8 @@ export interface PackRuntime {
   embedQuery?: EmbedFn;
   /** Embedding of each visual's description, by visual id. Empty without an embedder. */
   visualVectors?: Map<string, number[]>;
+  /** Search provider for `docs_lookup`. Default: chosen from `config.retrieval`. */
+  provider?: RetrieveProvider;
 }
 
 export interface PackToolAttach {
