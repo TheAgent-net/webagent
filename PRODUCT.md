@@ -53,7 +53,10 @@ Main message: agentnet gives every visitor the best personalised experience, peo
 
 - Name: **agentnet** (lowercase).
 - Voice: cheerful, warm, and plain. Friendly, never hype. No contractions in product strings.
-- The website must feel cheerful (user-confirmed). It must not read as austere, dark-infra, or editorial-serious.
+- The website must be professional, tasteful, and clean (user-confirmed), with a warm, optimistic tone. It must not read as gimmicky, themed, or loud.
+- Tagline (user-supplied): "Enabling businesses to sell to AI agents."
+- Logo (user-supplied): a plus split into two interlocking pieces by an S-shaped gap, white on a blue tile. Working SVG: `web/brand/mark.svg`, `web/brand/logo.svg` (redrawn; replace with the official file when available).
+- Theme (user-supplied): a pixel-mosaic of square tiles graded from deep cobalt #0140CB through #0265F1, #227EFD, #529CFD, #80B6FC to pale #A0C8FB; brand blue #0A67FE; white, heavy, wide uppercase grotesk for the tagline.
 
 ## Evidence on Hand
 

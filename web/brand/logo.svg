@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="agentnet">
+  <defs><linearGradient id="an-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0140CB"/><stop offset=".55" stop-color="#0A67FE"/><stop offset="1" stop-color="#529CFD"/></linearGradient></defs>
+  <rect width="64" height="64" rx="16" fill="url(#an-g)"/>
+  <g transform="translate(15.5 18.6) scale(.47)" fill="#fff"><path d="M31 0H48Q53 0 53 5V11Q53 16 58 16H65Q70 16 70 21V26Q70 31 65 31H53C48 31 46 28 44 24C42 20 39 17 33 16C28 15 26 12 26 7V5Q26 0 31 0Z"/><path d="M5 15H18C23 15 25 18 27 22C29 26 32 29 38 29H42Q47 29 47 34V51Q47 56 42 56H26Q21 56 21 51V35Q21 30 16 30H5Q0 30 0 25V20Q0 15 5 15Z"/></g>
+</svg>
