@@ -20,7 +20,7 @@ import { classifyVisitor, hashIp, type Visitor } from "./visitor.ts";
 import { asksHuman, cutNote, getTarget, isEmail, offersTeam, sendHandoff, getTranscriptUrl } from "./handoff.ts";
 import { getHold, getLimits, HOLD_TEXT, Limiter, refuseRate, type Limits, type Rule } from "./limit.ts";
 import { refuseOrigin, isAllowed } from "./origin.ts";
-import { serveBotd, checkSession, collect } from "./collect.ts";
+import { serveBotd, checkSession, cleanUrl, collect } from "./collect.ts";
 import { askMcp } from "./ask.ts";
 import { checkIp, hasSignature, proveVisitor } from "./verify.ts";
 
@@ -280,7 +280,7 @@ async function talk(
         kind: human ? "human" : scope.visitor.kind === "human" ? "script" : scope.visitor.kind,
         family: human ? undefined : scope.visitor.family,
         verified: !human && scope.visitor.verified,
-        page: page?.slice(0, 500),
+        page: cleanUrl(page),
         at: t0,
       });
       /* Analytics: apply the beacon verdict and the signature proof. */

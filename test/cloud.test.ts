@@ -117,3 +117,13 @@ describe("tenant mcp", () => {
     expect(c.turns).toBe(1);
   });
 });
+
+describe("stored page", () => {
+  test("a non-web page URL from a visitor is never stored", async () => {
+    const { store, fetch } = setup();
+    await fetch(chat("/t/acme/chat", { text: "hi", session: "wxss00001", channel: "widget", page: "javascript:alert(1)" }));
+    expect(store.getConversation("acme:wxss00001")!.page).toBeUndefined();
+    await fetch(chat("/t/acme/chat", { text: "hi", session: "wxss00002", channel: "widget", page: "https://acme.test/pricing?utm=x#top" }));
+    expect(store.getConversation("acme:wxss00002")!.page).toBe("https://acme.test/pricing");
+  });
+});
