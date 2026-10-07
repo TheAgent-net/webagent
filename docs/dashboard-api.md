@@ -29,7 +29,7 @@ A site is one tenant (one customer website). Each site belongs to one org (`tena
 ### `GET /orgs/{orgId}/sites`
 ```json
 { "items": [ { "id": "acme", "name": "Acme Docs", "domains": [], "origins": ["https://acme.dev"],
-  "widgetUrl": "https://agents.agentnet.it.com/t/acme/widget.js", "paused": false, "created": 1760000000000 } ] }
+  "widgetUrl": "https://agentnet.it.com/t/acme/widget.js", "paused": false, "created": 1760000000000 } ] }
 ```
 
 ### `POST /orgs/{orgId}/sites` (write)
@@ -123,10 +123,10 @@ A missing `visual`, `turn`, or `note` is `null`. An unknown session is `404 {"er
 
 ### `GET /orgs/{orgId}/sites/{siteId}/settings`
 ```json
-{ "install": { "scriptTag": "<script src=\"https://agents.agentnet.it.com/t/acme/widget.js\" async></script>",
-               "llmsLine": "- [Talk to the Acme Docs agent](https://agents.agentnet.it.com/t/acme/chat): POST JSON {text, session}",
-               "csp": [ "script-src https://agents.agentnet.it.com", "connect-src https://agents.agentnet.it.com",
-                        "img-src https://agents.agentnet.it.com", "font-src https://agents.agentnet.it.com",
+{ "install": { "scriptTag": "<script src=\"https://agentnet.it.com/t/acme/widget.js\" async></script>",
+               "llmsLine": "- [Talk to the Acme Docs agent](https://agentnet.it.com/t/acme/chat): POST JSON {text, session}",
+               "csp": [ "script-src https://agentnet.it.com", "connect-src https://agentnet.it.com",
+                        "img-src https://agentnet.it.com", "font-src https://agentnet.it.com",
                         "style-src 'unsafe-inline'" ] },
   "domains": [], "origins": ["https://acme.dev"],
   "handoff": { "email": "", "webhook": "", "slack": "" },

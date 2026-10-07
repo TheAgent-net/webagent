@@ -247,3 +247,10 @@ The Supermemory agent now runs alone: folder `/opt/webagent-supermemory`, servic
 The old URLs (`https://supermemory.agentnet.it.com/widget.js`, `/chat`, `/live`) keep working. The new URLs under `https://cloud.agentnet.it.com/t/supermemory/` also work.
 
 To roll back, start `webagent-supermemory` again and restore its nginx server block.
+
+## Product site
+
+The service serves the agentnet site at `/`. The site lives in `TheAgent-net/agentnet-website` (`public/`).
+- Set `WEBAGENT_SITE_DIR` to the folder that holds it. The default is `web`.
+- In production the deploy copies the site into the image at `/app/site`.
+- `POST /access` stores each "Get your agent" request on tenant `_site`.

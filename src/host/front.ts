@@ -31,7 +31,7 @@ export const SITE_TENANT = "_site";
 const EMAIL_OK = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,24}$/;
 
 export interface FrontOpts {
-  /** Folder with the site files. Default `web`. */
+  /** Folder with the site files. Default `WEBAGENT_SITE_DIR`, then `web`. */
   dir?: string;
   /** Requests per minute per client for `/access`. */
   perMinute?: number;
@@ -42,7 +42,7 @@ export interface FrontOpts {
 }
 
 export function frontRoute(store: Store, opts: FrontOpts = {}): Route {
-  const root = resolve(opts.dir ?? "web");
+  const root = resolve(opts.dir ?? process.env.WEBAGENT_SITE_DIR ?? "web");
   const limiter = new Limiter();
   const perMinute = opts.perMinute ?? 5;
   const siteOrigins = opts.siteOrigins ?? listSiteOrigins();
