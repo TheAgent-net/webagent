@@ -1,0 +1,930 @@
+---
+url: https://docs.composio.dev/toolkits/zendesk
+title: Zendesk - Composio Toolkit | Composio
+description: Build an AI agent that connects to Zendesk using Composio. Zendesk provides customer support software with ticketing, live chat, and knowledge base features, enabling efficient helpdesk operations and customer engagement
+status: 200
+---
+
+[All Toolkits](https://docs.composio.dev/toolkits)
+
+![](https://logos.composio.dev/api/zendesk)
+
+# Zendesk
+
+ZENDESKLatest version20260828\_00
+
+Zendesk provides customer support software with ticketing, live chat, and knowledge base features, enabling efficient helpdesk operations and customer engagement
+
+Copy page
+
+## Frequently Asked Questions
+
+### How do I set up custom OAuth credentials for Zendesk?
+
+Tools (452)Triggers (2)
+
+Apply Zendesk Macro PreviewZENDESK\_APPLY\_ZENDESK\_MACRO
+
+Autocomplete ProblemsZENDESK\_AUTOCOMPLETE\_PROBLEMS
+
+Autocomplete UsersZENDESK\_AUTOCOMPLETE\_USERS
+
+Check Host Mapping Validity for Existing BrandZENDESK\_CHECK\_HOST\_MAPPING\_VALIDITY\_FOR\_EXISTING\_BRAND
+
+Count Deleted UsersZENDESK\_COUNT\_DELETED\_USERS
+
+Count User CCD TicketsZENDESK\_COUNT\_USER\_CCD\_TICKETS
+
+Count Custom Object RecordsZENDESK\_COUNT\_ZENDESK\_CUSTOM\_OBJECT\_RECORDS
+
+Count Zendesk OrganizationsZENDESK\_COUNT\_ZENDESK\_ORGANIZATIONS
+
+Create Access RuleZENDESK\_CREATE\_ACCESS\_RULE
+
+Install Zendesk AppZENDESK\_CREATE\_APPS\_INSTALLATION
+
+Send Notification to AppZENDESK\_CREATE\_APPS\_NOTIFY
+
+Create Autocomplete TagsZENDESK\_CREATE\_AUTOCOMPLETE\_TAGS
+
+Create AutomationZENDESK\_CREATE\_AUTOMATION
+
+Create BookmarkZENDESK\_CREATE\_BOOKMARK
+
+Redact Zendesk CommentZENDESK\_CREATE\_COMMENT\_REDACTION
+
+Create Custom Object Bulk JobZENDESK\_CREATE\_CUSTOM\_OBJECT\_BULK\_JOB
+
+Create Custom Object RecordZENDESK\_CREATE\_CUSTOM\_OBJECT\_RECORD
+
+Create Custom Object Record AttachmentZENDESK\_CREATE\_CUSTOM\_OBJECT\_RECORD\_ATTACHMENT
+
+Create Custom Ticket StatusZENDESK\_CREATE\_CUSTOM\_STATUSES
+
+Create Deletion ScheduleZENDESK\_CREATE\_DELETION\_SCHEDULE
+
+Create Zendesk Dynamic Content ItemZENDESK\_CREATE\_DYNAMIC\_CONTENT\_ITEMS
+
+Create Zendesk Dynamic Content Item VariantZENDESK\_CREATE\_DYNAMIC\_CONTENT\_ITEMS\_VARIANTS
+
+Create End User IdentityZENDESK\_CREATE\_END\_USER\_IDENTITY
+
+Create Zendesk Group MembershipZENDESK\_CREATE\_GROUP\_MEMBERSHIPS
+
+Bulk Import TicketsZENDESK\_CREATE\_IMPORTS\_TICKETS\_CREATE\_MANY
+
+Create Many Dynamic Content VariantsZENDESK\_CREATE\_MANY\_DYNAMIC\_CONTENT\_ITEMS\_VARIANTS
+
+Create Many Zendesk TicketsZENDESK\_CREATE\_MANY\_TICKETS
+
+Create Many Zendesk UsersZENDESK\_CREATE\_MANY\_USERS
+
+Create Object TriggerZENDESK\_CREATE\_OBJECT\_TRIGGER
+
+Create Organization FieldZENDESK\_CREATE\_ORGANIZATION\_FIELD
+
+Create Organization MembershipZENDESK\_CREATE\_ORGANIZATION\_MEMBERSHIPS
+
+Create Many Organization MembershipsZENDESK\_CREATE\_ORGANIZATION\_MEMBERSHIPS\_CREATE\_MANY
+
+Merge Zendesk OrganizationsZENDESK\_CREATE\_ORGANIZATION\_MERGE
+
+Set Organization TagsZENDESK\_CREATE\_ORGANIZATIONS\_TAGS
+
+Create Organization SubscriptionZENDESK\_CREATE\_ORGANIZATION\_SUBSCRIPTION
+
+Create Or Update Many UsersZENDESK\_CREATE\_OR\_UPDATE\_MANY\_USERS
+
+Create Or Update OrganizationZENDESK\_CREATE\_OR\_UPDATE\_ORGANIZATION
+
+Create or Update UserZENDESK\_CREATE\_OR\_UPDATE\_USER
+
+Bulk Unregister Push Notification DevicesZENDESK\_CREATE\_PUSH\_NOTIFICATION\_DEVICES\_DESTROY\_MANY
+
+Create Resource CollectionZENDESK\_CREATE\_RESOURCE\_COLLECTIONS
+
+Create Side ConversationZENDESK\_CREATE\_SIDE\_CONVERSATION
+
+Create Support AddressZENDESK\_CREATE\_SUPPORT\_ADDRESS
+
+Export Suspended TicketsZENDESK\_CREATE\_SUSPENDED\_TICKETS\_EXPORT
+
+Create Ticket Content PinZENDESK\_CREATE\_TICKET\_CONTENT\_PIN
+
+Create Ticket FieldZENDESK\_CREATE\_TICKET\_FIELD
+
+Create Ticket Field OptionZENDESK\_CREATE\_TICKET\_FIELD\_OPTION
+
+Create TriggerZENDESK\_CREATE\_TRIGGER
+
+Create Trigger Categories Batch JobZENDESK\_CREATE\_TRIGGER\_CATEGORIES\_JOB
+
+Create Zendesk Trigger CategoryZENDESK\_CREATE\_TRIGGER\_CATEGORY
+
+Create User Field OptionZENDESK\_CREATE\_USER\_FIELD\_OPTION
+
+Create User IdentityZENDESK\_CREATE\_USER\_IDENTITY
+
+Create User Profile EventZENDESK\_CREATE\_USER\_PROFILES\_EVENTS
+
+Logout Many Zendesk UsersZENDESK\_CREATE\_USERS\_LOGOUT\_MANY
+
+Create User Organization MembershipZENDESK\_CREATE\_USERS\_ORGANIZATION\_MEMBERSHIPS
+
+Create Users TagsZENDESK\_CREATE\_USERS\_TAGS
+
+Create ViewZENDESK\_CREATE\_VIEW
+
+Preview ViewZENDESK\_CREATE\_VIEWS\_PREVIEW
+
+Preview View Ticket CountZENDESK\_CREATE\_VIEWS\_PREVIEW\_COUNT
+
+Upload Zendesk AttachmentZENDESK\_CREATE\_ZENDESK\_ATTACHMENTS
+
+Create Zendesk Custom ObjectZENDESK\_CREATE\_ZENDESK\_CUSTOM\_OBJECT
+
+Create Zendesk Custom Object FieldZENDESK\_CREATE\_ZENDESK\_CUSTOM\_OBJECT\_FIELD
+
+Create Zendesk GroupZENDESK\_CREATE\_ZENDESK\_GROUP
+
+Import Zendesk TicketZENDESK\_CREATE\_ZENDESK\_IMPORT\_TICKET
+
+Create Zendesk OrganizationZENDESK\_CREATE\_ZENDESK\_ORGANIZATION
+
+Create Zendesk RequestZENDESK\_CREATE\_ZENDESK\_REQUEST
+
+Create Zendesk TargetZENDESK\_CREATE\_ZENDESK\_TARGET
+
+Create Zendesk TicketZENDESK\_CREATE\_ZENDESK\_TICKET
+
+Create Ticket or Voicemail TicketZENDESK\_CREATE\_ZENDESK\_TICKET\_OR\_VOICEMAIL\_TICKET
+
+Create Zendesk UserZENDESK\_CREATE\_ZENDESK\_USER
+
+Create Zendesk User FieldZENDESK\_CREATE\_ZENDESK\_USER\_FIELD
+
+Delete Access RuleZENDESK\_DELETE\_ACCESS\_RULE
+
+Delete Zendesk AutomationZENDESK\_DELETE\_AUTOMATION
+
+Delete Zendesk Business Hours ScheduleZENDESK\_DELETE\_BUSINESS\_HOURS\_SCHEDULE
+
+Delete Custom Object Record AttachmentZENDESK\_DELETE\_CUSTOM\_OBJECT\_RECORD\_ATTACHMENT
+
+Delete Custom Object RecordZENDESK\_DELETE\_CUSTOM\_OBJECT\_RECORD\_BY\_EXTERNAL\_ID\_OR\_NAME
+
+Delete Deleted Ticket PermanentlyZENDESK\_DELETE\_DELETED\_TICKET
+
+Delete Zendesk Deletion ScheduleZENDESK\_DELETE\_DELETION\_SCHEDULE
+
+Delete Zendesk Group MembershipZENDESK\_DELETE\_GROUP\_MEMBERSHIP
+
+Bulk Delete Zendesk Group MembershipsZENDESK\_DELETE\_GROUP\_MEMBERSHIPS\_DESTROY\_MANY
+
+Delete Zendesk MacroZENDESK\_DELETE\_MACRO
+
+Bulk Delete Zendesk MacrosZENDESK\_DELETE\_MACROS\_DESTROY\_MANY
+
+Bulk Delete Zendesk AutomationsZENDESK\_DELETE\_MANY\_AUTOMATIONS
+
+Bulk Delete Zendesk Custom Object TriggersZENDESK\_DELETE\_MANY\_OBJECT\_TRIGGERS
+
+Bulk Delete Zendesk Organization MembershipsZENDESK\_DELETE\_MANY\_ORGANIZATION\_MEMBERSHIPS
+
+Bulk Delete Zendesk ViewsZENDESK\_DELETE\_MANY\_VIEWS
+
+Delete Zendesk Organization FieldZENDESK\_DELETE\_ORGANIZATION\_FIELD
+
+Delete Organization MembershipZENDESK\_DELETE\_ORGANIZATION\_MEMBERSHIP
+
+Delete Organization TagsZENDESK\_DELETE\_ORGANIZATIONS\_TAGS
+
+Delete Zendesk Organization SubscriptionZENDESK\_DELETE\_ORGANIZATION\_SUBSCRIPTION
+
+Delete Resource CollectionZENDESK\_DELETE\_RESOURCE\_COLLECTIONS
+
+Bulk Delete Zendesk Suspended TicketsZENDESK\_DELETE\_SUSPENDED\_TICKETS\_DESTROY\_MANY
+
+Delete Zendesk TargetZENDESK\_DELETE\_TARGET
+
+Delete Zendesk Ticket FieldZENDESK\_DELETE\_TICKET\_FIELD
+
+Delete Ticket Field OptionZENDESK\_DELETE\_TICKET\_FIELD\_OPTION
+
+Delete Ticket TagsZENDESK\_DELETE\_TICKETS\_TAGS
+
+Delete Zendesk TriggerZENDESK\_DELETE\_TRIGGER
+
+Delete Zendesk Trigger CategoryZENDESK\_DELETE\_TRIGGER\_CATEGORY
+
+Delete Zendesk User FieldZENDESK\_DELETE\_USER\_FIELD
+
+Delete User Field OptionZENDESK\_DELETE\_USER\_FIELD\_OPTION
+
+Permanently Delete UserZENDESK\_DELETE\_USER\_PERMANENTLY
+
+Delete Zendesk User ProfileZENDESK\_DELETE\_USER\_PROFILE
+
+Bulk Delete Zendesk UsersZENDESK\_DELETE\_USERS\_DESTROY\_MANY
+
+Delete Zendesk User SessionZENDESK\_DELETE\_USER\_SESSION
+
+Delete Zendesk User's Group MembershipZENDESK\_DELETE\_USERS\_GROUP\_MEMBERSHIPS
+
+Delete User IdentityZENDESK\_DELETE\_USERS\_IDENTITY
+
+Delete Authenticated SessionZENDESK\_DELETE\_USERS\_ME\_LOGOUT
+
+Delete User's Organization MembershipZENDESK\_DELETE\_USERS\_ORGANIZATION\_MEMBERSHIPS
+
+Delete All User SessionsZENDESK\_DELETE\_USERS\_SESSIONS
+
+Delete User TagsZENDESK\_DELETE\_USERS\_TAGS
+
+Delete Zendesk ViewZENDESK\_DELETE\_VIEW
+
+Delete Zendesk App InstallationZENDESK\_DELETE\_ZENDESK\_APP\_INSTALLATION
+
+Delete Zendesk BookmarkZENDESK\_DELETE\_ZENDESK\_BOOKMARK
+
+Delete Zendesk Custom ObjectZENDESK\_DELETE\_ZENDESK\_CUSTOM\_OBJECT
+
+Delete Zendesk Custom Object FieldZENDESK\_DELETE\_ZENDESK\_CUSTOM\_OBJECT\_FIELD
+
+Delete Zendesk Custom Object RecordZENDESK\_DELETE\_ZENDESK\_CUSTOM\_OBJECT\_RECORD
+
+Delete Zendesk Custom StatusZENDESK\_DELETE\_ZENDESK\_CUSTOM\_STATUS
+
+Delete Zendesk Dynamic Content ItemZENDESK\_DELETE\_ZENDESK\_DYNAMIC\_CONTENT\_ITEM
+
+Delete Zendesk Dynamic Content Item VariantZENDESK\_DELETE\_ZENDESK\_DYNAMIC\_CONTENT\_ITEM\_VARIANT
+
+Delete Zendesk Custom Object TriggerZENDESK\_DELETE\_ZENDESK\_OBJECT\_TRIGGER
+
+Delete Zendesk OrganizationZENDESK\_DELETE\_ZENDESK\_ORGANIZATION
+
+Delete Zendesk Support AddressZENDESK\_DELETE\_ZENDESK\_SUPPORT\_ADDRESS
+
+Delete Zendesk TicketZENDESK\_DELETE\_ZENDESK\_TICKET
+
+Delete Zendesk UserZENDESK\_DELETE\_ZENDESK\_USER
+
+Bulk Delete Soft-Deleted Zendesk TicketsZENDESK\_DESTROY\_MANY\_DELETED\_TICKETS
+
+Bulk Delete Zendesk OrganizationsZENDESK\_DESTROY\_MANY\_ORGANIZATIONS
+
+Detect Best LocaleZENDESK\_DETECT\_BEST\_LOCALE
+
+Download Custom Object Record AttachmentZENDESK\_DOWNLOAD\_CUSTOM\_OBJECT\_RECORD\_ATTACHMENT
+
+Get Zendesk About MeZENDESK\_GET\_ABOUT\_ME
+
+Get Account SettingsZENDESK\_GET\_ACCOUNT\_SETTINGS
+
+List Active TriggersZENDESK\_GET\_ACTIVE\_TRIGGERS
+
+Count ActivitiesZENDESK\_GET\_ACTIVITIES\_COUNT
+
+Get Zendesk OrganizationsZENDESK\_GET\_ALL\_ZENDESK\_ORGANIZATIONS
+
+Get AppZENDESK\_GET\_APP
+
+Get App Installation RequirementsZENDESK\_GET\_APPS\_INSTALLATIONS\_REQUIREMENTS
+
+Get App LocationZENDESK\_GET\_APPS\_LOCATION
+
+List Apps Location InstallationsZENDESK\_GET\_APPS\_LOCATION\_INSTALLATIONS
+
+Get App Public KeyZENDESK\_GET\_APPS\_PUBLIC\_KEY
+
+Get App Public Key PEMZENDESK\_GET\_APPS\_PUBLIC\_KEY\_PEM
+
+Get AttachmentZENDESK\_GET\_ATTACHMENT
+
+Get Autocomplete TagsZENDESK\_GET\_AUTOCOMPLETE\_TAGS
+
+Show AutomationZENDESK\_GET\_AUTOMATION
+
+List AutomationsZENDESK\_GET\_AUTOMATIONS
+
+Search AutomationsZENDESK\_GET\_AUTOMATIONS\_SEARCH
+
+List BrandsZENDESK\_GET\_BRANDS
+
+Get Zendesk BrandZENDESK\_GET\_BRANDS2
+
+List Agents by BrandZENDESK\_GET\_BRANDS\_AGENTS
+
+Get Custom Object Fields LimitZENDESK\_GET\_CUSTOM\_OBJECT\_FIELDS\_LIMIT
+
+Get Custom Object Records LimitZENDESK\_GET\_CUSTOM\_OBJECT\_RECORDS\_LIMIT
+
+Get Custom Objects LimitZENDESK\_GET\_CUSTOM\_OBJECTS\_LIMIT
+
+Get Custom StatusZENDESK\_GET\_CUSTOM\_STATUS
+
+List Custom Ticket StatusesZENDESK\_GET\_CUSTOM\_STATUSES
+
+List Deleted TicketsZENDESK\_GET\_DELETED\_TICKETS
+
+Get Deleted UserZENDESK\_GET\_DELETED\_USER
+
+Get Deletion ScheduleZENDESK\_GET\_DELETION\_SCHEDULE
+
+List Deletion SchedulesZENDESK\_GET\_DELETION\_SCHEDULES
+
+List Dynamic Content ItemsZENDESK\_GET\_DYNAMIC\_CONTENT\_ITEMS
+
+Show Dynamic Content ItemZENDESK\_GET\_DYNAMIC\_CONTENT\_ITEM\_SHOW
+
+Show Many Dynamic Content ItemsZENDESK\_GET\_DYNAMIC\_CONTENT\_ITEMS\_SHOW\_MANY
+
+List Dynamic Content VariantsZENDESK\_GET\_DYNAMIC\_CONTENT\_ITEMS\_VARIANTS
+
+Show Dynamic Content Item VariantZENDESK\_GET\_DYNAMIC\_CONTENT\_ITEM\_VARIANT
+
+Get Email NotificationZENDESK\_GET\_EMAIL\_NOTIFICATION
+
+Get Email NotificationsZENDESK\_GET\_EMAIL\_NOTIFICATIONS
+
+Show Many Email NotificationsZENDESK\_GET\_EMAIL\_NOTIFICATIONS\_SHOW\_MANY
+
+List End User IdentitiesZENDESK\_GET\_END\_USER\_IDENTITIES
+
+Get End User IdentityZENDESK\_GET\_END\_USER\_IDENTITY
+
+Get Group MembershipZENDESK\_GET\_GROUP\_MEMBERSHIP
+
+List Group MembershipsZENDESK\_GET\_GROUP\_MEMBERSHIPS
+
+List Memberships By GroupZENDESK\_GET\_GROUP\_MEMBERSHIPS\_BY\_GROUP
+
+List Assignable GroupsZENDESK\_GET\_GROUPS\_ASSIGNABLE
+
+Count GroupsZENDESK\_GET\_GROUPS\_COUNT
+
+Count Users by GroupZENDESK\_GET\_GROUPS\_USERS\_COUNT
+
+List Group UsersZENDESK\_GET\_GROUP\_USERS
+
+List Guide Survey ResponsesZENDESK\_GET\_GUIDE\_SURVEY\_RESPONSES
+
+List Guide SurveysZENDESK\_GET\_GUIDE\_SURVEYS
+
+Get Incremental OrganizationsZENDESK\_GET\_INCREMENTAL\_ORGANIZATIONS
+
+Incremental Routing Attributes ExportZENDESK\_GET\_INCREMENTAL\_ROUTING\_ATTRIBUTES
+
+Get Incremental Routing Attribute ValuesZENDESK\_GET\_INCREMENTAL\_ROUTING\_ATTRIBUTE\_VALUES
+
+Export Incremental Routing Instance ValuesZENDESK\_GET\_INCREMENTAL\_ROUTING\_INSTANCE\_VALUES
+
+Get Incremental Sample ExportZENDESK\_GET\_INCREMENTAL\_SAMPLE
+
+Get Incremental Ticket EventsZENDESK\_GET\_INCREMENTAL\_TICKET\_EVENTS
+
+List Ticket Metric EventsZENDESK\_GET\_INCREMENTAL\_TICKET\_METRIC\_EVENTS
+
+Get Incremental TicketsZENDESK\_GET\_INCREMENTAL\_TICKETS
+
+Get Incremental Tickets (Cursor)ZENDESK\_GET\_INCREMENTAL\_TICKETS\_CURSOR
+
+Get Incremental UsersZENDESK\_GET\_INCREMENTAL\_USERS
+
+Incremental User Export (Cursor)ZENDESK\_GET\_INCREMENTAL\_USERS\_CURSOR
+
+List Job StatusesZENDESK\_GET\_JOB\_STATUSES
+
+Get Job StatusZENDESK\_GET\_JOB\_STATUSES2
+
+Get LocaleZENDESK\_GET\_LOCALE
+
+List LocalesZENDESK\_GET\_LOCALES
+
+List Agent LocalesZENDESK\_GET\_LOCALES\_AGENT
+
+Get Current LocaleZENDESK\_GET\_LOCALES\_CURRENT
+
+Show MacroZENDESK\_GET\_MACRO2
+
+List Macro AttachmentsZENDESK\_GET\_MACRO\_ATTACHMENTS
+
+List Macro CategoriesZENDESK\_GET\_MACRO\_CATEGORIES
+
+List Macro Action DefinitionsZENDESK\_GET\_MACRO\_DEFINITIONS
+
+Show Macro ReplicaZENDESK\_GET\_MACRO\_REPLICA
+
+List MacrosZENDESK\_GET\_MACROS
+
+List Macro ActionsZENDESK\_GET\_MACROS\_ACTIONS
+
+List Active MacrosZENDESK\_GET\_MACROS\_ACTIVE
+
+Show Changes to TicketZENDESK\_GET\_MACROS\_APPLY
+
+Search MacrosZENDESK\_GET\_MACROS\_SEARCH
+
+Show Object TriggerZENDESK\_GET\_OBJECT\_TRIGGER
+
+List Open RequestsZENDESK\_GET\_OPEN\_REQUESTS
+
+Get Organization FieldZENDESK\_GET\_ORGANIZATION\_FIELD2
+
+List Organization FieldsZENDESK\_GET\_ORGANIZATION\_FIELDS
+
+Get Organization MembershipZENDESK\_GET\_ORGANIZATION\_MEMBERSHIP2
+
+Get Organization Related InfoZENDESK\_GET\_ORGANIZATION\_RELATED
+
+List Organization RequestsZENDESK\_GET\_ORGANIZATION\_REQUESTS
+
+Autocomplete OrganizationsZENDESK\_GET\_ORGANIZATIONS\_AUTOCOMPLETE
+
+List Organization MergesZENDESK\_GET\_ORGANIZATIONS\_MERGES
+
+Show Many OrganizationsZENDESK\_GET\_ORGANIZATIONS\_SHOW\_MANY
+
+Count Organization TicketsZENDESK\_GET\_ORGANIZATIONS\_TICKETS\_COUNT
+
+Get Organization SubscriptionZENDESK\_GET\_ORGANIZATION\_SUBSCRIPTION
+
+List Organization SubscriptionsZENDESK\_GET\_ORGANIZATION\_SUBSCRIPTIONS
+
+Get Organization TagsZENDESK\_GET\_ORGANIZATION\_TAGS
+
+Get Organization TicketsZENDESK\_GET\_ORGANIZATION\_TICKETS
+
+List Organization UsersZENDESK\_GET\_ORGANIZATION\_USERS
+
+Count Organization UsersZENDESK\_GET\_ORGANIZATION\_USERS\_COUNT
+
+Get Owned AppsZENDESK\_GET\_OWNED\_APPS
+
+List Ticket ProblemsZENDESK\_GET\_PROBLEMS
+
+List Public LocalesZENDESK\_GET\_PUBLIC\_LOCALES
+
+Get Recent TicketsZENDESK\_GET\_RECENT\_TICKETS
+
+List Remote AuthenticationsZENDESK\_GET\_REMOTE\_AUTHENTICATIONS
+
+List Request CommentsZENDESK\_GET\_REQUEST\_COMMENTS
+
+List CCD RequestsZENDESK\_GET\_REQUESTS\_CCDB
+
+Get Request CommentZENDESK\_GET\_REQUESTS\_COMMENT
+
+Search RequestsZENDESK\_GET\_REQUESTS\_SEARCH
+
+List Solved RequestsZENDESK\_GET\_REQUESTS\_SOLVED
+
+Get Agent Attribute ValuesZENDESK\_GET\_ROUTING\_AGENTS\_INSTANCE\_VALUES
+
+List Satisfaction RatingsZENDESK\_GET\_SATISFACTION\_RATINGS
+
+Count Satisfaction RatingsZENDESK\_GET\_SATISFACTION\_RATINGS\_COUNT
+
+Get Search Results CountZENDESK\_GET\_SEARCH\_COUNT
+
+Export Search ResultsZENDESK\_GET\_SEARCH\_EXPORT
+
+Get Security SettingsZENDESK\_GET\_SECURITY\_SETTINGS
+
+List Side Conversation EventsZENDESK\_GET\_SIDE\_CONVERSATIONS\_EVENTS
+
+Get Support AddressZENDESK\_GET\_SUPPORT\_ADDRESS
+
+List TagsZENDESK\_GET\_TAGS
+
+Count TagsZENDESK\_GET\_TAGS\_COUNT
+
+Show TargetZENDESK\_GET\_TARGET
+
+Show Target FailureZENDESK\_GET\_TARGET\_FAILURE
+
+List Target FailuresZENDESK\_GET\_TARGET\_FAILURES
+
+List TargetsZENDESK\_GET\_TARGETS
+
+Get Ticket AuditZENDESK\_GET\_TICKET\_AUDIT\_BY\_ID
+
+List Ticket CollaboratorsZENDESK\_GET\_TICKET\_COLLABORATORS
+
+Get Ticket CommentsZENDESK\_GET\_TICKET\_COMMENTS
+
+List Ticket Email CCsZENDESK\_GET\_TICKET\_EMAIL\_C\_CS
+
+Show Ticket FieldZENDESK\_GET\_TICKET\_FIELD2
+
+List Ticket FieldsZENDESK\_GET\_TICKET\_FIELDS
+
+Count Ticket FieldsZENDESK\_GET\_TICKET\_FIELDS\_COUNT
+
+Show Many Ticket FieldsZENDESK\_GET\_TICKET\_FIELDS\_SHOW\_MANY
+
+List Ticket FollowersZENDESK\_GET\_TICKET\_FOLLOWERS
+
+List Ticket FormsZENDESK\_GET\_TICKET\_FORMS
+
+Show Many Ticket FormsZENDESK\_GET\_TICKET\_FORMS\_SHOW\_MANY
+
+List Ticket IncidentsZENDESK\_GET\_TICKET\_INCIDENTS
+
+Get Ticket MetricZENDESK\_GET\_TICKET\_METRIC
+
+Get Ticket MetricsZENDESK\_GET\_TICKET\_METRICS
+
+List Ticket AuditsZENDESK\_GET\_TICKETS\_AUDITS
+
+Count Ticket AuditsZENDESK\_GET\_TICKETS\_AUDITS\_COUNT
+
+Count Ticket CommentsZENDESK\_GET\_TICKETS\_COMMENTS\_COUNT
+
+Get Ticket Conversation LogZENDESK\_GET\_TICKETS\_CONVERSATION\_LOG
+
+Count Zendesk TicketsZENDESK\_GET\_TICKETS\_COUNT
+
+List Ticket SkipsZENDESK\_GET\_TICKET\_SKIPS
+
+Get Ticket MetricsZENDESK\_GET\_TICKETS\_METRICS
+
+List Side Conversation EventsZENDESK\_GET\_TICKETS\_SIDE\_CONVERSATIONS\_EVENTS
+
+Show TriggerZENDESK\_GET\_TRIGGER
+
+List Trigger CategoriesZENDESK\_GET\_TRIGGER\_CATEGORIES
+
+Show Trigger CategoryZENDESK\_GET\_TRIGGER\_CATEGORIES2
+
+List Ticket TriggersZENDESK\_GET\_TRIGGERS
+
+Get Ticket Trigger DefinitionsZENDESK\_GET\_TRIGGERS\_DEFINITIONS
+
+Search Ticket TriggersZENDESK\_GET\_TRIGGERS\_SEARCH
+
+Get UserZENDESK\_GET\_USER
+
+Get Full User EntitlementsZENDESK\_GET\_USER\_ENTITLEMENTS\_FULL
+
+Get User EventsZENDESK\_GET\_USER\_EVENTS
+
+Get User Field By IDZENDESK\_GET\_USER\_FIELD\_BY\_ID
+
+List User Field OptionsZENDESK\_GET\_USER\_FIELD\_OPTIONS
+
+List User FieldsZENDESK\_GET\_USER\_FIELDS
+
+Get User Fields Show ManyZENDESK\_GET\_USER\_FIELDS\_SHOW\_MANY
+
+Get User Profile by Profile IDZENDESK\_GET\_USER\_PROFILES2
+
+Get User Profile Events by IDZENDESK\_GET\_USER\_PROFILES\_EVENTS2
+
+Get User's Assigned TicketsZENDESK\_GET\_USERS\_ASSIGNED\_TICKETS
+
+Autocomplete UsersZENDESK\_GET\_USERS\_AUTOCOMPLETE
+
+List Brand Agent Memberships By UserZENDESK\_GET\_USERS\_BRAND\_AGENTS
+
+Get User's CC'd TicketsZENDESK\_GET\_USERS\_CCD\_TICKETS
+
+Get User Compliance Deletion StatusesZENDESK\_GET\_USERS\_COMPLIANCE\_DELETION\_STATUSES
+
+Count UsersZENDESK\_GET\_USERS\_COUNT
+
+List User SessionsZENDESK\_GET\_USER\_SESSIONS
+
+Get User's Followed TicketsZENDESK\_GET\_USERS\_FOLLOWED\_TICKETS
+
+List Memberships By UserZENDESK\_GET\_USERS\_GROUP\_MEMBERSHIPS
+
+Get User's Group MembershipZENDESK\_GET\_USERS\_GROUP\_MEMBERSHIPS\_BY\_ID
+
+List User GroupsZENDESK\_GET\_USERS\_GROUPS
+
+Count User GroupsZENDESK\_GET\_USERS\_GROUPS\_COUNT
+
+Show User IdentityZENDESK\_GET\_USERS\_IDENTITIES2
+
+Get Current SessionZENDESK\_GET\_USERS\_ME\_SESSION
+
+Get Current User SettingsZENDESK\_GET\_USERS\_ME\_SETTINGS
+
+List User Organization MembershipsZENDESK\_GET\_USERS\_ORGANIZATION\_MEMBERSHIPS
+
+Get User's Organization MembershipZENDESK\_GET\_USERS\_ORGANIZATION\_MEMBERSHIPS2
+
+List User OrganizationsZENDESK\_GET\_USERS\_ORGANIZATIONS
+
+Get User's Organizations CountZENDESK\_GET\_USERS\_ORGANIZATIONS\_COUNT
+
+List User's Organization SubscriptionsZENDESK\_GET\_USERS\_ORGANIZATION\_SUBSCRIPTIONS
+
+Get User Password RequirementsZENDESK\_GET\_USERS\_PASSWORD\_REQUIREMENTS
+
+Get Users ProfilesZENDESK\_GET\_USERS\_PROFILES
+
+Get User Related InfoZENDESK\_GET\_USERS\_RELATED
+
+Get User's Requested TicketsZENDESK\_GET\_USERS\_REQUESTED\_TICKETS
+
+List User RequestsZENDESK\_GET\_USERS\_REQUESTS
+
+List User SkipsZENDESK\_GET\_USERS\_SKIPS
+
+Get User TagsZENDESK\_GET\_USERS\_TAGS
+
+Count User Assigned TicketsZENDESK\_GET\_USER\_TICKETS\_ASSIGNED\_COUNT
+
+List View Filter DefinitionsZENDESK\_GET\_VIEW\_DEFINITIONS
+
+List ViewsZENDESK\_GET\_VIEWS
+
+List Active ViewsZENDESK\_GET\_VIEWS\_ACTIVE
+
+List Views - CompactZENDESK\_GET\_VIEWS\_COMPACT
+
+Count ViewsZENDESK\_GET\_VIEWS\_COUNT
+
+Count Tickets in ViewsZENDESK\_GET\_VIEWS\_COUNT\_MANY
+
+Execute ViewZENDESK\_GET\_VIEWS\_EXECUTE
+
+Export ViewZENDESK\_GET\_VIEWS\_EXPORT
+
+Search ViewsZENDESK\_GET\_VIEWS\_SEARCH
+
+List Views By IDsZENDESK\_GET\_VIEWS\_SHOW\_MANY
+
+List Tickets From ViewZENDESK\_GET\_VIEWS\_TICKETS
+
+Count Tickets in ViewZENDESK\_GET\_VIEW\_TICKET\_COUNT
+
+List ActivitiesZENDESK\_GET\_ZENDESK\_ACTIVITIES
+
+List Custom RolesZENDESK\_GET\_ZENDESK\_CUSTOM\_ROLES
+
+Get Zendesk OrganizationZENDESK\_GET\_ZENDESK\_ORGANIZATION
+
+Get Zendesk Organization MergeZENDESK\_GET\_ZENDESK\_ORGANIZATION\_MERGE
+
+List Organization SubscriptionsZENDESK\_GET\_ZENDESK\_ORGANIZATIONS\_SUBSCRIPTIONS
+
+List RequestsZENDESK\_GET\_ZENDESK\_REQUESTS
+
+List SessionsZENDESK\_GET\_ZENDESK\_SESSIONS
+
+List Sharing AgreementsZENDESK\_GET\_ZENDESK\_SHARING\_AGREEMENTS
+
+List Suspended TicketsZENDESK\_GET\_ZENDESK\_SUSPENDED\_TICKETS
+
+Get Zendesk TicketZENDESK\_GET\_ZENDESK\_TICKET\_BY\_ID
+
+List Ticket Field OptionsZENDESK\_GET\_ZENDESK\_TICKET\_FIELDS\_OPTIONS
+
+Show Ticket Field OptionZENDESK\_GET\_ZENDESK\_TICKET\_FIELDS\_OPTIONS2
+
+Get Zendesk Ticket FormZENDESK\_GET\_ZENDESK\_TICKET\_FORM
+
+Get Zendesk Ticket RelatedZENDESK\_GET\_ZENDESK\_TICKET\_RELATED
+
+Get Side ConversationZENDESK\_GET\_ZENDESK\_TICKETS\_SIDE\_CONVERSATION\_ID
+
+Get Ticket TagsZENDESK\_GET\_ZENDESK\_TICKETS\_TAGS
+
+List Active AutomationsZENDESK\_LIST\_ACTIVE\_AUTOMATIONS
+
+List App InstallationsZENDESK\_LIST\_APP\_INSTALLATIONS
+
+List App LocationsZENDESK\_LIST\_APP\_LOCATIONS
+
+List Assignable Group MembershipsZENDESK\_LIST\_ASSIGNABLE\_GROUP\_MEMBERSHIPS
+
+List Assignable Memberships By GroupZENDESK\_LIST\_ASSIGNABLE\_GROUP\_MEMBERSHIPS\_BY\_GROUP
+
+List BookmarksZENDESK\_LIST\_BOOKMARKS
+
+List Brand Agent MembershipsZENDESK\_LIST\_BRAND\_AGENTS
+
+List Custom Object Record AttachmentsZENDESK\_LIST\_CUSTOM\_OBJECT\_RECORD\_ATTACHMENTS
+
+List Custom Object RecordsZENDESK\_LIST\_CUSTOM\_OBJECT\_RECORDS
+
+List Deleted UsersZENDESK\_LIST\_DELETED\_USERS
+
+List Incremental Custom Object RecordsZENDESK\_LIST\_INCREMENTAL\_CUSTOM\_OBJECT\_RECORDS
+
+List Monitored X HandlesZENDESK\_LIST\_MONITORED\_TWITTER\_HANDLES
+
+List Object TriggersZENDESK\_LIST\_OBJECT\_TRIGGERS
+
+List Object Trigger DefinitionsZENDESK\_LIST\_OBJECT\_TRIGGERS\_DEFINITIONS
+
+List Organization MembershipsZENDESK\_LIST\_ORGANIZATION\_MEMBERSHIPS
+
+List Organization Memberships by OrganizationZENDESK\_LIST\_ORGANIZATION\_MEMBERSHIPS\_BY\_ORGANIZATION
+
+List Resource CollectionsZENDESK\_LIST\_RESOURCE\_COLLECTIONS
+
+List All SkipsZENDESK\_LIST\_SKIPS
+
+List Support AddressesZENDESK\_LIST\_SUPPORT\_ADDRESSES
+
+List Ticket AuditsZENDESK\_LIST\_TICKET\_AUDITS
+
+List Ticket Content PinsZENDESK\_LIST\_TICKET\_CONTENT\_PINS
+
+List User IdentitiesZENDESK\_LIST\_USER\_IDENTITIES
+
+List Access RulesZENDESK\_LIST\_ZENDESK\_ACCESS\_RULES
+
+List Custom Object FieldsZENDESK\_LIST\_ZENDESK\_CUSTOM\_OBJECT\_FIELDS
+
+List Custom ObjectsZENDESK\_LIST\_ZENDESK\_CUSTOM\_OBJECTS
+
+List Permission PoliciesZENDESK\_LIST\_ZENDESK\_PERMISSION\_POLICIES
+
+List TicketsZENDESK\_LIST\_ZENDESK\_TICKETS
+
+List UsersZENDESK\_LIST\_ZENDESK\_USERS
+
+Make Zendesk Ticket Comment PrivateZENDESK\_MAKE\_COMMENT\_PRIVATE
+
+Make Organization Membership DefaultZENDESK\_MAKE\_DEFAULT\_ORGANIZATION\_MEMBERSHIP
+
+Make End User Identity PrimaryZENDESK\_MAKE\_END\_USER\_IDENTITY\_PRIMARY
+
+Make Ticket Comment PrivateZENDESK\_MAKE\_TICKET\_COMMENT\_PRIVATE
+
+Make User Identity PrimaryZENDESK\_MAKE\_USER\_IDENTITY\_PRIMARY
+
+Mark Multiple Tickets as SpamZENDESK\_MARK\_MANY\_TICKETS\_AS\_SPAM
+
+Merge UsersZENDESK\_MERGE\_USERS
+
+Merge Zendesk TicketsZENDESK\_MERGE\_ZENDESK\_TICKETS
+
+Open User's Profile in Agent BrowserZENDESK\_OPEN\_USERS\_PROFILE\_IN\_AGENT\_BROWSER
+
+Recover Multiple Suspended TicketsZENDESK\_RECOVER\_MANY\_SUSPENDED\_TICKETS
+
+Renew SessionZENDESK\_RENEW\_SESSION
+
+Reorder Custom Object FieldsZENDESK\_REORDER\_CUSTOM\_OBJECT\_FIELDS
+
+Reorder App Location InstallationsZENDESK\_REORDER\_LOCATION\_INSTALLATIONS
+
+Reorder Organization FieldsZENDESK\_REORDER\_ORGANIZATION\_FIELDS
+
+Reorder Ticket FieldsZENDESK\_REORDER\_TICKET\_FIELDS
+
+Reorder Ticket TriggersZENDESK\_REORDER\_TRIGGERS
+
+Reorder User FieldsZENDESK\_REORDER\_USER\_FIELDS
+
+Reply to Zendesk TicketZENDESK\_REPLY\_ZENDESK\_TICKET
+
+Request End User VerificationZENDESK\_REQUEST\_END\_USER\_VERIFICATION
+
+Request User CreateZENDESK\_REQUEST\_USER\_CREATE
+
+Request User VerificationZENDESK\_REQUEST\_USER\_VERIFICATION
+
+Restore Multiple Deleted TicketsZENDESK\_RESTORE\_MANY\_TICKETS
+
+Restore Zendesk TicketZENDESK\_RESTORE\_ZENDESK\_TICKET
+
+Search Custom Object RecordsZENDESK\_SEARCH\_CUSTOM\_OBJECT\_RECORDS
+
+Search Object TriggersZENDESK\_SEARCH\_OBJECT\_TRIGGERS
+
+Search ZendeskZENDESK\_SEARCH\_ZENDESK
+
+Search OrganizationsZENDESK\_SEARCH\_ZENDESK\_ORGANIZATIONS
+
+Search Zendesk UsersZENDESK\_SEARCH\_ZENDESK\_USERS
+
+Set Default Custom Ticket StatusZENDESK\_SET\_DEFAULT\_CUSTOM\_STATUS
+
+Set Group Membership as DefaultZENDESK\_SET\_GROUP\_MEMBERSHIP\_AS\_DEFAULT
+
+Set Organization as Default for UserZENDESK\_SET\_USERS\_ORGANIZATION\_AS\_DEFAULT
+
+Show Access RuleZENDESK\_SHOW\_ACCESS\_RULE
+
+Show Custom ObjectZENDESK\_SHOW\_CUSTOM\_OBJECT
+
+Show Custom Object RecordZENDESK\_SHOW\_CUSTOM\_OBJECT\_RECORD
+
+Show Many Job StatusesZENDESK\_SHOW\_MANY\_JOB\_STATUSES
+
+Show Many TicketsZENDESK\_SHOW\_MANY\_TICKETS
+
+Show Many UsersZENDESK\_SHOW\_MANY\_USERS
+
+Show Permission PolicyZENDESK\_SHOW\_PERMISSION\_POLICY
+
+Show RequestZENDESK\_SHOW\_REQUEST
+
+Unassign User from OrganizationZENDESK\_UNASSIGN\_USER\_ORGANIZATION
+
+Update Access RuleZENDESK\_UPDATE\_ACCESS\_RULE
+
+Update Zendesk App InstallationZENDESK\_UPDATE\_APPS\_INSTALLATION
+
+Update AutomationZENDESK\_UPDATE\_AUTOMATION
+
+Update Custom ObjectZENDESK\_UPDATE\_CUSTOM\_OBJECT
+
+Update Custom Object RecordZENDESK\_UPDATE\_CUSTOM\_OBJECT\_RECORD
+
+Update Custom Ticket StatusZENDESK\_UPDATE\_CUSTOM\_STATUS
+
+Update Deletion ScheduleZENDESK\_UPDATE\_DELETION\_SCHEDULE
+
+Update Dynamic Content VariantZENDESK\_UPDATE\_DYNAMIC\_CONTENT\_ITEMS\_VARIANT
+
+Update Many Dynamic Content VariantsZENDESK\_UPDATE\_DYNAMIC\_CONTENT\_ITEMS\_VARIANTS
+
+Update MacroZENDESK\_UPDATE\_MACRO
+
+Update Many AutomationsZENDESK\_UPDATE\_MANY\_AUTOMATIONS
+
+Update Many MacrosZENDESK\_UPDATE\_MANY\_MACROS
+
+Update Many Object TriggersZENDESK\_UPDATE\_MANY\_OBJECT\_TRIGGERS
+
+Update Many Zendesk OrganizationsZENDESK\_UPDATE\_MANY\_ORGANIZATIONS
+
+Update Many TicketsZENDESK\_UPDATE\_MANY\_TICKETS
+
+Update Many Ticket TriggersZENDESK\_UPDATE\_MANY\_TRIGGERS
+
+Update Many UsersZENDESK\_UPDATE\_MANY\_USERS
+
+Update Many ViewsZENDESK\_UPDATE\_MANY\_VIEWS
+
+Update Object TriggerZENDESK\_UPDATE\_OBJECT\_TRIGGER
+
+Update Organization FieldZENDESK\_UPDATE\_ORGANIZATION\_FIELD
+
+Add Organization TagsZENDESK\_UPDATE\_ORGANIZATIONS\_TAGS
+
+Update Permission PolicyZENDESK\_UPDATE\_PERMISSION\_POLICY
+
+Update Resource CollectionZENDESK\_UPDATE\_RESOURCE\_COLLECTION
+
+Update Side ConversationZENDESK\_UPDATE\_SIDE\_CONVERSATION
+
+Update Support AddressZENDESK\_UPDATE\_SUPPORT\_ADDRESS
+
+Update Zendesk TargetZENDESK\_UPDATE\_TARGET
+
+Update Ticket FieldZENDESK\_UPDATE\_TICKET\_FIELD
+
+Update Zendesk Ticket TagsZENDESK\_UPDATE\_TICKETS\_TAGS
+
+Update Ticket TriggerZENDESK\_UPDATE\_TICKET\_TRIGGER
+
+Update Trigger CategoryZENDESK\_UPDATE\_TRIGGER\_CATEGORY
+
+Update Zendesk User FieldZENDESK\_UPDATE\_USER\_FIELD
+
+Update Zendesk User ProfileZENDESK\_UPDATE\_USER\_PROFILE
+
+Update Zendesk User Profile By IDZENDESK\_UPDATE\_USER\_PROFILE\_BY\_ID
+
+Update User IdentityZENDESK\_UPDATE\_USERS\_IDENTITY
+
+Update Current User SettingsZENDESK\_UPDATE\_USERS\_ME\_SETTINGS
+
+Update Users ProfilesZENDESK\_UPDATE\_USERS\_PROFILES
+
+Update User TagsZENDESK\_UPDATE\_USERS\_TAGS
+
+Update ViewZENDESK\_UPDATE\_VIEW
+
+Update Zendesk Account SettingsZENDESK\_UPDATE\_ZENDESK\_ACCOUNT\_SETTINGS
+
+Update Zendesk AttachmentZENDESK\_UPDATE\_ZENDESK\_ATTACHMENT
+
+Update Custom Object FieldZENDESK\_UPDATE\_ZENDESK\_CUSTOM\_OBJECT\_FIELD
+
+Update Dynamic Content ItemZENDESK\_UPDATE\_ZENDESK\_DYNAMIC\_CONTENT\_ITEM
+
+Update Zendesk OrganizationZENDESK\_UPDATE\_ZENDESK\_ORGANIZATION
+
+Update RequestZENDESK\_UPDATE\_ZENDESK\_REQUESTS
+
+Update Zendesk TicketZENDESK\_UPDATE\_ZENDESK\_TICKET
+
+Upsert Custom Object Record By External ID or NameZENDESK\_UPSERT\_CUSTOM\_OBJECT\_RECORD\_BY\_EXTERNAL\_ID\_OR\_NAME
+
+Verify Subdomain AvailabilityZENDESK\_VERIFY\_SUBDOMAIN\_AVAILABILITY
+
+Verify Support AddressZENDESK\_VERIFY\_SUPPORT\_ADDRESS
+
+Verify User IdentityZENDESK\_VERIFY\_USER\_IDENTITY
+
+[Edit this page on GitHub](https://github.com/ComposioHQ/composio/blob/next/docs/components/toolkits/toolkit-detail.tsx)

@@ -1,0 +1,194 @@
+---
+url: https://docs.composio.dev/reference/sdk-reference/python/connected-accounts
+title: ConnectedAccounts | Composio
+description: Manage connected accounts.  This class is used to manage connected accounts in the Composio SDK. These are used to authenticate with third-party se...
+status: 200
+---
+
+SDK Reference [Python SDK](https://docs.composio.dev/reference/sdk-reference/python)
+
+# ConnectedAccounts
+
+Copy page
+
+## [Methods](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts\#methods)
+
+### [update()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts\#update)
+
+Update a connected account's alias and/or credentials.
+
+```
+def update(nanoid: str, alias: str | None = ..., connection: connected_account_patch_params.Connection | None = ...) -> connected_account_patch_response.ConnectedAccountPatchRes...
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `nanoid` | `str` |
+| `alias?` | `str | None` |
+| `connection?` | `connected_account_patch_params.Connection | None` |
+
+**Returns**
+
+`connected_account_patch_response.ConnectedAccountPatchRes...` — Response with `id`, `status`, and `success`.
+
+**Example**
+
+```
+# Set an alias
+composio.connected_accounts.update('ca_abc123', alias='work-gmail')
+
+# Clear an alias
+composio.connected_accounts.update('ca_abc123', alias='')
+```
+
+* * *
+
+### [update\_acl()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts\#update_acl)
+
+Update the per-user ACL on a SHARED connected account. Experimental — shape may change in future releases. Only valid on SHARED connections; raises `ComposioAclOnlyForSharedError` on a PRIVATE connection. Omit a parameter to leave it unchanged; pass an empty list to clear an allow/deny list. At least one parameter must be provided.
+
+```
+def update_acl(nanoid: str, allow_all_users: bool | None = ..., allowed_user_ids: List[str | None] = ..., not_allowed_user_ids: List[str | None] = ...) -> connected_account_patch_response.ConnectedAccountPatchRes...
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `nanoid` | `str` |
+| `allow_all_users?` | `bool | None` |
+| `allowed_user_ids?` | `List[str | None]` |
+| `not_allowed_user_ids?` | `List[str | None]` |
+
+**Returns**
+
+`connected_account_patch_response.ConnectedAccountPatchRes...` — Response with `id`, `status`, and `success`.
+
+**Example**
+
+```
+composio.connected_accounts.update_acl(
+    'ca_abc',
+    allow_all_users=True,
+    not_allowed_user_ids=['user_bob'],
+)
+```
+
+* * *
+
+### [initiate()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts\#initiate)
+
+Compound function to create a new connected account. This function creates a new connected account and returns a connection request. Users can then wait for the connection to be established using the `wait_for_connection` method.
+
+```
+def initiate(user_id: str, auth_config_id: str, callback_url: str | None = ..., allow_multiple: bool = ..., config: connected_account_create_params.ConnectionState | None = ..., alias: str | None = ...) -> ConnectionRequest
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `user_id` | `str` |
+| `auth_config_id` | `str` |
+| `callback_url?` | `str | None` |
+| `allow_multiple?` | `bool` |
+| `config?` | `connected_account_create_params.ConnectionState | None` |
+| `alias?` | `str | None` |
+
+**Returns**
+
+`ConnectionRequest` — The connection request.
+
+* * *
+
+### [link()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts\#link)
+
+Create a Composio Connect Link for a user to connect their account to a given auth config. This method will return an external link which you can use for the user to connect their account.
+
+```
+def link(user_id: str, auth_config_id: str, callback_url: str | None = ..., alias: str | None = ..., allow_multiple: bool = ..., experimental: link_create_params.Experimental | None = ...) -> ConnectionRequest
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `user_id` | `str` |
+| `auth_config_id` | `str` |
+| `callback_url?` | `str | None` |
+| `alias?` | `str | None` |
+| `allow_multiple?` | `bool` |
+| `experimental?` | `link_create_params.Experimental | None` |
+
+**Returns**
+
+`ConnectionRequest` — Connection request object.
+
+**Example**
+
+```
+# Create a connection request and redirect the user to the redirect url
+connection_request = composio.connected_accounts.link('user_123', 'auth_config_123')
+redirect_url = connection_request.redirect_url
+print(f"Visit: {redirect_url} to authenticate your account")
+
+# Wait for the connection to be established
+connected_account = connection_request.wait_for_connection()
+
+# Create a connection request with callback URL
+connection_request = composio.connected_accounts.link(
+    'user_123',
+    'auth_config_123',
+    callback_url='https://your-app.com/callback'
+)
+redirect_url = connection_request.redirect_url
+print(f"Visit: {redirect_url} to authenticate your account")
+
+# Wait for the connection to be established
+connected_account = composio.connected_accounts.wait_for_connection(connection_request.id)
+
+connection_request = composio.connected_accounts.link(
+    'user_creator',
+    'auth_config_123',
+    experimental={
+        'account_type': 'SHARED',
+        'acl_config_for_shared': {
+            'allow_all_users': True,
+            'not_allowed_user_ids': ['user_bob'],
+        },
+    },
+)
+```
+
+* * *
+
+### [wait\_for\_connection()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts\#wait_for_connection)
+
+Wait for connected account with given ID to be active
+
+```
+def wait_for_connection(id: str, timeout: float | None = ...) -> connected_account_retrieve_response.ConnectedAccountRetri...
+```
+
+**Parameters**
+
+| Name | Type |
+| --- | --- |
+| `id` | `str` |
+| `timeout?` | `float | None` |
+
+**Returns**
+
+`connected_account_retrieve_response.ConnectedAccountRetri...`
+
+* * *
+
+[View source](https://github.com/composiohq/composio/blob/next/python/composio/core/models/connected_accounts.py#L340)
+
+[Edit this page on GitHub](https://github.com/ComposioHQ/composio/blob/next/docs/content/reference/sdk-reference/python/connected-accounts.mdx)
+
+### On this page
+
+[Methods](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts#methods) [update()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts#update) [update\_acl()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts#update_acl) [initiate()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts#initiate) [link()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts#link) [wait\_for\_connection()](https://docs.composio.dev/reference/sdk-reference/python/connected-accounts#wait_for_connection)

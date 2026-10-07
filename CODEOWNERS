@@ -1,13 +1,5 @@
 # Code owners for webagent. See https://docs.github.com/articles/about-code-owners
-# Replace with the actual GitHub team/handles before enabling branch protection.
 
-# Default owner for everything.
 * @TheAgent-net/maintainers
 
-# The SPI and core contracts are the highest-stakes surface — require core-team review.
-/core/ @TheAgent-net/core
-/spi/  @TheAgent-net/core
-
-# Compatibility and security policy changes need maintainer sign-off.
-/COMPATIBILITY.md @TheAgent-net/maintainers
-/SECURITY.md      @TheAgent-net/maintainers
+/SECURITY.md @TheAgent-net/maintainers

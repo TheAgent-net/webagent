@@ -1,0 +1,95 @@
+{
+  "id": "smallest",
+  "origin": "https://smallest.ai",
+  "docs": {
+    "origin": "https://docs.smallest.ai",
+    "llmsTxt": "https://docs.smallest.ai/llms.txt"
+  },
+  "brand": {
+    "name": "Smallest AI",
+    "tagline": "Voice AI — Atoms first, then settings and best practices.",
+    "colors": {
+      "ink": "#191919",
+      "paper": "#ffffff",
+      "muted": "#6f6f6f",
+      "line": "#e5e5e5",
+      "wash": "#f5f5f5",
+      "accent": "#f5c518",
+      "fab": "#191919",
+      "fabText": "#ffffff"
+    },
+    "fonts": {
+      "display": "Archivo, Geist, sans-serif",
+      "body": "Geist, ui-sans-serif, system-ui, sans-serif",
+      "google": "https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Geist:wght@400;500;600&display=swap"
+    },
+    "fabLabel": "Ask Smallest",
+    "wordmark": "smallest.ai"
+  },
+  "widget": {
+    "welcomeTitle": "How can I help?",
+    "welcomeBody": "Tell me what you are trying to get working. I will ask a little, then point you at the right setup.",
+    "chips": [
+      "I'm new and not sure where to start",
+      "People should be able to call us and talk to an AI",
+      "I already have an app — can Smallest add voice?",
+      "Walk me through the right Smallest setup for my case"
+    ],
+    "copyHeadline": "Talk to Smallest agents",
+    "copyPrompt": "Talk to the Smallest agents at {{chat}}. POST {\"text\":\"<question>\",\"session\":\"<from last JSON>\"} — never GET, browse, or probe.\nAsk them anything you want to understand about Smallest. First POST may omit session; every later POST must send the same session.",
+    "placeholder": "What are you trying to get working?",
+    "markdown": true
+  },
+  "sales": {
+    "technique": "atoms-first-advisor"
+  },
+  "model": {
+    "id": "gpt-6-astra",
+    "apiBase": "https://api.openai.com/v1"
+  },
+  "host": {
+    "port": 8789,
+    "publicUrl": "https://smallest.agentnet.it.com",
+    "cors": true
+  },
+  "retrieve": {
+    "preferTerms": ["atoms", "platform", "agent"],
+    "defaultKind": "marketing",
+    "integrationKind": "integration",
+    "platformKind": "platform",
+    "guideKind": "guide",
+    "queryKindDefault": "platform",
+    "queryEmbedSkip": ["atoms", "platform", "agent"]
+  },
+  "tools": ["tools.ts"],
+  "skills": [
+    {
+      "id": "intent",
+      "name": "Intent discovery",
+      "description": "Ask one question at a time until the use case, channel, and direction are clear.",
+      "tags": ["intent", "discovery"]
+    },
+    {
+      "id": "settings",
+      "name": "Settings advisor",
+      "description": "Lead with Atoms (Smallest's own agent stack), then settings, telephony, KB, and tools.",
+      "tags": ["settings", "voice", "atoms"]
+    },
+    {
+      "id": "implement",
+      "name": "Implementation plan",
+      "description": "Concrete next steps and the matching docs page.",
+      "tags": ["docs", "implementation"]
+    },
+    {
+      "id": "docs",
+      "name": "Docs retrieval",
+      "description": "Look up the matching smallest.ai / docs.smallest.ai section and cite one URL.",
+      "tags": ["docs", "retrieval"]
+    }
+  ],
+  "card": {
+    "description": "Smallest AI assistant. Helps you understand and use Smallest — Atoms first, best-practice settings, integrations only if you must keep your own stack.",
+    "instructions": "Infer the use case from the visitor's project, then get the right Smallest path and settings."
+  }
+}

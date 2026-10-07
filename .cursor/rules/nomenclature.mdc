@@ -1,0 +1,16 @@
+---
+description: ASD-STE100 nomenclature for all identifiers
+alwaysApply: true
+---
+
+Follow `AGENTS.md` for every name you add or change.
+
+Use ASD-STE100 Simplified Technical English for files, modules, types, functions, variables, constants, components, CLI verbs, MCP tools, tests, and comments:
+
+- One word, one meaning, one part of speech. A noun stays a noun. A verb stays a verb.
+- Short, common American English. Three words or fewer in a compound name.
+- Do not use two names for the same thing. Prefer the approved glossary in `AGENTS.md` (`Harness`, `Run`, `Context`, `Assembler`, `start`, `pause`, `cancel`, `fork`, `merge`, `inject`).
+- No slang, jargon, clever metaphors, or opaque abbreviations.
+- After you select a name, use that same name in the file, the type, the tests, and the HTTP/MCP/CLI surface.
+
+Do not rename existing public names unless a human asks.

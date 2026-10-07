@@ -1,0 +1,310 @@
+---
+url: https://docs.composio.dev/docs/providers/custom-providers/typescript
+title: TypeScript Custom Provider | Composio
+description: Build an agent with any TypeScript framework and enable it to use 1000+ tools with Composio.
+status: 200
+---
+
+[SDKs and frameworks](https://docs.composio.dev/docs/providers) [Custom providers](https://docs.composio.dev/docs/providers/custom-providers)
+
+# TypeScript Custom Provider
+
+Copy page
+
+A **provider** adapts Composio tools to the format your AI framework expects. Write one, and any framework can call Composio's 1000+ tools. This guide shows you how to build your own in TypeScript.
+
+## [Provider architecture](https://docs.composio.dev/docs/providers/custom-providers/typescript\#provider-architecture)
+
+A provider does three things:
+
+- **Transforms tool format**: converts Composio tools into the shape your AI platform expects.
+- **Executes tools**: runs tool calls and returns results.
+- **Adds platform helpers**: exposes convenience methods specific to your platform.
+
+There are two kinds, depending on whether the target platform runs its own agent loop:
+
+| Type | When to use | Examples |
+| --- | --- | --- |
+| **Non-agentic** | The platform has no agency of its own. You drive the loop. | OpenAI |
+| **Agentic** | The platform runs its own agent loop and calls tools itself. | LangChain, AutoGPT |
+
+Both extend `BaseProvider`:
+
+```
+BaseProvider (Abstract)
+├── BaseNonAgenticProvider (Abstract)
+│   └── OpenAIProvider (Concrete)
+│   └── [Your Custom Non-Agentic Provider] (Concrete)
+└── BaseAgenticProvider (Abstract)
+    └── [Your Custom Agentic Provider] (Concrete)
+```
+
+## [Non-agentic provider](https://docs.composio.dev/docs/providers/custom-providers/typescript\#non-agentic-provider)
+
+A non-agentic provider extends `BaseNonAgenticProvider`. You supply a `name`, `wrapTool`, and `wrapTools`, and call the built-in `executeTool` when you're ready to run a tool.
+
+```
+import { BaseNonAgenticProvider, Tool } from '@composio/core';
+
+// Define your tool format
+interface MyAITool {
+  name: string;
+  description: string;
+  parameters: {
+    type: string;
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
+// Define your tool collection format
+type MyAIToolCollection = MyAITool[];
+
+// Create your provider
+export class MyAIProvider extends BaseNonAgenticProvider<MyAIToolCollection, MyAITool> {
+  // Required: Unique provider name for telemetry
+  readonly name = 'my-ai-platform';
+
+  // Required: Method to transform a single tool
+  override wrapTool(tool: Tool): MyAITool {
+    return {
+      name: tool.slug,
+      description: tool.description || '',
+      parameters: {
+        type: 'object',
+        properties: tool.inputParameters?.properties || {},
+        required: tool.inputParameters?.required || [],
+      },
+    };
+  }
+
+  // Required: Method to transform a collection of tools
+  override wrapTools(tools: Tool[]): MyAIToolCollection {
+    return tools.map(tool => this.wrapTool(tool));
+  }
+
+  // Optional: Custom helper methods for your AI platform
+  async executeMyAIToolCall(
+    userId: string,
+    toolCall: {
+      name: string;
+      arguments: Record<string, unknown>;
+    }
+  ): Promise<string> {
+    // Use the built-in executeTool method
+    const result = await this.executeTool(toolCall.name, {
+      userId,
+      arguments: toolCall.arguments,
+    });
+
+    return JSON.stringify(result.data);
+  }
+}
+```
+
+## [Agentic provider](https://docs.composio.dev/docs/providers/custom-providers/typescript\#agentic-provider)
+
+An **agentic provider** extends `BaseAgenticProvider`. The difference from the non-agentic case: `wrapTool` and `wrapTools` receive an `executeToolFn`, which you embed in each tool so the framework's agent can run the tool itself.
+
+```
+import { BaseAgenticProvider, Tool, ExecuteToolFn } from '@composio/core';
+
+// Define your tool format
+interface AgentTool {
+  name: string;
+  description: string;
+  execute: (args: Record<string, unknown>) => Promise<unknown>;
+  schema: Record<string, unknown>;
+}
+
+// Define your tool collection format
+interface AgentToolkit {
+  tools: AgentTool[];
+  createAgent: (config: Record<string, unknown>) => unknown;
+}
+
+// Create your provider
+export class MyAgentProvider extends BaseAgenticProvider<AgentToolkit, AgentTool> {
+  // Required: Unique provider name for telemetry
+  readonly name = 'my-agent-platform';
+
+  // Required: Method to transform a single tool with execute function
+  override wrapTool(tool: Tool, executeToolFn: ExecuteToolFn): AgentTool {
+    return {
+      name: tool.slug,
+      description: tool.description || '',
+      schema: tool.inputParameters || {},
+      execute: async (args: Record<string, unknown>) => {
+        const result = await executeToolFn(tool.slug, args);
+        if (!result.successful) {
+          throw new Error(result.error || 'Tool execution failed');
+        }
+        return result.data;
+      },
+    };
+  }
+
+  // Required: Method to transform a collection of tools with execute function
+  override wrapTools(tools: Tool[], executeToolFn: ExecuteToolFn): AgentToolkit {
+    const agentTools = tools.map(tool => this.wrapTool(tool, executeToolFn));
+
+    return {
+      tools: agentTools,
+      createAgent: config => {
+        // Create an agent using the tools
+        return {
+          run: async (prompt: string) => {
+            // Implementation depends on your agent framework
+            console.log(`Running agent with prompt: ${prompt}`);
+            // The agent would use the tools.execute method to run tools
+          },
+        };
+      },
+    };
+  }
+
+  // Optional: Custom helper methods for your agent platform
+  async runAgent(agentToolkit: AgentToolkit, prompt: string): Promise<unknown> {
+    const agent = agentToolkit.createAgent({});
+    return await agent.run(prompt);
+  }
+}
+```
+
+## [Use your provider](https://docs.composio.dev/docs/providers/custom-providers/typescript\#use-your-provider)
+
+Pass an instance to `Composio` via the `provider` option. Every tool you fetch comes back in your custom format.
+
+```
+import { Composio } from '@composio/core';
+import { MyAIProvider } from './my-ai-provider';
+
+// Create your provider instance
+const myProvider = new MyAIProvider();
+
+// Initialize Composio with your provider
+const composio = new Composio({
+  apiKey: 'your-composio-api-key',
+  provider: myProvider,
+});
+
+// Get tools - they will be transformed by your provider
+const tools = await composio.tools.get('default', {
+  toolkits: ['github'],
+});
+
+// Use the tools with your AI platform
+console.log(tools); // These will be in your custom format
+```
+
+## [Provider state and context](https://docs.composio.dev/docs/providers/custom-providers/typescript\#provider-state-and-context)
+
+A provider is a class, so it can hold state. Use the constructor for config, and instance fields for caches or counters.
+
+```
+export class StatefulProvider extends BaseNonAgenticProvider<ToolCollection, Tool> {
+  readonly name = 'stateful-provider';
+
+  // Provider state
+  private requestCount = 0;
+  private toolCache = new Map<string, any>();
+  private config: ProviderConfig;
+
+  constructor(config: ProviderConfig) {
+    super();
+    this.config = config;
+  }
+
+  override wrapTool(tool: Tool): ProviderTool {
+    this.requestCount++;
+
+    // Use the provider state/config
+    const enhancedTool = {
+      // Transform the tool
+      name: this.config.useUpperCase ? tool.slug.toUpperCase() : tool.slug,
+      description: tool.description,
+      schema: tool.inputParameters,
+    };
+
+    // Cache the transformed tool
+    this.toolCache.set(tool.slug, enhancedTool);
+
+    return enhancedTool;
+  }
+
+  override wrapTools(tools: Tool[]): ProviderToolCollection {
+    return tools.map(tool => this.wrapTool(tool));
+  }
+
+  // Custom methods that use provider state
+  getRequestCount(): number {
+    return this.requestCount;
+  }
+
+  getCachedTool(slug: string): ProviderTool | undefined {
+    return this.toolCache.get(slug);
+  }
+}
+```
+
+## [Add behavior with composition](https://docs.composio.dev/docs/providers/custom-providers/typescript\#add-behavior-with-composition)
+
+Don't subclass a concrete provider to add analytics, retries, or other cross-cutting behavior. Hold a provider instance and delegate to it instead. This avoids making your class satisfy every overload that the provider exposes.
+
+```
+import { Composio } from '@composio/core';
+import type { ExecuteToolFnOptions, ExecuteToolModifiers } from '@composio/core';
+import { OpenAIProvider } from '@composio/openai';
+import type OpenAI from 'openai';
+
+class InstrumentedOpenAIToolExecutor {
+  private readonly analytics = {
+    toolCalls: 0,
+    errors: 0,
+  };
+
+  constructor(private readonly provider: OpenAIProvider) {}
+
+  async executeToolCall(
+    userId: string,
+    tool: OpenAI.ChatCompletionMessageFunctionToolCall,
+    options?: ExecuteToolFnOptions,
+    modifiers?: ExecuteToolModifiers
+  ): Promise<string> {
+    this.analytics.toolCalls++;
+
+    try {
+      return await this.provider.executeToolCall(userId, tool, options, modifiers);
+    } catch (error) {
+      this.analytics.errors++;
+      throw error;
+    }
+  }
+
+  getAnalytics(): Readonly<{ toolCalls: number; errors: number }> {
+    return { ...this.analytics };
+  }
+}
+
+const provider = new OpenAIProvider();
+const composio = new Composio({ provider });
+const toolExecutor = new InstrumentedOpenAIToolExecutor(provider);
+```
+
+Pass the underlying provider to `Composio`, then call the wrapper from your manual tool-call loop.
+
+## [Best practices](https://docs.composio.dev/docs/providers/custom-providers/typescript\#best-practices)
+
+- **Keep providers focused**: each provider should target one platform.
+- **Handle errors gracefully**: catch and transform errors from tool execution.
+- **Follow platform conventions**: adopt the naming and structure of the target platform.
+- **Cache transformed tools**: reuse wrapped tools instead of rebuilding them.
+- **Add helper methods**: expose convenience methods for common platform operations.
+- **Document your provider**: describe its features and usage.
+- **Set a meaningful `name`**: it's used for telemetry insights.
+
+[Edit this page on GitHub](https://github.com/ComposioHQ/composio/blob/next/docs/content/docs/providers/custom-providers/typescript.mdx)
+
+### On this page
+
+[Provider architecture](https://docs.composio.dev/docs/providers/custom-providers/typescript#provider-architecture) [Non-agentic provider](https://docs.composio.dev/docs/providers/custom-providers/typescript#non-agentic-provider) [Agentic provider](https://docs.composio.dev/docs/providers/custom-providers/typescript#agentic-provider) [Use your provider](https://docs.composio.dev/docs/providers/custom-providers/typescript#use-your-provider) [Provider state and context](https://docs.composio.dev/docs/providers/custom-providers/typescript#provider-state-and-context) [Add behavior with composition](https://docs.composio.dev/docs/providers/custom-providers/typescript#add-behavior-with-composition) [Best practices](https://docs.composio.dev/docs/providers/custom-providers/typescript#best-practices)

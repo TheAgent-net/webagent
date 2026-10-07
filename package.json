@@ -1,0 +1,33 @@
+{
+  "name": "webagent",
+  "version": "0.4.0",
+  "description": "Layered harness: parallel runs, public loop controls, no slots",
+  "type": "module",
+  "license": "Apache-2.0",
+  "bin": {
+    "webagent": "./src/cli.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "bench": "bun bench/run.ts",
+    "pair": "bun experiment/run.ts"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.30",
+    "@fingerprintjs/botd": "^2.0.0",
+    "isbot": "^5.2.2",
+    "web-bot-auth": "^0.2.0"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "puppeteer-core": "^25.10.0",
+    "typescript": "^5.8.2"
+  }
+}

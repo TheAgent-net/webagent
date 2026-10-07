@@ -1,0 +1,111 @@
+---
+url: https://docs.composio.dev/toolkits/jira
+title: Jira
+description: 
+status: 200
+---
+
+# Jira
+
+A tool for bug tracking, issue tracking, and agile project management.
+
+- **Category:** project management
+- **Auth:** OAUTH2, S2S_OAUTH2, API_KEY
+- **Composio-managed OAuth available?** Yes
+- **Tools:** 102
+- **Triggers:** 17
+- **Slug:** `JIRA`
+- **Version:** 20260908_00
+
+## Frequently Asked Questions
+
+### How do I set up custom OAuth credentials for Jira?
+
+For a step-by-step guide on creating and configuring your own Jira OAuth credentials with Composio, see [How to create OAuth credentials for Jira](https://composio.dev/auth/jira).
+
+### What is the difference between JQL GET, JQL POST, and Search Issues?
+
+JQL GET and POST target the same search functionality but use different HTTP methods. POST supports complex queries in the request body. Search Issues uses JQL POST under the hood with extra parameters and filters. For consistent results, prefer POST for complex queries. Use the `fields` parameter to request specific fields, or `["*all"]` to request all fields.
+
+## Tools
+
+- `JIRA_ADD_ATTACHMENT`
+- `JIRA_ADD_COMMENT`
+- `JIRA_ADD_USERS_TO_PROJECT_ROLE`
+- `JIRA_ADD_USER_TO_GROUP`
+- `JIRA_ADD_WATCHER_TO_ISSUE`
+- `JIRA_ADD_WORKLOG`
+- `JIRA_ANALYSE_EXPRESSION`
+- `JIRA_ASSIGN_ISSUE`
+- `JIRA_BULK_CREATE_ISSUE`
+- `JIRA_CHECK_PERMISSIONS`
+- `JIRA_CREATE_BOARD`
+- `JIRA_CREATE_GROUP`
+- `JIRA_CREATE_ISSUE`
+- `JIRA_CREATE_ISSUE_LINK`
+- `JIRA_CREATE_JQL_AUTOCOMPLETEDATA`
+- `JIRA_CREATE_PROJECT`
+- `JIRA_CREATE_SPRINT`
+- `JIRA_CREATE_VERSION`
+- `JIRA_DELETE_ATTACHMENT`
+- `JIRA_DELETE_COMMENT`
+- `JIRA_DELETE_ISSUE`
+- `JIRA_DELETE_VERSION`
+- `JIRA_DELETE_WORKLOG`
+- `JIRA_EDIT_ISSUE`
+- `JIRA_EVALUATE_JIRA_EXPRESSION`
+- `JIRA_FETCH_BULK_ISSUES`
+- `JIRA_FIND_USERS`
+- `JIRA_FIND_USERS2`
+- `JIRA_FIND_USERS_FOR_PICKER`
+- `JIRA_GET_ALL_GROUPS`
+- `JIRA_GET_ALL_ISSUE_TYPE_SCHEMES`
+- `JIRA_GET_ALL_PROJECTS`
+- `JIRA_GET_ALL_STATUSES`
+- `JIRA_GET_ALL_USERS`
+- `JIRA_GET_ATTACHMENT`
+- `JIRA_GET_ATTACHMENT_META`
+- `JIRA_GET_COMMENT`
+- `JIRA_GET_COMPONENTS`
+- `JIRA_GET_CREATE_METADATA_ISSUE_TYPE_FIELDS`
+- `JIRA_GET_CURRENT_USER`
+- `JIRA_GET_DASHBOARDS`
+- `JIRA_GET_FAVORITE_FILTERS`
+- `JIRA_GET_FIELDS`
+- `JIRA_GET_FIELDS_PAGINATED`
+- `JIRA_GET_FILTER`
+- `JIRA_GET_GROUP`
+- `JIRA_GET_INFO`
+- `JIRA_GET_ISSUE`
+- `JIRA_GET_ISSUE_CREATE_METADATA`
+- `JIRA_GET_ISSUE_EDIT_METADATA`
+- `JIRA_GET_ISSUE_LINK_TYPES`
+- `JIRA_GET_ISSUE_PICKER_SUGGESTIONS`
+- `JIRA_GET_ISSUE_PROPERTY`
+- `JIRA_GET_ISSUE_RESOLUTIONS`
+- `JIRA_GET_ISSUE_TYPES`
+- `JIRA_GET_ISSUE_WATCHERS`
+- `JIRA_GET_ISSUE_WORKLOGS`
+- `JIRA_GET_JQL_AUTOCOMPLETEDATA`
+- `JIRA_GET_JQL_AUTOCOMPLETEDATA_SUGGESTIONS`
+- `JIRA_GET_MY_PERMISSIONS`
+- `JIRA_GET_MYPREFERENCES_LOCALE`
+- `JIRA_GET_PERMISSIONS`
+- `JIRA_GET_PERMITTED_PROJECTS`
+- `JIRA_GET_PROJECT`
+- `JIRA_GET_PROJECT_ROLES`
+- `JIRA_GET_PROJECT_TEMPLATES`
+- `JIRA_GET_PROJECT_TYPE`
+- `JIRA_GET_PROJECT_VERSIONS`
+- `JIRA_GET_RECENT_PROJECTS`
+- `JIRA_GET_REMOTE_ISSUE_LINKS`
+- `JIRA_GET_SERVER_INFO`
+- `JIRA_GET_SERVICE_DESK_REQUEST_TYPE_FIELDS`
+- `JIRA_GET_SPRINT`
+- `JIRA_GET_SYSTEM_AVATARS`
+- `JIRA_GET_TRANSITIONS`
+- `JIRA_GET_UNIVERSAL_AVATAR_TYPE_OWNER`
+- `JIRA_GET_UNIVERSAL_AVATAR_VIEW_TYPE`
+- `JIRA_GET_USER_GROUPS`
+- `JIRA_GET_VIEW_TYPE_AVATAR`
+- `JIRA_GET_VOTES`
