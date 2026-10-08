@@ -9,6 +9,7 @@ import { extractPage } from "../site/extract.ts";
 import { buildPack } from "../site/pack.ts";
 import type { CrawlState } from "../site/crawl.ts";
 import type { PageShot } from "../site/types.ts";
+import { loadContent } from "./content.ts";
 import { loadInstruction, loadPackConfig, packPolicy, resolvePackDir } from "./load.ts";
 import type { AgentPackConfig, PackBuildFn, PackRuntime } from "./types.ts";
 
@@ -66,9 +67,17 @@ export async function buildFromOrigin(
   const policy = packPolicy(config);
   const fetchFn = opts.fetch ?? fetch;
   const max = opts.maxPages ?? 80;
-  const state = await crawlSite(config.origin, { maxPages: max, fetch: fetchFn });
-  const extra = await crawlDocs(config, fetchFn, Math.max(10, Math.floor(max * 0.6)));
-  const pages = dedupePages([...state.pages, ...extra]);
+  /* A pack with stored content opens without a crawl. `refresh.ts` keeps the content current. */
+  const stored = loadContent(dir);
+  let pages: PageShot[];
+  if (stored?.pages.length) {
+    pages = stored.pages;
+  } else {
+    const state = await crawlSite(config.origin, { maxPages: max, fetch: fetchFn });
+    const extra = await crawlDocs(config, fetchFn, Math.max(10, Math.floor(max * 0.6)));
+    pages = dedupePages([...state.pages, ...extra]);
+  }
+  const cachePath = opts.cachePath ?? (stored ? join(dir, "retrieve-cache.json") : undefined);
   const crawlState: CrawlState = {
     origin: config.origin,
     pages,
@@ -81,7 +90,7 @@ export async function buildFromOrigin(
   const chunks = indexPages(pages, policy);
   let retrieval: RetrievalInfo = { mode: "lexical", embedded: 0 };
   try {
-    retrieval = await fillVectors(chunks, { embed: opts.embed, cachePath: opts.embed === false ? undefined : opts.cachePath });
+    retrieval = await fillVectors(chunks, { embed: opts.embed, cachePath: opts.embed === false ? undefined : cachePath });
   } catch (err) {
     console.error("embeddings failed — lexical fallback:", err instanceof Error ? err.message : err);
   }

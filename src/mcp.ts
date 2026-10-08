@@ -424,12 +424,12 @@ interface Rpc {
   params?: unknown;
 }
 
-interface RpcErr {
+export interface RpcErr {
   code: number;
   message: string;
 }
 
-function rpc(req: Request, id: unknown, result?: unknown, error?: RpcErr): Promise<Response> | Response {
+export function rpc(req: Request, id: unknown, result?: unknown, error?: RpcErr): Promise<Response> | Response {
   const body = error
     ? { jsonrpc: "2.0", id: id ?? null, error }
     : { jsonrpc: "2.0", id: id ?? null, result };

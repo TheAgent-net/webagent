@@ -3,24 +3,24 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Harness } from "../harness.ts";
 import type { Run } from "../run.ts";
-import { attachPack } from "../site/attach.ts";
 import { docsLookupTool } from "./docs.ts";
 import type { PackRuntime } from "./types.ts";
 
-export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: string }): Run {
-  const run = attachPack(h, runtime.site, { model: opts?.model, instruction: runtime.instruction });
+/**
+ * Bind a pack agent. The run gets one system prompt in a fixed order:
+ * pack instruction, then reply shape. Tools: docs_lookup plus the pack's own tools.
+ * Visuals are not the model's job: pickVisual attaches one after the answer.
+ * Pass `instruction` to try a different pack instruction (prompt tuning).
+ */
+export function attachAgent(h: Harness, runtime: PackRuntime, opts?: { model?: string; instruction?: string }): Run {
   const docs = docsLookupTool(runtime);
   h.addTool(docs);
-  run.useTool(docs);
-  run.inject({
-    vars: [
-      "You are the " + runtime.config.brand.name + " assistant.",
-      "Docs at " + (runtime.config.docs?.origin || runtime.config.origin) + ".",
-      "Retrieval: " + (runtime.retrieval?.mode ?? "lexical") + ", " + runtime.chunks.length + " chunks.",
-      "Call docs_lookup for a quote or URL.",
-    ].join("\n"),
-  });
-  return run;
+  return h.create({ model: opts?.model, instruction: composePrompt(runtime, opts?.instruction), tools: [docs] });
+}
+
+/** The full system prompt for a pack run. */
+export function composePrompt(runtime: PackRuntime, instruction = runtime.instruction): string {
+  return [instruction.trim(), REPLY_SHAPE].filter(Boolean).join("\n\n");
 }
 
 export async function attachPackTools(h: Harness, run: Run, runtime: PackRuntime): Promise<void> {
@@ -35,3 +35,16 @@ export async function attachPackTools(h: Harness, run: Run, runtime: PackRuntime
     if (typeof mod.attach === "function") await mod.attach(h, run, runtime);
   }
 }
+
+/** How a reply must read. The widget shows the first paragraph as the answer. */
+export const REPLY_SHAPE = [
+  "REPLY SHAPE",
+  "- Put the direct answer in the first paragraph: one or two short sentences. No preamble. Do not start with a heading.",
+  "- Then explain it so the visitor understands. A bare fact is not an answer. In 2-4 short bullets, say what it means for them, how it works, and what they do next. Use 3-5 numbered steps for a setup.",
+  "- Answer each question on its own. Use earlier turns only when the new question depends on them.",
+  "- Use plain words. One idea per sentence. Bold only the one key term.",
+  "- A greeting or a question back to the visitor is one short paragraph.",
+  "- Speak about the product, not about your sources. Never say \"the docs say\", \"the docs do not specify\", \"according to the documentation\", or \"I could not find\".",
+  "- State what is true. Leave out what you do not know. If the visitor needs an exact fact you do not have, offer to connect them with the team.",
+].join("\n");
+

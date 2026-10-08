@@ -65,6 +65,9 @@ function rankHits(
     let s = lex[i]! / maxLex;
     if (qvec && c.vector?.length) s = 0.5 * s + 0.5 * Math.max(0, cosine(qvec, c.vector));
     s += kindPrior(c, integration, policy) * 0.01;
+    for (const t of parts.core) {
+      if (t.length >= 4 && urlSegments(c.url).includes(t)) s += 0.08;
+    }
     if (s <= 0) continue;
     scored.push({ i, score: s });
   }
@@ -129,11 +132,22 @@ function termScore(
   url: string,
   w: number,
 ): number {
-  const tf = countIn(doc, t) + (title.includes(t) ? 2 : 0) + (section.includes(t) ? 1.5 : 0) + (url.includes(t) ? 1.5 : 0);
+  const tf = countIn(doc, t) + (title.includes(t) ? 2 : 0) + (section.includes(t) ? 1.5 : 0) + urlTermBoost(url, t);
   if (tf <= 0) return 0;
   const idf = Math.log(1 + (N - dft + 0.5) / (dft + 0.5));
   const den = tf + K1 * (1 - B + B * (dl / (avgdl || 1)));
   return w * idf * ((tf * (K1 + 1)) / den);
+}
+
+/** A query word that is a path segment (cursor, grok) is a named page, not a generic topic. */
+function urlSegments(url: string): string[] {
+  return url.replace(/^https?:\/\/[^/]+/i, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+}
+
+function urlTermBoost(url: string, t: string): number {
+  if (!url.includes(t)) return 0;
+  if (t.length >= 4 && urlSegments(url).includes(t)) return 5;
+  return 1.5;
 }
 
 function kindPrior(c: DocChunk, integration: boolean, policy: RetrievePolicy): number {

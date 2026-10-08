@@ -14,8 +14,19 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent ask <text>             one echo run");
   console.error("  webagent from-url <url>         crawl a site → write a pack");
   console.error("  webagent serve --pack <dir>     host a pack (widget + POST /chat)");
+  console.error("  webagent capture --pack <dir>   save site visuals for the widget (Chromium)");
+  console.error("  webagent tune --pack <dir>      GEPA: tune the pack instruction on evals.json");
   console.error("  webagent serve [addr]           generic host, no pack");
-  console.error("  webagent demo <name>            pack host + demo site preview");
+  console.error("  webagent cloud [addr]           host every tenant (--packs <dir> --db <file>)");
+  console.error("  webagent tenant add <id> --pack <dir> [--org <orgId>] [--domain a,b] [--origin https://x]");
+  console.error("  webagent tenant list            list tenants in the store");
+  console.error("  webagent csp <site-url> [--cloud <public-url>]  check if the site CSP lets the widget load");
+  console.error("  webagent score [--tenant <id>]  label idle agent chats: intelligent, script, unclear (--db --idle <min> --no-judge)");
+  console.error("  webagent cdn pull --tenant <id> pull one day of CDN counts (settings.cdn, read-only token)");
+  console.error("  webagent cdn add --tenant <id> --zone <id> --token-env <NAME>  link a Cloudflare zone, token from env");
+  console.error("  webagent onboard <url> --id <id> [--org <orgId>] [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs dir]");
+  console.error("  webagent refresh --tenant <id>  fetch the site again, rebuild changed pages, reload");
+  console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
   console.error("  webagent ingest <url>           crawl a site, build flows, attach a run");
   console.error("  webagent company <src> [addr]   website or GitHub → crawl, forms, live webagent");
   console.error("  webagent pair <url>             two agents: site seller + buyer (Cursor SDK)");
@@ -125,21 +136,39 @@ switch (args[0]) {
   case "demo": {
     const name = args[1];
     if (!name) {
-      console.error("usage: webagent demo <name> [addr]");
+      console.error("usage: webagent demo <name> [addr] [--refresh] [--site-port N]");
       process.exit(2);
     }
     const addr = positional(args.slice(2)) || ":8787";
     const sitePort = Number(flag(args, "--site-port") || 0) || Number(addr.replace(/^.*:/, "")) + 1;
-    await startPack(h, packDirFor(name), addr);
-    const { existsSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    const site = join(process.cwd(), "demo", name, "site");
-    if (existsSync(join(site, "index.html"))) {
-      const { serveDemoSite } = await import("./pack/demo-site.ts");
-      const origin = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + (Number(addr.replace(/^.*:/, "")) || 8787);
-      serveDemoSite(site, sitePort, origin);
-      console.error(`  demo    http://127.0.0.1:${sitePort}/  (embeds ${origin}/widget.js)`);
+    const refresh = args.includes("--refresh");
+    const dir = packDirFor(name);
+    const { loadPackConfig } = await import("./pack/load.ts");
+    const { ensureDemoClone } = await import("./pack/clone.ts");
+    const { serveDemoSite } = await import("./pack/demo-site.ts");
+    const config = loadPackConfig(dir);
+    if (!config.origin) {
+      console.error("pack.json missing origin — demo cannot pixel-clone the webpage");
+      process.exit(2);
     }
+    const site = join(process.cwd(), "demo", name, "site");
+    const widgetOrigin = process.env.WEBAGENT_PUBLIC_URL || "http://" + lanIp() + ":" + (Number(addr.replace(/^.*:/, "")) || 8787);
+    console.error("pixel-cloning " + config.origin + " → " + site + (refresh ? " (refresh)" : ""));
+    const packP = startPack(h, dir, addr);
+    try {
+      const cloned = await ensureDemoClone({ origin: config.origin, out: site, refresh });
+      console.error(
+        `  clone   ${cloned.files} files  ${Math.round(cloned.htmlBytes / 1024)}kb html` +
+          (cloned.fresh ? "  fresh" : "  cached") +
+          (cloned.landed && cloned.landed !== config.origin ? "  via " + cloned.landed : ""),
+      );
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+    await packP;
+    serveDemoSite(site, sitePort, widgetOrigin);
+    console.error(`  demo    http://127.0.0.1:${sitePort}/  (pixel clone + ${widgetOrigin}/widget.js)`);
     await new Promise(() => {});
     break;
   }
@@ -209,6 +238,262 @@ switch (args[0]) {
     await new Promise(() => {});
     break;
   }
+  case "tune": {
+    const pack = flag(args, "--pack");
+    if (!pack) {
+      console.error("usage: webagent tune --pack <dir> [--budget 8] [--model <judge and reflect model>]");
+      process.exit(2);
+    }
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("tune runs the real agent and a judge model: set OPENAI_API_KEY");
+      process.exit(2);
+    }
+    const { openPack } = await import("./pack/build.ts");
+    const { loadCases, starterCases, tunePrompt, tuneReport } = await import("./pack/tune.ts");
+    const { embedVisuals } = await import("./pack/docs.ts");
+    const { writeFileSync } = await import("node:fs");
+    const runtime = await openPack(pack, { maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220 });
+    await embedVisuals(runtime).catch(() => 0);
+    const own = existsSync(join(runtime.dir, "evals.json"));
+    const cases = own
+      ? loadCases(runtime.dir)
+      : starterCases(runtime.config.brand.name, runtime.pages.map((p) => new URL(p.url).pathname));
+    if (!own) console.error("no evals.json: using the generic starter cases");
+    console.error(`tuning ${runtime.config.id} on ${cases.length} cases ...`);
+    const { best, pool } = await tunePrompt(runtime, cases, {
+      budget: Number(flag(args, "--budget")) || 8,
+      model: flag(args, "--model"),
+      log: (line) => console.error("  " + line),
+    });
+    writeFileSync(join(runtime.dir, "instruction.tuned.md"), best.text.trim() + "\n");
+    writeFileSync(join(runtime.dir, "tune-report.md"), tuneReport(pool, best) + "\n");
+    console.error(`best ${best.id} mean ${best.mean.toFixed(3)} (seed ${pool[0]!.mean.toFixed(3)})`);
+    console.error(`wrote ${join(runtime.dir, "instruction.tuned.md")} and tune-report.md. Review it, then copy it over instruction.md.`);
+    break;
+  }
+  case "capture": {
+    const pack = flag(args, "--pack");
+    if (!pack) {
+      console.error("usage: webagent capture --pack <dir> [--url <site>] [--pages /,/pricing,https://other.site/page] [--max 8] [--max-visuals 40]");
+      process.exit(2);
+    }
+    const { loadPackConfig } = await import("./pack/load.ts");
+    const { captureVisuals } = await import("./site/visual.ts");
+    const config = loadPackConfig(pack);
+    const clone = join(process.cwd(), "demo", config.id, "site");
+    let url = flag(args, "--url");
+    let stop = () => {};
+    if (!url && existsSync(join(clone, "index.html"))) {
+      const { serveDemoSite } = await import("./pack/demo-site.ts");
+      const site = serveDemoSite(clone, 0, "http://127.0.0.1");
+      url = "http://127.0.0.1:" + site.port;
+      stop = site.stop;
+    }
+    url ||= config.origin;
+    const pages = flag(args, "--pages")?.split(",").map((p) => p.trim()).filter(Boolean);
+    console.error("capturing visuals from " + url + " ...");
+    try {
+      const visuals = await captureVisuals(url, {
+        out: config.dir!,
+        pages,
+        maxPages: Number(flag(args, "--max")) || 8,
+        maxVisuals: Number(flag(args, "--max-visuals")) || 40,
+      });
+      for (const v of visuals) console.error(`  ${v.kind.padEnd(8)} ${v.id.padEnd(36)} ${v.page}`);
+      console.error(`wrote ${visuals.length} visuals to ${join(config.dir!, "visuals.json")}`);
+    } finally {
+      stop();
+    }
+    break;
+  }
+  case "cloud": {
+    const { openStore } = await import("./store/sqlite.ts");
+    const { Tenants } = await import("./host/tenant.ts");
+    const { serveCloud } = await import("./host/cloud.ts");
+    const { apiRoute, API_BASE } = await import("./admin/index.ts");
+    const store = openStore(flag(args, "--db"));
+    const packs = flag(args, "--packs") || "packs";
+    const tenants = new Tenants(store, { packs });
+    const added = tenants.sync();
+    const addr = positional(args.slice(1)) || ":8787";
+    const port = Number(addr.replace(/^.*:/, "")) || 8787;
+    const { frontRoute } = await import("./host/front.ts");
+    const front = frontRoute(store, {
+      skip: (req) => !!tenants.forDomain((req.headers.get("x-forwarded-host") || req.headers.get("host") || "").split(",")[0]!.trim()),
+    });
+    const served = serveCloud(tenants, { port, routes: [apiRoute(tenants, { packs }), front] });
+    /* Analytics: refresh agent IP ranges daily. Score idle agent chats every 5 minutes. */
+    const { startRanges } = await import("./host/verify.ts");
+    const { startScoring } = await import("./host/score.ts");
+    startRanges();
+    startScoring(store, () => tenants.list().map((t) => t.id));
+    /* Analytics: pull CDN counts every hour for the sites with a CDN link. */
+    const { startCdn } = await import("./host/cdn.ts");
+    startCdn(store, () => tenants.list().map((t) => t.id));
+    const hours = Number(process.env.WEBAGENT_REFRESH_HOURS) || 0;
+    if (hours > 0) {
+      const { startRefresh } = await import("./pack/refresh.ts");
+      startRefresh(tenants, hours * 3600_000);
+      console.error(`  refresh every ${hours} h`);
+    }
+    console.error(`cloud ${served.url}`);
+    console.error(`  api     ${served.url}${API_BASE}  (dashboard login: ${process.env.AGENTNET_PLATFORM_URL || "http://platform:8000"}/auth/me)`);
+    if (added.length) console.error("  added   " + added.join(", "));
+    for (const t of tenants.list()) {
+      console.error(`  ${t.id.padEnd(14)} ${served.url}/t/${t.id}/widget.js` + (t.domains.length ? "  " + t.domains.join(", ") : ""));
+    }
+    await new Promise(() => {});
+    break;
+  }
+  case "csp": {
+    const site = args[1];
+    const cloudUrl = flag(args, "--cloud") || process.env.WEBAGENT_PUBLIC_URL;
+    if (!site || !cloudUrl) {
+      console.error("usage: webagent csp <site-url> --cloud <public-url>  (or set WEBAGENT_PUBLIC_URL)");
+      process.exit(2);
+    }
+    const { checkCsp, formatCsp } = await import("./host/csp.ts");
+    const report = await checkCsp(site, cloudUrl);
+    console.log(formatCsp(report));
+    process.exit(report.ok ? 0 : 1);
+  }
+  case "tenant": {
+    const { openStore } = await import("./store/sqlite.ts");
+    const store = openStore(flag(args, "--db"));
+    const verb = args[1];
+    if (verb === "add") {
+      const id = args[2];
+      const pack = flag(args, "--pack");
+      if (!id || !/^[a-z0-9][a-z0-9_-]{0,62}$/.test(id) || !pack || !existsSync(join(pack, "pack.json"))) {
+        console.error("usage: webagent tenant add <id> --pack <dir with pack.json> [--org <orgId>] [--domain a,b] [--origin https://x]");
+        process.exit(2);
+      }
+      const list = (v?: string) => (v ? v.split(",").map((x) => x.trim()).filter(Boolean) : []);
+      const old = store.getTenant(id);
+      const org = flag(args, "--org") || old?.org;
+      if (org !== undefined && !/^[A-Za-z0-9_-]{1,64}$/.test(org)) {
+        console.error("bad --org: use A-Z, a-z, 0-9, - and _ (at most 64 characters)");
+        process.exit(2);
+      }
+      const { resolve } = await import("node:path");
+      store.putTenant({
+        id,
+        name: flag(args, "--name") || old?.name || id,
+        pack: resolve(pack),
+        domains: list(flag(args, "--domain")).length ? list(flag(args, "--domain")) : old?.domains ?? [],
+        origins: list(flag(args, "--origin")).length ? list(flag(args, "--origin")) : old?.origins ?? [],
+        settings: old?.settings ?? {},
+        created: old?.created ?? Date.now(),
+        ...(org ? { org } : {}),
+      });
+      console.error((old ? "updated " : "added ") + id);
+    } else {
+      for (const t of store.listTenants()) {
+        console.log([t.id, t.name, t.org ?? "", t.pack, t.domains.join(","), t.origins.join(",")].join("\t"));
+      }
+    }
+    store.close();
+    break;
+  }
+  /* ---- Analytics verbs. Start ---- */
+  case "score": {
+    const { openStore } = await import("./store/sqlite.ts");
+    const { scoreConversations } = await import("./host/score.ts");
+    const store = openStore(flag(args, "--db"));
+    const one = flag(args, "--tenant");
+    const idle = flag(args, "--idle");
+    for (const id of one ? [one] : store.listTenants().map((t) => t.id)) {
+      const done = await scoreConversations(store, id, {
+        idleMinutes: idle === undefined ? undefined : Number(idle),
+        judge: args.includes("--no-judge") ? false : {},
+      });
+      for (const s of done) console.log([s.id, s.label, s.score.toFixed(2), s.reason ?? ""].join("\t"));
+      console.error(`${id}: ${done.length} scored`);
+    }
+    store.close();
+    break;
+  }
+  case "cdn": {
+    const id = flag(args, "--tenant");
+    const verb = args[1];
+    if ((verb !== "pull" && verb !== "add") || !id) {
+      console.error("usage: webagent cdn pull --tenant <id> [--db <file>]");
+      console.error("       webagent cdn add --tenant <id> --zone <zone id> --token-env <ENV_NAME> [--db <file>]");
+      process.exit(2);
+    }
+    const { openStore } = await import("./store/sqlite.ts");
+    const cdnModule = await import("./host/cdn.ts");
+    const store = openStore(flag(args, "--db"));
+    if (verb === "add") {
+      const t = store.getTenant(id);
+      const cdn = { provider: "cloudflare", zone: (flag(args, "--zone") || "").toLowerCase(), tokenEnv: flag(args, "--token-env") || "" };
+      if (!t || !cdnModule.getCdnSettings({ cdn })) {
+        console.error(t ? "bad --zone (32 hex characters) or --token-env (A-Z, 0-9, _)" : "unknown tenant " + id);
+        process.exitCode = 2;
+      } else {
+        store.putTenant({ ...t, settings: { ...t.settings, cdn } });
+        console.error(`${id}: cdn linked. Set ${cdn.tokenEnv} in the env of the cloud process.`);
+      }
+      store.close();
+      break;
+    }
+    try {
+      const out = await cdnModule.runCdn(store, id);
+      console.error(out.skipped ? `${id}: ${cdnModule.getDay(out.since)} already pulled` : `${id}: ${out.stored} rows stored for ${cdnModule.getDay(out.since)}`);
+    } catch (err) {
+      console.error("cdn pull failed:", err instanceof Error ? err.message : err);
+      process.exitCode = 1;
+    }
+    store.close();
+    break;
+  }
+  /* ---- Analytics verbs. End ---- */
+  case "onboard": {
+    const url = args[1];
+    const id = flag(args, "--id");
+    if (!url || url.startsWith("-") || !id) {
+      console.error("usage: webagent onboard <url> --id <id> [--org <orgId>] [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs packs] [--db file]");
+      process.exit(2);
+    }
+    const { openStore } = await import("./store/sqlite.ts");
+    const { onboard, getReport } = await import("./pack/onboard.ts");
+    const list = (v?: string) => (v ? v.split(",").map((x) => x.trim()).filter(Boolean) : []);
+    const store = openStore(flag(args, "--db"));
+    try {
+      const done = await onboard(url, {
+        id,
+        store,
+        name: flag(args, "--name"),
+        domains: list(flag(args, "--domain")),
+        origins: list(flag(args, "--origin")),
+        org: flag(args, "--org"),
+        packs: flag(args, "--packs") || "packs",
+        visuals: !args.includes("--no-visuals"),
+        maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 80,
+      });
+      console.log(getReport(done));
+    } finally {
+      store.close();
+    }
+    break;
+  }
+  case "refresh": {
+    const id = flag(args, "--tenant");
+    if (!id) {
+      console.error("usage: webagent refresh --tenant <id> [--db file] [--no-visuals]");
+      process.exit(2);
+    }
+    const { openStore } = await import("./store/sqlite.ts");
+    const { Tenants } = await import("./host/tenant.ts");
+    const { refreshTenant } = await import("./pack/refresh.ts");
+    const store = openStore(flag(args, "--db"));
+    try {
+      await refreshTenant(new Tenants(store), id, { visuals: args.includes("--no-visuals") ? false : undefined });
+    } finally {
+      store.close();
+    }
+    break;
+  }
   case "serve": {
     const pack = flag(args, "--pack");
     const addr = positional(args.slice(1)) || ":8787";
@@ -241,7 +526,12 @@ async function startPack(h: ReturnType<typeof defaultHarness>, dir: string, addr
     maxPages: Number(process.env.WEBAGENT_MAX_PAGES) || 220,
   });
   console.error(`agent ${hosted.url}`);
-  console.error(`  pack    ${runtime.config.id}  ${runtime.pages.length} pages  ${runtime.chunks.length} chunks`);
+  const visualN = runtime.visualVectors?.size ?? 0;
+  const visualT = runtime.config.visuals?.length ?? 0;
+  console.error(
+    `  pack    ${runtime.config.id}  ${runtime.pages.length} pages  ${runtime.chunks.length} chunks` +
+      (visualT ? `  ${visualN}/${visualT} visuals` : ""),
+  );
   console.error(`  model   ${modelName}${modelName === "echo" ? " — OPENAI_API_KEY missing, replies echo" : ""}`);
   console.error(`  human   ${hosted.url}/`);
   console.error(`  widget  ${hosted.url}/widget.js`);

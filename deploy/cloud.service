@@ -1,0 +1,18 @@
+[Unit]
+Description=webagent cloud (every tenant on one service)
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/opt/webagent-cloud
+Environment=PATH=/home/ec2-user/.bun/bin:/usr/local/bin:/usr/bin
+Environment=WEBAGENT_DB=/opt/webagent-cloud/data/webagent.db
+EnvironmentFile=-/opt/webagent-cloud/.env.cloud
+ExecStart=/home/ec2-user/.bun/bin/bun src/cli.ts cloud :8790 --packs /opt/webagent-cloud/packs --db /opt/webagent-cloud/data/webagent.db
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

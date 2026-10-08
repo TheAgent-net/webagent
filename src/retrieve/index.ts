@@ -19,3 +19,12 @@ export type {
   RetrievePolicyJson,
   SearchOpts,
 } from "./types.ts";
+export {
+  getContainerTag,
+  localProvider,
+  selectProvider,
+  supermemoryProvider,
+  type Passage,
+  type RetrievalConfig,
+  type RetrieveProvider,
+} from "./provider.ts";
