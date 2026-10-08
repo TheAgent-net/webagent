@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { generateNonce, sign } from "web-bot-auth";
 import { signerFromJWK } from "web-bot-auth/crypto";
 import { defaultHarness } from "../src/harness.ts";
-import { classifyRow, pullCdn, readCdnRows } from "../src/host/cdn.ts";
+import { classifyRow, getCdnLast, getCdnToken, pullCdn, readCdnRows, startCdn } from "../src/host/cdn.ts";
+import { getSecretKey, lockSecret, unlockSecret } from "../src/host/secret.ts";
 import { cloud } from "../src/host/cloud.ts";
 import { readSignals, scoreBeacon, BROWSER_THRESHOLD } from "../src/host/collect.ts";
 import { getFeatures, getLabel, scoreRules, scoreConversations } from "../src/host/score.ts";
@@ -352,6 +353,44 @@ describe("cdn", () => {
     expect(JSON.stringify(events)).not.toContain("test-token");
     const again = await pullCdn(store, "acme", { fetch: fake, until, env: { ACME_CF_TOKEN: "test-token" } });
     expect(again.skipped).toBe(true);
+  });
+
+  test("a locked token unlocks only with the same key", () => {
+    const key = getSecretKey({ WEBAGENT_SECRET_KEY: "a".repeat(40) })!;
+    const locked = lockSecret("cf-token-value", key);
+    expect(locked).toStartWith("v1:");
+    expect(locked).not.toContain("cf-token-value");
+    expect(unlockSecret(locked, key)).toBe("cf-token-value");
+    expect(unlockSecret(locked, getSecretKey({ WEBAGENT_SECRET_KEY: "b".repeat(40) })!)).toBeUndefined();
+    expect(getSecretKey({ WEBAGENT_SECRET_KEY: "short" })).toBeUndefined();
+    const cdn = { provider: "cloudflare" as const, zone: "0123456789abcdef0123456789abcdef", token: locked };
+    expect(getCdnToken(cdn, { WEBAGENT_SECRET_KEY: "a".repeat(40) })).toBe("cf-token-value");
+    expect(() => getCdnToken(cdn, {})).toThrow("WEBAGENT_SECRET_KEY");
+  });
+
+  test("the hourly job pulls each linked site once per day and stores the last pull", async () => {
+    const store = openStore(":memory:");
+    const zone = "0123456789abcdef0123456789abcdef";
+    store.putTenant({ id: "acme", name: "ACME", pack: "/none", domains: [], origins: [], settings: { cdn: { provider: "cloudflare", zone, tokenEnv: "ACME_CF_TOKEN" } }, created: 1 });
+    store.putTenant({ id: "beta", name: "BETA", pack: "/none", domains: [], origins: [], settings: {}, created: 1 });
+    process.env.ACME_CF_TOKEN = "test-token";
+    let calls = 0;
+    const fake = async () => {
+      calls++;
+      return Response.json(answer);
+    };
+    try {
+      const stop = startCdn(store, () => ["acme", "beta"], { fetch: fake, delayMs: 0, everyMs: 20 });
+      await Bun.sleep(80);
+      stop();
+    } finally {
+      delete process.env.ACME_CF_TOKEN;
+    }
+    expect(calls).toBe(1);
+    expect(store.listEvents("acme", { type: "cdn" })).toHaveLength(4);
+    const last = getCdnLast(store.getTenant("acme")!.settings)!;
+    expect(last).toMatchObject({ ok: true, rows: 4, reason: null });
+    expect(store.getTenant("beta")!.settings).toEqual({});
   });
 
   test("missing token env or settings fails with the env name only", async () => {

@@ -72,6 +72,8 @@ interface SetupOpts {
   onboard?: (url: string, opts: OnboardOpts) => Promise<Onboarded>;
   /** The fake onboard waits for this promise. */
   gate?: Promise<void>;
+  cdnFetch?: (url: string, init?: RequestInit) => Promise<Response>;
+  env?: Record<string, string | undefined>;
 }
 
 function setup(opts: SetupOpts = {}) {
@@ -103,6 +105,8 @@ function setup(opts: SetupOpts = {}) {
     origins: [ORIGIN],
     onboard: opts.onboard ?? fakeOnboard,
     packs: mkdtempSync(join(tmpdir(), "packs-")),
+    cdnFetch: opts.cdnFetch,
+    env: opts.env ?? {},
   });
   const fetch = cloud(tenants, { fallbackUrl: "http://cloud.test", routes: [route] });
   const call = (path: string, who?: string, init: RequestInit = {}) => {
@@ -364,6 +368,7 @@ describe("dashboard api writes", () => {
       handoff: { email: "", webhook: "", slack: "" },
       cap: 0,
       paused: false,
+      cdn: null,
     });
     await tenants.get("acme", () => "http://cloud.test/t/acme");
     const res = await send("PUT", "/orgs/org1/sites/acme/settings", "owner", {
@@ -411,6 +416,64 @@ describe("dashboard api writes", () => {
     expect(t.name).toBe("Acme Inc");
     expect(t.settings).toEqual({});
     expect((await send("PUT", "/orgs/org1/sites/acme/settings", "owner", undefined)).status).toBe(400);
+  });
+
+  test("cdn connect checks the token, stores it locked, and never sends it back", async () => {
+    const token = "cf_token_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const zone = "0123456789abcdef0123456789abcdef";
+    const seen: string[] = [];
+    const cdnFetch = async (_url: string, init?: RequestInit) => {
+      const auth = new Headers(init!.headers).get("authorization")!;
+      seen.push(auth);
+      if (auth !== "Bearer " + token) return new Response("no", { status: 403 });
+      return Response.json({ data: { viewer: { zones: [{ httpRequestsAdaptiveGroups: [{ count: 9, dimensions: { userAgent: "ChatGPT-User/1.0", verifiedBotCategory: "AI Assistant" } }] }] } }, errors: null });
+    };
+    const env = { WEBAGENT_SECRET_KEY: "k".repeat(40) };
+    const { store, send, call, read } = setup({ cdnFetch, env });
+
+    const wrong = await send("PUT", "/orgs/org1/sites/acme/settings", "owner", { cdn: { zone, token: "cf_wrong_ABCDEFGHIJKLMNOPQRSTUV" } });
+    expect(wrong.status).toBe(400);
+    expect((await read(wrong)).reason).toContain("Cloudflare refused the token");
+    expect(store.getTenant("acme")!.settings.cdn).toBeUndefined();
+
+    const ok = await send("PUT", "/orgs/org1/sites/acme/settings", "owner", { cdn: { zone, token } });
+    expect(ok.status).toBe(200);
+    const body = await ok.text();
+    expect(body).not.toContain(token);
+    expect(JSON.parse(body).cdn).toEqual({ provider: "cloudflare", zone, token: "dashboard", last: null });
+    const stored = JSON.stringify(store.getTenant("acme")!.settings);
+    expect(stored).not.toContain(token);
+    expect(stored).toContain('"token":"v1:');
+
+    const pulled = await read(send("POST", "/orgs/org1/sites/acme/cdn/pull", "owner"));
+    expect(pulled).toEqual({ day: "2026-10-04", rows: 1, stored: 1, skipped: false });
+    expect(seen.at(-1)).toBe("Bearer " + token);
+    const again = await read(send("POST", "/orgs/org1/sites/acme/cdn/pull", "owner"));
+    expect(again.skipped).toBe(true);
+    const s = await read(call("/orgs/org1/sites/acme/settings", "member"));
+    expect(s.cdn.last).toMatchObject({ day: "2026-10-04", ok: true, rows: 1, reason: null });
+    expect((await send("POST", "/orgs/org1/sites/acme/cdn/pull", "member")).status).toBe(403);
+
+    const zoneOnly = await read(send("PUT", "/orgs/org1/sites/acme/settings", "owner", { cdn: { zone: "f".repeat(32) } }));
+    expect(zoneOnly.cdn).toMatchObject({ zone: "f".repeat(32), token: "dashboard", last: null });
+
+    const off = await read(send("PUT", "/orgs/org1/sites/acme/settings", "owner", { cdn: null }));
+    expect(off.cdn).toBeNull();
+    expect(store.getTenant("acme")!.settings.cdn).toBeUndefined();
+    expect((await send("POST", "/orgs/org1/sites/acme/cdn/pull", "owner")).status).toBe(409);
+  });
+
+  test("cdn token needs the secret key, and a bad body changes nothing", async () => {
+    const zone = "0123456789abcdef0123456789abcdef";
+    const { store, send, read } = setup({ env: {} });
+    const noKey = await send("PUT", "/orgs/org1/sites/acme/settings", "owner", { cdn: { zone, token: "cf_token_ABCDEFGHIJKLMNOPQRSTUVWXYZ" } });
+    expect(noKey.status).toBe(503);
+    expect((await read(noKey)).reason).toContain("WEBAGENT_SECRET_KEY");
+    for (const cdn of [{ zone: "nope", token: "cf_token_ABCDEFGHIJKLMNOPQRSTUVWXYZ" }, { zone }, { zone, token: "short" }, { zone, token: "x".repeat(30), extra: 1 }, "on"]) {
+      const res = await send("PUT", "/orgs/org1/sites/acme/settings", "owner", { cdn, paused: true });
+      expect(res.status).toBe(400);
+    }
+    expect(store.getTenant("acme")!.settings).toEqual({});
   });
 
   test("reload closes the tenant", async () => {

@@ -6,8 +6,11 @@
  * - A member of the org reads. An `owner` or `admin` writes.
  * - A site of another org is `404`.
  */
+import { checkCdn, getCdnSettings, getCdnToken, getDay, runCdn } from "../host/cdn.ts";
 import type { Route } from "../host/cloud.ts";
 import { publicUrl } from "../host/host.ts";
+import { getSecretKey, lockSecret, SECRET_ENV } from "../host/secret.ts";
+import type { Fetch } from "../host/verify.ts";
 import { Limiter } from "../host/limit.ts";
 import type { Tenants } from "../host/tenant.ts";
 import { ORG_ID, TENANT_ID } from "../pack/onboard.ts";
@@ -15,7 +18,7 @@ import type { Channel, Conversation, ConversationFilter, Store, Tenant, VisitorK
 import { canRead, canWrite, checkWrite, listOrigins, Platform, type PlatformOpts, type User } from "./auth.ts";
 import { Builds, type BuildsOpts } from "./build.ts";
 import { conversationsCsv, turnsCsv } from "./csv.ts";
-import { getSettings, readSettings } from "./settings.ts";
+import { getSettings, readCdn, readSettings } from "./settings.ts";
 import {
   DAY_MS,
   getOverview,
@@ -32,6 +35,10 @@ export interface ApiOpts extends PlatformOpts, BuildsOpts {
   publicUrl?: string;
   /** Origins that may write. Default: `WEBAGENT_DASHBOARD_ORIGINS`. */
   origins?: string[];
+  /** Fetch for the CDN API. Tests pass a fake. */
+  cdnFetch?: Fetch;
+  /** Env for the secret key and CDN tokens. Default `process.env`. */
+  env?: Record<string, string | undefined>;
 }
 
 export const API_BASE = "/webagent/api";
@@ -64,6 +71,7 @@ export function apiRoute(tenants: Tenants, opts: ApiOpts = {}): Route & { builds
   const now = opts.now ?? Date.now;
   const store = tenants.store;
   const limiter = new Limiter();
+  const env = opts.env ?? process.env;
 
   async function handle(req: Request, url: URL): Promise<Response> {
     const path = url.pathname.replace(/\/+$/, "");
@@ -91,6 +99,7 @@ export function apiRoute(tenants: Tenants, opts: ApiOpts = {}): Route & { builds
     if (!tenant || tenant.org !== org) throw new Refusal(404, "site", "This site does not exist in this org.");
 
     if (rest === "/settings" && method === "PUT") return putSettings(req, tenant, ours);
+    if (rest === "/cdn/pull" && method === "POST") return pullNow(tenant);
     if (rest === "/reload" && method === "POST") {
       tenants.reload(tenant.id);
       return new Response(null, { status: 204, headers: HEADERS });
@@ -166,11 +175,67 @@ export function apiRoute(tenants: Tenants, opts: ApiOpts = {}): Route & { builds
 
   async function putSettings(req: Request, tenant: Tenant, ours: string): Promise<Response> {
     const body = await readBody(req);
-    const result = readSettings(store, tenant, body);
+    const first = readSettings(store, tenant, body);
+    const hasCdn = !!body && typeof body === "object" && !Array.isArray(body) && "cdn" in body;
+    const cdnBody = hasCdn ? readCdn(tenant, (body as Record<string, unknown>).cdn) : undefined;
+    const errors = [...first.errors, ...(cdnBody?.errors ?? [])];
+    if (errors.length) throw refuse(errors.join(" "));
+
+    /* Check a new zone or token with Cloudflare before anything changes. */
+    let cdn: Record<string, unknown> | null | undefined;
+    if (cdnBody?.cdn === null) cdn = null;
+    else if (cdnBody?.cdn) {
+      const { zone, token } = cdnBody.cdn;
+      const old = getCdnSettings(tenant.settings);
+      let locked: string | undefined;
+      if (token) {
+        const key = getSecretKey(env);
+        if (!key) throw new Refusal(503, "server", "The server cannot store CDN tokens yet. Ask the operator to set " + SECRET_ENV + ".");
+        locked = lockSecret(token, key);
+      }
+      let plain: string;
+      try {
+        plain = token ?? getCdnToken(old!, env);
+      } catch (err) {
+        throw refuse("The stored token cannot be used: " + (err instanceof Error ? err.message : "unknown") + ". Add the token again.");
+      }
+      try {
+        await checkCdn(zone, plain, opts.cdnFetch ?? fetch, now());
+      } catch (err) {
+        throw refuse(readCdnError(err));
+      }
+      cdn = locked
+        ? { provider: "cloudflare", zone, token: locked }
+        : { provider: "cloudflare", zone, ...(old?.token ? { token: old.token } : { tokenEnv: old?.tokenEnv }) };
+    }
+
+    /* Read the tenant again after the waits, so a write in the meantime is not lost. */
+    const fresh = store.getTenant(tenant.id) ?? tenant;
+    const result = readSettings(store, fresh, body);
     if (result.errors.length) throw refuse(result.errors.join(" "));
-    store.putTenant(result.tenant);
+    const next = result.tenant;
+    if (cdn === null) {
+      delete next.settings.cdn;
+      delete next.settings.cdnLast;
+    } else if (cdn) {
+      const before = fresh.settings.cdn as { zone?: string } | undefined;
+      next.settings.cdn = cdn;
+      if (before?.zone !== cdn.zone) delete next.settings.cdnLast;
+    }
+    store.putTenant(next);
     tenants.reload(tenant.id);
-    return sendJson(getSettings(result.tenant, ours));
+    return sendJson(getSettings(next, ours));
+  }
+
+  async function pullNow(tenant: Tenant): Promise<Response> {
+    if (!getCdnSettings(tenant.settings)) throw new Refusal(409, "conflict", "This site has no CDN link. Connect Cloudflare in the settings first.");
+    if (!limiter.take("cdn|" + tenant.id, 5).ok) throw new Refusal(429, "rate", "Too many pulls. Wait one minute.");
+    try {
+      const out = await runCdn(store, tenant.id, { fetch: opts.cdnFetch, env, until: Math.floor(now() / DAY_MS) * DAY_MS });
+      return sendJson({ day: getDay(out.since), rows: out.rows, stored: out.stored, skipped: out.skipped === true });
+    } catch (err) {
+      throw new Refusal(502, "server", readCdnError(err));
+    }
   }
 
   const route = async (req: Request, url: URL): Promise<Response | null> => {
@@ -417,4 +482,13 @@ function getQuestions(store: Store, tenant: Tenant, since: number) {
       at: g.conversation.updated,
     })),
   };
+}
+
+/** A plain reason for a CDN failure. The token is never in it. */
+function readCdnError(err: unknown): string {
+  const text = err instanceof Error ? err.message : "";
+  if (/^cloudflare: /.test(text)) return "Cloudflare refused the request: " + text.slice("cloudflare: ".length) + ".";
+  if (/^cloudflare status /.test(text)) return "Cloudflare did not answer (" + text.slice("cloudflare ".length) + "). Try again.";
+  if (text) return text.replace(/\.?$/, ".");
+  return "The CDN check failed. Try again.";
 }

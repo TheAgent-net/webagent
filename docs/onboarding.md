@@ -74,7 +74,7 @@ The widget puts styles inline. If your `style-src` does not allow `'unsafe-inlin
 
 | Step | What you get | Time |
 | --- | --- | --- |
-| Connect Cloudflare with a **read-only** API token (Analytics: Read, Logs: Read). | We count AI agents and crawlers that visit your site, not only the ones that talk to the widget. | 10 min |
+| Connect Cloudflare in the dashboard (Site, Settings, Cloudflare analytics): the zone ID and a **read-only** API token with one permission, Zone · Analytics · Read. | We count AI agents and crawlers that read your site from the CDN, not only the ones that run the widget. The service pulls once a day. The token is stored encrypted and never shown again. | 5 min |
 | Add a line to your `/llms.txt`. | AI assistants find the agent and ask it direct questions. | 2 min |
 | Review the weekly gap report. | A list of questions the agent could not answer. Add the answers to your site or the facts sheet. | 15 min each week |
 | Use your own model or retrieval keys. | Your own billing and limits. | 10 min |

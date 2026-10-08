@@ -1,6 +1,7 @@
 /**
  * Settings: the install snippets and the site settings for the dashboard API.
  */
+import { getCdnLast, getCdnSettings, ZONE_ID, type CdnLast } from "../host/cdn.ts";
 import { isEmail } from "../host/handoff.ts";
 import type { Store, Tenant } from "../store/store.ts";
 
@@ -18,10 +19,25 @@ export interface Settings {
   /** Most turns in one month. `0` means no cap. */
   cap: number;
   paused: boolean;
+  /** The CDN link. `null` when there is none. Never holds the token. */
+  cdn: CdnView | null;
 }
 
+export interface CdnView {
+  provider: "cloudflare";
+  zone: string;
+  /** Where the token lives. */
+  token: "dashboard" | "env" | "none";
+  last: CdnLast | null;
+}
+
+/** A checked `cdn` body. `null` removes the link. */
+export type CdnBody = null | { zone: string; token?: string };
+
 const HOST_NAME = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
-const FIELDS = new Set(["domains", "origins", "handoff", "cap", "paused"]);
+const FIELDS = new Set(["domains", "origins", "handoff", "cap", "paused", "cdn"]);
+const CDN_FIELDS = new Set(["zone", "token"]);
+const TOKEN_TEXT = /^[A-Za-z0-9_-]{20,200}$/;
 const HANDOFF_FIELDS = new Set(["email", "webhook", "slack"]);
 const LIST_CAP = 50;
 const CAP_TOP = 100_000_000;
@@ -42,12 +58,47 @@ export function getSettings(tenant: Tenant, ours: string): Settings {
     handoff: { email: text(raw.email), webhook: text(raw.webhook), slack: text(raw.slack) },
     cap: Number.isInteger(cap) && cap > 0 ? cap : 0,
     paused: tenant.settings.paused === true,
+    cdn: getCdnView(tenant.settings),
+  };
+}
+
+function getCdnView(settings: Record<string, unknown>): CdnView | null {
+  const raw = settings.cdn as { zone?: unknown } | undefined;
+  if (!raw || typeof raw.zone !== "string") return null;
+  const cdn = getCdnSettings(settings);
+  return {
+    provider: "cloudflare",
+    zone: raw.zone,
+    token: cdn?.token ? "dashboard" : cdn?.tokenEnv ? "env" : "none",
+    last: getCdnLast(settings) ?? null,
   };
 }
 
 /**
+ * Check the `cdn` field of a settings body. The caller checks the token with Cloudflare and locks it.
+ * - `null` removes the link.
+ * - `{ zone, token? }` sets the link. Without a token, a stored token must exist.
+ */
+export function readCdn(tenant: Tenant, value: unknown): { cdn?: CdnBody; errors: string[] } {
+  if (value === null) return { cdn: null, errors: [] };
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { errors: ["CDN must be an object or null."] };
+  const errors: string[] = [];
+  const v = value as Record<string, unknown>;
+  for (const k of Object.keys(v)) if (!CDN_FIELDS.has(k)) errors.push("Unknown CDN field: " + k.slice(0, 40) + ".");
+  const zone = typeof v.zone === "string" ? v.zone.trim().toLowerCase() : "";
+  if (!ZONE_ID.test(zone)) errors.push("Zone ID is not valid. Copy the 32 characters from the zone Overview page in Cloudflare.");
+  let token: string | undefined;
+  if (v.token !== undefined) {
+    token = typeof v.token === "string" ? v.token.trim() : "";
+    if (!TOKEN_TEXT.test(token)) errors.push("API token is not valid. Paste the token that Cloudflare showed when you made it.");
+  } else if (!getCdnSettings(tenant.settings)) errors.push("Add an API token.");
+  return errors.length ? { errors } : { cdn: { zone, ...(token ? { token } : {}) }, errors };
+}
+
+/**
  * Check a settings body and make the new tenant.
- * - The body is any subset of `domains`, `origins`, `handoff`, `cap`, `paused`. Other keys are errors.
+ * - The body is any subset of `domains`, `origins`, `handoff`, `cap`, `paused`, `cdn`. Other keys are errors.
+ * - This function does not change `cdn`. Use `readCdn` for it.
  * - An empty handoff text clears that target.
  * When there are errors, the tenant does not change.
  */
@@ -117,6 +168,8 @@ export function readSettings(store: Store, tenant: Tenant, body: unknown): { ten
     } else if (cap === 0) delete next.settings.cap;
     else next.settings.cap = cap;
   }
+
+  /* `cdn` is checked by `readCdn`. The token check needs Cloudflare. */
 
   if ("paused" in b) {
     if (typeof b.paused !== "boolean") errors.push("Paused must be true or false.");

@@ -108,6 +108,7 @@ A missing `visual`, `turn`, or `note` is `null`. An unknown session is `404 {"er
   "browserPages": [ { "page": "https://acme.dev/pricing", "n": 6 } ],
   "cdn": { "connected": false, "rows": [ { "key": "chatgpt", "n": 300 } ] } }
 ```
+- `cdn.rows` are requests that the CDN saw, by agent family. They include agents that never run the widget script.
 
 ## Questions
 
@@ -130,17 +131,36 @@ A missing `visual`, `turn`, or `note` is `null`. An unknown session is `404 {"er
                         "style-src 'unsafe-inline'" ] },
   "domains": [], "origins": ["https://acme.dev"],
   "handoff": { "email": "", "webhook": "", "slack": "" },
-  "cap": 0, "paused": false }
+  "cap": 0, "paused": false,
+  "cdn": { "provider": "cloudflare", "zone": "023e105f4ecef8ad9ca31a8372d0c353", "token": "dashboard",
+           "last": { "at": 1760000000000, "day": "2026-10-07", "ok": true, "rows": 42, "reason": null } } }
 ```
+- `cdn` is `null` when the site has no CDN link.
+- `cdn.token` says where the token lives: `dashboard` (sent through this API, stored encrypted), `env` (set by the operator), or `none`. The API never returns the token.
+- `cdn.last` is the last pull, or `null` before the first pull. `ok: false` comes with a plain `reason`.
 
 ### `PUT /orgs/{orgId}/sites/{siteId}/settings` (write)
-- Body: any subset of `domains`, `origins`, `handoff`, `cap`, `paused`.
+- Body: any subset of `domains`, `origins`, `handoff`, `cap`, `paused`, `cdn`.
 - The service validates every field and returns the new settings.
 - The webhook and Slack URLs must be `https`. A Slack `#channel` name is not valid.
 - An unknown field is `400`. When one field is bad, nothing changes.
 - `handoff` is a subset of `email`, `webhook`, `slack`. An empty text clears that target. A missing key keeps it.
 - `cap` is the most turns in one month: a whole number from `0` to `100000000`. `0` means no cap.
 - `domains` and `origins` are lists of at most 50 items. A domain of another site is `400`.
+- `cdn` is `{ "zone": "<32 hex>", "token": "<Cloudflare API token>" }` or `null`.
+  - `null` removes the CDN link and the stored token. Pulled counts stay.
+  - `token` is optional when a token is already stored. Then only the zone changes.
+  - The token needs one permission: Zone, Analytics, Read, for that zone.
+  - The service checks the zone and token with Cloudflare before it saves. A refusal is `400` with Cloudflare's reason.
+  - When the server has no `WEBAGENT_SECRET_KEY`, a `token` is `503` (`server`): the server cannot store tokens.
+
+### `POST /orgs/{orgId}/sites/{siteId}/cdn/pull` (write)
+Pull the last full UTC day from the CDN now. The service also pulls by itself every hour, once per day.
+```json
+{ "day": "2026-10-07", "rows": 42, "stored": 42, "skipped": false }
+```
+- `skipped: true`: that day is already stored. Nothing changes.
+- No CDN link is `409` (`conflict`). A Cloudflare refusal is `502` (`server`) with the reason.
 
 ### `POST /orgs/{orgId}/sites/{siteId}/reload` (write)
 `204`. The next request reopens the site's agent.

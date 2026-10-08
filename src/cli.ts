@@ -23,6 +23,7 @@ if (!args[0] || args[0] === "help") {
   console.error("  webagent csp <site-url> [--cloud <public-url>]  check if the site CSP lets the widget load");
   console.error("  webagent score [--tenant <id>]  label idle agent chats: intelligent, script, unclear (--db --idle <min> --no-judge)");
   console.error("  webagent cdn pull --tenant <id> pull one day of CDN counts (settings.cdn, read-only token)");
+  console.error("  webagent cdn add --tenant <id> --zone <id> --token-env <NAME>  link a Cloudflare zone, token from env");
   console.error("  webagent onboard <url> --id <id> [--org <orgId>] [--name] [--domain a,b] [--origin https://x] [--no-visuals] [--packs dir]");
   console.error("  webagent refresh --tenant <id>  fetch the site again, rebuild changed pages, reload");
   console.error("  webagent demo <name>            pixel-clone pack.origin + inject widget");
@@ -326,6 +327,9 @@ switch (args[0]) {
     const { startScoring } = await import("./host/score.ts");
     startRanges();
     startScoring(store, () => tenants.list().map((t) => t.id));
+    /* Analytics: pull CDN counts every hour for the sites with a CDN link. */
+    const { startCdn } = await import("./host/cdn.ts");
+    startCdn(store, () => tenants.list().map((t) => t.id));
     const hours = Number(process.env.WEBAGENT_REFRESH_HOURS) || 0;
     if (hours > 0) {
       const { startRefresh } = await import("./pack/refresh.ts");
@@ -411,16 +415,31 @@ switch (args[0]) {
   }
   case "cdn": {
     const id = flag(args, "--tenant");
-    if (args[1] !== "pull" || !id) {
+    const verb = args[1];
+    if ((verb !== "pull" && verb !== "add") || !id) {
       console.error("usage: webagent cdn pull --tenant <id> [--db <file>]");
+      console.error("       webagent cdn add --tenant <id> --zone <zone id> --token-env <ENV_NAME> [--db <file>]");
       process.exit(2);
     }
     const { openStore } = await import("./store/sqlite.ts");
-    const { pullCdn } = await import("./host/cdn.ts");
+    const cdnModule = await import("./host/cdn.ts");
     const store = openStore(flag(args, "--db"));
+    if (verb === "add") {
+      const t = store.getTenant(id);
+      const cdn = { provider: "cloudflare", zone: (flag(args, "--zone") || "").toLowerCase(), tokenEnv: flag(args, "--token-env") || "" };
+      if (!t || !cdnModule.getCdnSettings({ cdn })) {
+        console.error(t ? "bad --zone (32 hex characters) or --token-env (A-Z, 0-9, _)" : "unknown tenant " + id);
+        process.exitCode = 2;
+      } else {
+        store.putTenant({ ...t, settings: { ...t.settings, cdn } });
+        console.error(`${id}: cdn linked. Set ${cdn.tokenEnv} in the env of the cloud process.`);
+      }
+      store.close();
+      break;
+    }
     try {
-      const out = await pullCdn(store, id);
-      console.error(out.skipped ? `${id}: window already pulled` : `${id}: ${out.stored} rows stored`);
+      const out = await cdnModule.runCdn(store, id);
+      console.error(out.skipped ? `${id}: ${cdnModule.getDay(out.since)} already pulled` : `${id}: ${out.stored} rows stored for ${cdnModule.getDay(out.since)}`);
     } catch (err) {
       console.error("cdn pull failed:", err instanceof Error ? err.message : err);
       process.exitCode = 1;

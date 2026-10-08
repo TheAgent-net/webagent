@@ -113,6 +113,17 @@ Only one refresh runs at a time in one process. A failed fetch keeps the old con
 
 The CLI refresh runs in its own process. It cannot reload a tenant in the running service. Restart the service, or use the timer in the service.
 
+### CDN pull
+
+Some agents read a site from its CDN and never run the widget script (for example ChatGPT-User, Perplexity, GPTBot). The CDN pull counts them.
+
+- The site owner connects Cloudflare in the dashboard: the zone ID and a read-only API token (Zone, Analytics, Read).
+- The service checks the token with Cloudflare, then stores it locked with `WEBAGENT_SECRET_KEY` (AES-256-GCM). The API never sends it back.
+- The operator can also link a zone with a token from the env: `webagent cdn add --tenant <id> --zone <zone id> --token-env <NAME>`.
+- Every hour, the cloud process pulls the last full UTC day for each linked site. A day that is stored already is skipped, so each day counts once.
+- The last pull (day, rows, or the reason of a failure) is in `settings.cdnLast` and in the dashboard.
+- Pull one site by hand: `webagent cdn pull --tenant <id>`, or `POST .../sites/<id>/cdn/pull` from the dashboard.
+
 ### Retrieval provider
 
 `docs_lookup` asks a retrieval provider for passages. Code: `src/retrieve/provider.ts`.
@@ -149,6 +160,7 @@ Put these in `/opt/webagent-cloud/.env.cloud`. Do not commit this file. Do not p
 | `WEBAGENT_SITE_ORIGINS` | Comma list of landing site origins that may `POST /access` from a browser (CORS). | unset |
 | `WEBAGENT_IP_SALT` | Salt for the IP hash in `events`. Use a long random value. | `webagent` |
 | `SUPERMEMORY_API_KEY` | Key for the Supermemory provider. | unset |
+| `WEBAGENT_SECRET_KEY` | Key that locks the CDN tokens that site owners send through the dashboard. At least 32 characters. Keep it: a new key makes the stored tokens unreadable, and owners must connect again. | unset (dashboard tokens off) |
 | `WEBAGENT_REFRESH_HOURS` | Hours between refresh passes. `0` is off. | `0` |
 | `WEBAGENT_TENANT_CAP` | Most tenants open at once. | `32` |
 | `WEBAGENT_MAIL_WEBHOOK` | Webhook that sends handoff mail. | unset |
